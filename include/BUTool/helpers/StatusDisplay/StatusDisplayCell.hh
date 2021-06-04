@@ -1,21 +1,14 @@
 #ifndef __STATUS_DISPLAY_CELL_HH__
 #define __STATUS_DISPLAY_CELL_HH__
 
-#ifdef STD_UNORDERED_MAP
-#include <unordered_map>
-typedef std::unordered_map<std::string, std::string> uMap;
-#else 
-#include <boost/unordered_map.hpp>
-typedef boost::unordered_map<std::string, std::string> uMap;
-#endif
 
 #include <ostream>
 #include <iostream> //for std::cout
 #include <vector>
 #include <string>
 #include <map>
+#include <boost/unordered_map.hpp>
 #include <boost/tokenizer.hpp> //for tokenizer
-#include <cmath> // for pow
 
 namespace BUTool{
 
