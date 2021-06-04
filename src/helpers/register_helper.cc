@@ -136,9 +136,9 @@ void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vec
     }
     //Print the value if we are suppose to
     if(!skipPrintZero ||  (val != 0)){
-      printf(" 0x%0*" PRIX64, printWord64?16:8, val);	
+      printf(" 0x%0*" PRIX64, printWord64?16:8, val);
     }else{
-      printf("   %*s", printWord64?16:8," ");	
+      printf("   %*s", printWord64?16:8," ");
     }
     //End line
     if(readNumber % lineWordCount == 0){
@@ -490,15 +490,16 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
     uint32_t size = GetRegSize(regName);
     
     //Print main line
-    printf("  %3zu: %-60s (addr=%08x mask=%08x) ", iReg+1, regNames[iReg].c_str(), addr,
-	   mask);
+    printf("  %3zu: %-60s (addr=%08x mask=%08x) ", iReg+1, regNames[iReg].c_str(), addr, mask);
+
     //Print mode attribute
     printf("%s",GetRegMode(regName).c_str());
+
     //Print permission attribute
     printf("%s",GetRegPermissions(regName).c_str());
     if(size > 1){
       //Print permission attribute
-      printf(" size=0x%08X",size);    
+      printf(" size=0x%08X",size);
     }
     //End first line
     printf("\n");

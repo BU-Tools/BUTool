@@ -7,6 +7,7 @@
 #include <vector>
 #include <stdint.h>
 
+#include <BUTextIO/BUTextIO.hh>
 
 namespace BUTool{  
   class RegisterHelper{  

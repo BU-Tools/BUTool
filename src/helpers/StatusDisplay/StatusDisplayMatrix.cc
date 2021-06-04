@@ -77,9 +77,9 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, boost::unordered_map<std::string,std::string> const & parameters)
+  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, uMap const & parameters)
   {
-    boost::unordered_map<std::string,std::string>::const_iterator itTable= parameters.find("Table");
+    uMap::const_iterator itTable= parameters.find("Table");
     if(itTable == parameters.end()){
       BUException::BAD_VALUE e;
       char tmp[256];
@@ -237,10 +237,10 @@ namespace BUTool{
     }      
   }
 
-  std::string StatusDisplayMatrix::ParseRow(boost::unordered_map<std::string,std::string> const & parameters,
+  std::string StatusDisplayMatrix::ParseRow(uMap const & parameters,
 					    std::string const & addressBase) const
   {
-    boost::unordered_map<std::string,std::string>::const_iterator rowName = parameters.find("Row");
+    uMap::const_iterator rowName = parameters.find("Row");
     std::string newRow;
     //Row
     if(rowName != parameters.end()){
@@ -295,10 +295,10 @@ namespace BUTool{
     }
     return newRow;
   }
-  std::string StatusDisplayMatrix::ParseCol(boost::unordered_map<std::string,std::string> const & parameters,
+  std::string StatusDisplayMatrix::ParseCol(uMap const & parameters,
 					 std::string const & addressBase) const
   {    
-    boost::unordered_map<std::string,std::string>::const_iterator colName = parameters.find("Column");
+    uMap::const_iterator colName = parameters.find("Column");
     std::string newCol;
     //Col
     if(colName != parameters.end()){

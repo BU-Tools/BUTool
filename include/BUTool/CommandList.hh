@@ -8,9 +8,11 @@
 #include <boost/tokenizer.hpp>
 #include "ToolException.hh"
 
+#include <BUTextIO/BUTextIO.hh>
+
 namespace BUTool{
 
-  class CommandListBase{
+  class CommandListBase: public BUTextIO {
   public:
     CommandListBase(std::string const & typeName):type(typeName){};
     virtual ~CommandListBase(){};

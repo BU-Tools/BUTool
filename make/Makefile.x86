@@ -19,6 +19,10 @@ LIBRARY_EXCEPTION = lib/libToolException.so
 LIBRARY_EXCEPTION_SOURCES  = $(wildcard src/BUException/*.cc)
 LIBRARY_EXCEPTION_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_EXCEPTION_SOURCES})
 
+# BUTextIO class
+LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
+LIBRARY_BUTEXTIO_SOURCES = $(wildcard src/BUTextIO/*.cc)
+LIBRARY_BUTEXTIO_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_BUTEXTIO_SOURCES})
 
 LIBRARY_TOOL = lib/libBUTool.so
 LIBRARY_TOOL_SOURCES  = $(wildcard src/tool/*.cc)
@@ -58,7 +62,8 @@ LIBRARIES =    	-lToolException		\
 		-lz 			\
 		-lboost_regex 		\
 		-lboost_program_options \
-		-ldl
+		-ldl \
+		-lBUTool_BUTextIO
 
 INSTALL_PATH ?= ./install
 
@@ -72,6 +77,10 @@ EXECUTABLE_LIBRARIES = ${LIBRARIES} ${EXECUTABLE_LINKED_LIBRARY_FLAGS}
 CXX_FLAGS = -g -O3 -rdynamic -Wall -MMD -MP -fPIC ${INCLUDE_PATH} -Werror -Wno-literal-suffix
 
 CXX_FLAGS += -std=c++11 -fno-omit-frame-pointer -pedantic -Wno-ignored-qualifiers -Werror=return-type -Wextra -Wno-long-long -Winit-self -Wno-unused-local-typedefs  -Woverloaded-virtual ${COMPILETIME_ROOT} ${FALLTHROUGH_FLAGS}
+
+ifdef MAP_TYPE
+CXX_FLAGS += ${MAP_TYPE}
+endif
 
 LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -g -O3 -rdynamic ${LIBRARY_PATH} ${LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
@@ -97,7 +106,7 @@ self: ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_TOOL}  ${EXECU
 # ------------------------
 # exception library
 # ------------------------
-${LIBRARY_EXCEPTION}: ${LIBRARY_EXCEPTION_OBJECT_FILES}
+${LIBRARY_EXCEPTION}: ${LIBRARY_EXCEPTION_OBJECT_FILES} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} -shared -fPIC -Wall -g -O3 -rdynamic ${LIBRARY_EXCEPTION_OBJECT_FILES} -o $@
 
@@ -105,6 +114,16 @@ ${LIBRARY_EXCEPTION_OBJECT_FILES}: obj/%.o : src/%.cc
 	mkdir -p $(dir $@)
 	${CXX} ${CXX_FLAGS} -c $< -o $@
 
+# ------------------------
+# BUTextIO library
+# ------------------------
+${LIBRARY_BUTEXTIO}: ${LIBRARY_BUTEXTIO_OBJECT_FILES} 
+	mkdir -p $(dir $@)
+	${CXX} -shared -fPIC -Wall -g -O3 -rdynamic ${LIBRARY_BUTEXTIO_OBJECT_FILES} -o $@
+
+${LIBRARY_BUTEXTIO_OBJECT_FILES}: obj/%.o : src/%.cc
+	mkdir -p $(dir $@)
+	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
 # Executables
