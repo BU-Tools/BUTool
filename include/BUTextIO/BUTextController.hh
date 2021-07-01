@@ -19,6 +19,7 @@ public:
     void Print(const char *fmt, ...);
     void Print(printer a);
     void AddOutputStream(std::ostream *os);
+    void RemoveOutputStream(std::ostream *os);
     void ResetStreams();
 };
 

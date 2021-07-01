@@ -12,6 +12,10 @@ void BUTextIO::AddOutputStream(Level::level level, std::ostream *os) {
     controllers[level].AddOutputStream(os);
 }
 
+void BUTextIO::RemoveOutputStream(Level::level level, std::ostream* os) {
+    controllers[level].RemoveOutputStream(os);
+}
+
 void BUTextIO::ResetStreams(Level::level level) {
     controllers[level].ResetStreams();
 }
