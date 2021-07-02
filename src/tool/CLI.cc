@@ -153,6 +153,8 @@ namespace BUTool{
 	} else {
 	  includeFilename = line.substr(loadString.size());
 	}
+	//add the load to the history
+	add_history(line.c_str());	  
 	
 	//remove any white space
 	while((includeFilename.size() > 0) && (includeFilename[0] == ' '))
@@ -186,7 +188,8 @@ namespace BUTool{
   {
     //Command string
     std::string currentCommand("");
-    
+    bool addToHistory=true;
+
     //Connect to the Launcher's auto-complete if it is used.
     rl_attempted_completion_function = CLISetAutoComplete(launcher);
     
@@ -197,6 +200,7 @@ namespace BUTool{
       {
 	//load the first command into currentCommand
 	currentCommand = Commands.front();
+	addToHistory=false;
 	//delete that first command
 	Commands.pop_front();
       }
@@ -221,17 +225,20 @@ namespace BUTool{
 	    
 	    //Parse the command string
 	    ProcessLine(currentCommand);
-	    if(Commands.size())			      
+	    if(Commands.size() && !commandsFromScript)			      
 	      {
 		//load the first command into currentCommand
 		currentCommand = Commands.front();
 		//delete that first command
-		Commands.pop_front();
+		Commands.pop_front();		
 	      }
+	    else{
+	      return std::vector<std::string>();
+	    }
 	  }
       }
     
-    if(!currentCommand.empty())
+    if(addToHistory && !currentCommand.empty())
       {
 	//Add the command to the history
 	add_history(currentCommand.c_str());
