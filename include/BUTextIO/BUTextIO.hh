@@ -8,6 +8,7 @@ public:
     BUTextIO();
     virtual ~BUTextIO() {};
     void AddOutputStream(Level::level level, std::ostream *os);
+    void AddPreamble(Level::level, std::ostream*, std::string, bool);
     void RemoveOutputStream(Level::level level, std::ostream* os);
     void ResetStreams(Level::level level);
     void Print(Level::level level, const char *fmt, ...);
