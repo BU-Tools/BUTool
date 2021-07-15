@@ -10,34 +10,37 @@ inline std::string getTime() {
 
 BUTextController::BUTextController(std::ostream *os) {
     // constructor adds an ostream* without a preamble by default
-    streams.push_back(std::make_tuple(os, Preamble::Disabled, ""));
+    Preamble p = Preamble::Disabled;
+    streams.push_back(std::make_tuple(os, p, ""));
 }
 
 void BUTextController::Print(printer a) {
     std::vector<std::tuple<std::ostream*,Preamble,std::string>>::iterator it;
     for (it = streams.begin(); it != streams.end(); ++it) {
         // check bitmask for preamble text and timestamp
-        switch (std::get<1>(*it)) {
-            case (Preamble::Enabled | Preamble::Timestamp | Preamble::Text):
+        switch (unsigned(std::get<1>(*it))) {
+            case (unsigned(Preamble::Enabled | Preamble::Timestamp | Preamble::Text)):
             {   // timestamp : preamble : text
                 *std::get<0>(*it) << getTime() << " : " << a << "\n";
                 break;
             }
-            case (Preamble::Enabled | Preamble::Timestamp):
+            case (unsigned(Preamble::Enabled | Preamble::Timestamp)):
             {   // timestamp : text
                 *std::get<0>(*it) << getTime() << " : " << a << "\n";
                 break;
             }
-            case (Preamble::Enabled | Preamble::Text):
+            case (unsigned(Preamble::Enabled | Preamble::Text)):
             {   // preamble : text
                 *std::get<0>(*it) << std::get<2>(*it) << " " << a << "\n";
                 break;
             }
-            default:
+            case (unsigned(Preamble::Enabled)):
             {   // only display text
                 *std::get<0>(*it) << a << "\n";
                 break;
             }
+	    default:
+		break;
         }
     }
 }
@@ -51,7 +54,8 @@ void BUTextController::AddOutputStream(std::ostream *os) {
         }
     }
     // if pointer doesn't already exist in vector, add it (without preamble)
-    streams.push_back(std::make_tuple(os, Preamble::Disabled, ""));
+    Preamble p = Preamble::Disabled;
+    streams.push_back(std::make_tuple(os, p, ""));
 }
 
 void BUTextController::AddPreamble(std::ostream *os, std::string preambleText, bool timestamp) {
