@@ -9,34 +9,34 @@ enum Preamble : unsigned {
 };
 
 // allow for bitwise operations on the enum
-Preamble constexpr operator | (Preamble lhs, Preamble rhs) {
+inline Preamble constexpr operator|(Preamble lhs, Preamble rhs) {
     return static_cast<Preamble>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
 }
 
-Preamble& operator |= (Preamble &lhs, Preamble rhs) {
+inline Preamble& operator|=(Preamble &lhs, Preamble rhs) {
     lhs = static_cast<Preamble>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
     return lhs;
 }
 
-Preamble constexpr operator & (Preamble lhs, Preamble rhs) {
+inline Preamble constexpr operator&(Preamble lhs, Preamble rhs) {
     return static_cast<Preamble>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
 }
 
-Preamble& operator &= (Preamble &lhs, Preamble rhs) {
+inline Preamble& operator&=(Preamble &lhs, Preamble rhs) {
     lhs = static_cast<Preamble>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
     return lhs;
 }
 
-Preamble constexpr operator ^ (Preamble lhs, Preamble rhs) {
+inline Preamble constexpr operator^(Preamble lhs, Preamble rhs) {
     return static_cast<Preamble>(static_cast<unsigned>(lhs) ^ static_cast<unsigned>(rhs));
 }
 
-Preamble& operator ^= (Preamble &lhs, Preamble rhs) {
+inline Preamble& operator^=(Preamble &lhs, Preamble rhs) {
     lhs = static_cast<Preamble>(static_cast<unsigned>(lhs) ^ static_cast<unsigned>(rhs));
     return lhs;
 }
 
-Preamble constexpr operator ~ (Preamble rhs) {
+inline Preamble constexpr operator~(Preamble rhs) {
     return ~static_cast<Preamble>(static_cast<unsigned>(rhs));
 }
 
