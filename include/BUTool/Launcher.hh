@@ -22,6 +22,7 @@ namespace BUTool{
     uint32_t GetVerbosity();
   private:    
     std::vector<std::ostream*> ownedOutputStreams;
+    std::map<int, std::ostream*> devicesWithOutputStreams;   // keep track of which devices have which output files
     uint32_t verbosity;
     int activeDevice;
     //  std::vector<DeviceContainer *> device;
@@ -53,6 +54,7 @@ namespace BUTool{
     CommandReturn::status ListDevices(std::vector<std::string>,std::vector<uint64_t>);	        
     CommandReturn::status SelectDevice(std::vector<std::string>,std::vector<uint64_t>);	        
     CommandReturn::status AddDeviceOutputFile(std::vector<std::string>,std::vector<uint64_t>); 
+    CommandReturn::status AddOutputFilePreamble(std::vector<std::string>,std::vector<uint64_t>);
 
     //Add new command (sub command) auto-complete files here
     std::string autoComplete_Help(std::vector<std::string> const &,std::string const &,int);
