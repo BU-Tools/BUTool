@@ -92,7 +92,7 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
       //printf("%s ",strArg[iArg].c_str());
-      Print(Level::INFO, "%s ",strArg[iArg].c_str())
+      Print(Level::INFO, "%s ",strArg[iArg].c_str());
     }
   //printf("\n");
 
