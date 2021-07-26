@@ -93,7 +93,7 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
   printf("\n");
 
   // add quick test - preamble & timestamp
-  AddPreamble(Level::INFO, "preamble", true);
+  AddPreamble(Level::INFO, &std::cout, "preamble", true);
   Print(Level::INFO, "Preamble Test\n");
 
   return  CommandReturn::OK;
