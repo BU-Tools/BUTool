@@ -86,14 +86,15 @@ CommandReturn::status Launcher::Quit(std::vector<std::string>,
 CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
 		   std::vector<uint64_t> intArg) {
   (void) intArg; // makes compiler not complain about unused arg
+
+  // add quick test - preamble & timestamp
+  AddPreamble(Level::INFO, &std::cout, "echo", true);
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
       printf("%s ",strArg[iArg].c_str());
     }
-  printf("\n");
+  //printf("\n");
 
-  // add quick test - preamble & timestamp
-  AddPreamble(Level::INFO, &std::cout, "preamble", true);
   Print(Level::INFO, "Preamble Test\n");
 
   return  CommandReturn::OK;
