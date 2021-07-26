@@ -92,7 +92,11 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
       //printf("%s ",strArg[iArg].c_str());
-      Print(Level::INFO, "%s ",strArg[iArg].c_str());
+      Print(Level::DEBUG, "%s ",strArg[iArg].c_str());
+      /*
+          If added to Level::INFO and cout, then only BUTool's Print calls work
+          If another AddPreamble is added to ApolloSMDevice's on Level::INFO and cout, then there will be two separate preambles
+      */
     }
   //printf("\n");
 
