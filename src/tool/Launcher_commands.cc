@@ -91,6 +91,11 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
       printf("%s ",strArg[iArg].c_str());
     }
   printf("\n");
+
+  // add quick test - preamble & timestamp
+  AddPreamble(Level::INFO, "preamble", true);
+  Print(Level::INFO, "Preamble Test\n");
+
   return  CommandReturn::OK;
 }
 
