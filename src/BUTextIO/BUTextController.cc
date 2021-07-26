@@ -4,7 +4,7 @@ inline std::string getTime() {
     char buffer[128];
     time_t unixTime=time(NULL);
     struct tm * timeinfo = localtime(&unixTime);
-    strftime(buffer,128,"%F-%T-%Z",timeinfo);
+    strftime(buffer,128,"%F %T-%Z",timeinfo);
     return std::string(buffer);
 }
 
@@ -39,8 +39,8 @@ void BUTextController::Print(printer a) {
                 *std::get<0>(*it) << a << "\n";
                 break;
             }
-	    default:
-		break;
+            //default:
+                //break;
         }
     }
 }

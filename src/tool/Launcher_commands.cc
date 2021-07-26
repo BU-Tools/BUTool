@@ -91,11 +91,10 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
   AddPreamble(Level::INFO, &std::cout, "echo", true);
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
-      printf("%s ",strArg[iArg].c_str());
+      //printf("%s ",strArg[iArg].c_str());
+      Print(Level::INFO, "%s ",strArg[iArg].c_str())
     }
   //printf("\n");
-
-  Print(Level::INFO, "Preamble Test\n");
 
   return  CommandReturn::OK;
 }
