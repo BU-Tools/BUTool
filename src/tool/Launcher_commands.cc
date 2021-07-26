@@ -54,13 +54,7 @@ void Launcher::LoadCommandList()
 	     "Place device print calls in filename.\n"\
 	     "  Usage:\n"\
 	     "  add_dev_ofile filename <device#>\n"\
-             "  If no device# listed, it will be added to all devices\n");
-  AddCommand("add_ofile_preamble",&Launcher::AddOutputFilePreamble,
-       "Add preamble and/or timestamp before device print calls in filename.\n"\
-       "  Usage:\n"\
-       "  add_ofile_preamble [<device#>] [<preamble>] [<'time'>]\n"\
-       "    If no device# listed, it will be added to all devices\n"
-       "    Preamble text and/or timestamp flag 'time' must be specified\n");
+             "  If no device# listed, it will be added to all devices\n");  
 }
 
 CommandReturn::status Launcher::SetVerbosity(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
@@ -418,15 +412,18 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
       iEndDev = iArg[1]+1; //Cause the following loop to end after iArg[i]
     }
 
-    for(size_t iDev = iStartDev; iDev < device.size() && iDev < iEndDev; iDev++){
+    for(size_t iDev = iStartDev; 
+	iDev < device.size() && iDev < iEndDev;
+	iDev++){
       if(iDev < device.size()){
-	      BUTextIO * text_ptr = NULL; 
-	    if((text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) ){
-	      text_ptr->AddOutputStream(Level::INFO,newStream);
-        devicesWithOutputStreams.insert({static_cast<int>(iDev), newStream});   // store device# of device and ptr to its output file
-      }	
+	BUTextIO * text_ptr = NULL; 
+	if(
+	   (text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) 
+	   ){
+	  text_ptr->AddOutputStream(Level::INFO,newStream);
+	}	
       }else{
-	      printf("Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
+	printf("Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
       }   
     } 
     return CommandReturn::OK;
@@ -434,76 +431,3 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
   return CommandReturn::BAD_ARGS;
 }
 
-CommandReturn::status Launcher::AddOutputFilePreamble(std::vector<std::string> strArg, std::vector<uint64_t> iArg) {
-  // first check if any device output files exist
-  if (!ownedOutputStreams.size()) {
-    printf("Error: there are currently no device output files. Use 'add_dev_ofile' to add one first.\n");
-    return CommandReturn::BAD_ARGS;
-  }
-  // next check args
-  switch (iArg.size()) {
-    case 1:   // either preamble is set or timestamp is set. Device# only is NOT valid
-    {
-      if (std::isdigit(strArg[0][0])) {   // user only selected device#
-        // NOTE: if for some reason the user wanted preamble text to start with digit, this code will exit - should think about
-        printf("Error: neither preamble text nor timestamp flag set.\n");
-        return CommandReturn::BAD_ARGS;
-      }
-      // User opted to add preamble or timestamp to all devices (that have output files)
-      std::map<int,std::ostream*>::iterator devIt; 
-      for (devIt = devicesWithOutputStreams.begin(); devIt != devicesWithOutputStreams.end(); devIt++) {
-        BUTextIO * text_ptr = NULL;
-        if ( (text_ptr = dynamic_cast<BUTextIO*>(device[devIt->first])) ) {  // this should always work, since it was already done in add_dev_ofile
-          if (strArg[0] == "time") {
-            // add only timestamp to all eligible devices
-            text_ptr->AddPreamble(Level::INFO, devIt->second, "", true);
-          }
-          else {
-            // add only preamble text to all eligible devices
-            text_ptr->AddPreamble(Level::INFO, devIt->second, strArg[0], false);
-          }
-        }
-      }
-      return CommandReturn::OK;
-    }
-    case 2:
-    {
-      if (std::isdigit(strArg[0][0])) {   // user wants a preamble OR timestamp added to device#
-        BUTextIO * text_ptr = NULL;
-        if ( (text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) ) {
-          if (strArg[1] == "time") {
-            text_ptr->AddPreamble(Level::INFO, devicesWithOutputStreams[iArg[0]], "", true);
-          }
-          else {
-            text_ptr->AddPreamble(Level::INFO, devicesWithOutputStreams[iArg[0]], strArg[1], false);
-          }
-        }
-      }
-      else {    // user wants ALL eligible devices to be given a preamble and timestamp (will this ever be used?)
-        std::map<int,std::ostream*>::iterator devIt;
-        for (devIt = devicesWithOutputStreams.begin(); devIt != devicesWithOutputStreams.end(); devIt++) {
-          BUTextIO * text_ptr = NULL;
-          if ( (text_ptr = dynamic_cast<BUTextIO*>(device[devIt->first])) ) {
-            text_ptr->AddPreamble(Level::INFO, devIt->second, strArg[0], true);
-          }
-        }
-      }
-      return CommandReturn::OK;
-    }
-    case 3:
-    {
-      if (!std::isdigit(strArg[0][0])) {
-        printf("Error: Incorrect device number.\n");
-        return CommandReturn::BAD_ARGS;
-      }
-      BUTextIO * text_ptr = NULL;
-      if ( (text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) ) {
-        text_ptr->AddPreamble(Level::INFO, devicesWithOutputStreams[iArg[0]], strArg[1], true);
-      }
-      return CommandReturn::OK;
-    }
-    default:
-      return CommandReturn::BAD_ARGS;
-  }
-  return CommandReturn::BAD_ARGS;
-}
