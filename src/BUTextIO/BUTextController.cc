@@ -60,6 +60,18 @@ void BUTextController::AddOutputStream(std::ostream *os) {
     streams.push_back(std::make_tuple(os, p, ""));
 }
 
+void BUTextController::RemoveOutputStream(std::ostream *os) {
+    std::vector<std::tuple<std::ostream*,Preamble,std::string>>::iterator it;
+    for (it=streams.begin(); it!=streams.end();) {
+        if (std::get<0>(*it) == os) {
+            it = streams.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
 void BUTextController::AddPreamble(std::ostream *os, std::string preambleText, bool timestamp) {
     // check that input makes sense
     if (preambleText.size()==0 && !timestamp) {
@@ -84,14 +96,13 @@ void BUTextController::AddPreamble(std::ostream *os, std::string preambleText, b
     }
 }
 
-void BUTextController::RemoveOutputStream(std::ostream *os) {
+void BUTextController::RemovePreamble(std::ostream *os) {
     std::vector<std::tuple<std::ostream*,Preamble,std::string>>::iterator it;
-    for (it=streams.begin(); it!=streams.end();) {
+    // 0=ostream*, 1=Preamble bitmask, 2=Preamble string
+    for (it=streams.begin(); it!=streams.end(); ++it) {
         if (std::get<0>(*it) == os) {
-            it = streams.erase(it);
-        }
-        else {
-            ++it;
+            std::get<1>(*it) = Preamble::Disabled;
+            std::get<2>(*it) = "";
         }
     }
 }

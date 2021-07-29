@@ -21,8 +21,9 @@ public:
     BUTextController(std::ostream *os);
     void Print(printer a);
     void AddOutputStream(std::ostream *os);
-    void AddPreamble(std::ostream *os, std::string preambleText, bool timestamp);
     void RemoveOutputStream(std::ostream *os);
+    void AddPreamble(std::ostream *os, std::string preambleText, bool timestamp);
+    void RemovePreamble(std::ostream *os);
     void ResetStreams();
 };
 

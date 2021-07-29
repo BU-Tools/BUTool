@@ -12,12 +12,16 @@ void BUTextIO::AddOutputStream(Level::level level, std::ostream *os) {
     controllers[level].AddOutputStream(os);
 }
 
+void BUTextIO::RemoveOutputStream(Level::level level, std::ostream* os) {
+    controllers[level].RemoveOutputStream(os);
+}
+
 void BUTextIO::AddPreamble(Level::level level, std::ostream* os, std::string preambleText, bool timestamp) {
     controllers[level].AddPreamble(os, preambleText, timestamp);
 }
 
-void BUTextIO::RemoveOutputStream(Level::level level, std::ostream* os) {
-    controllers[level].RemoveOutputStream(os);
+void BUTextIO::RemovePreamble(Level::level level, std::ostream* os) {
+    controllers[level].RemovePreamble(os);
 }
 
 void BUTextIO::ResetStreams(Level::level level) {
