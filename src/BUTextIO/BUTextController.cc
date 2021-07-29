@@ -23,22 +23,22 @@ void BUTextController::Print(printer a) {
         switch (unsigned(std::get<1>(*it))) {
             case (unsigned(Preamble::Enabled | Preamble::Timestamp | Preamble::Text)):
             {   // timestamp : preamble : text
-                *std::get<0>(*it) << getTime() << " [" << std::get<2>(*it) << "] " << a << "\n";
+                *std::get<0>(*it) << getTime() << " [" << std::get<2>(*it) << "] " << a;
                 break;
             }
             case (unsigned(Preamble::Enabled | Preamble::Timestamp)):
             {   // timestamp : text
-                *std::get<0>(*it) << getTime() << " " << a << "\n";
+                *std::get<0>(*it) << getTime() << " " << a;
                 break;
             }
             case (unsigned(Preamble::Enabled | Preamble::Text)):
             {   // preamble : text
-                *std::get<0>(*it) << " [" << std::get<2>(*it) << "] " << a << "\n";
+                *std::get<0>(*it) << " [" << std::get<2>(*it) << "] " << a;
                 break;
             }
             case (unsigned(Preamble::Disabled)):
             {   // only display text
-                *std::get<0>(*it) << a << "\n";
+                *std::get<0>(*it) << a;
                 break;
             }
             default:
