@@ -102,7 +102,7 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
             >read SM_INFO.GIT_HASH_3
              2021-07-26 22:26:28-UTC [SMDevice ctor]      SM_INFO.GIT_HASH_3: 0x4306F4DB
           
-          Preambles differ for the same stream bc is tied to the device
+          Preambles differ for the same stream bc it's tied to the device
           But why does the adding a preamble to Launcher break ApolloSMDevice's printing?
       */
     }

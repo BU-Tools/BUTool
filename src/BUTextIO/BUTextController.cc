@@ -16,6 +16,8 @@ BUTextController::BUTextController(std::ostream *os) {
 
 void BUTextController::Print(printer a) {
     std::vector<std::tuple<std::ostream*,Preamble,std::string>>::iterator it;
+    // std::get<n> to access elements of tuple:
+    //      n=0: ostream*, n=1: preamble bitmask, n=2: preamble text string 
     for (it = streams.begin(); it != streams.end(); ++it) {
         // check bitmask for preamble text and timestamp
         switch (unsigned(std::get<1>(*it))) {
@@ -26,7 +28,7 @@ void BUTextController::Print(printer a) {
             }
             case (unsigned(Preamble::Enabled | Preamble::Timestamp)):
             {   // timestamp : text
-                *std::get<0>(*it) << getTime() << " : " << a << "\n";
+                *std::get<0>(*it) << getTime() << " " << a << "\n";
                 break;
             }
             case (unsigned(Preamble::Enabled | Preamble::Text)):
@@ -34,13 +36,13 @@ void BUTextController::Print(printer a) {
                 *std::get<0>(*it) << " [" << std::get<2>(*it) << "] " << a << "\n";
                 break;
             }
-            case (unsigned(Preamble::Enabled)):
+            case (unsigned(Preamble::Disabled)):
             {   // only display text
                 *std::get<0>(*it) << a << "\n";
                 break;
             }
-            //default:
-                //break;
+            default:
+                break;
         }
     }
 }
