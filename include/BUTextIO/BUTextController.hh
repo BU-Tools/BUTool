@@ -16,6 +16,7 @@
 class BUTextController {
 private:
     // tuple contains : ostream pointer, preamble bitmask, preamble string (can be empty)
+    // for the future: possible change to map, add struct for holding this stream info
     std::vector<std::tuple<std::ostream*, Preamble, std::string> > streams;
 public:
     BUTextController(std::ostream *os);
