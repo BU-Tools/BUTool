@@ -137,7 +137,8 @@ int main(int argc, char* argv[])
       ("help,h", "Help Screen")    
       ("lib,l",       po::value<std::string >()->multitoken(), "Device library plugin to load")
       ("script,X",    po::value<std::string >()->multitoken(), "Script files to load")    
-      ("cmd",         po::value<std::string >()->multitoken(), "Command to run");
+      ("cmd",         po::value<std::string >()->multitoken(), "Command to run")
+      ("var",         po::value<std::string >()->multitoken(), "Set local variable");
     
     std::vector<std::string> devices = DevFac->GetDeviceNames();
     std::vector<std::string> deviceNames;
@@ -247,6 +248,14 @@ int main(int argc, char* argv[])
 	cli.ProcessString(command);
       }
     }
+
+    //set local variables
+    std::vector<std::string> vars = allOptions["var"];
+    for (auto iVar = vars.begin(); iVar != vars.end(); iVar++) {
+      std::string command = "set_var " + *iVar;
+      cli.ProcessString(command);
+    }
+
 
     //Run scripts
     std::vector<std::string> scripts = allOptions["script"];

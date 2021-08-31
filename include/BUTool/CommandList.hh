@@ -10,6 +10,8 @@
 
 #include <BUTextIO/BUTextIO.hh>
 
+#include <boost/algorithm/string.hpp> //for to_upper
+
 namespace BUTool{
 
   class CommandListBase: public BUTextIO {
@@ -24,12 +26,44 @@ namespace BUTool{
     virtual std::map<std::string,std::vector<std::string> > const & GetCommandList()=0;
     virtual std::string GetType(){return type;};
     virtual std::string GetInfo(){return info;};
+    //local BUTool variables. 
+    void SetVariable(std::string name,std::string const & value){boost::to_upper(name);BUToolVariables[name] = value;};
+    void UnsetVariable(std::string name){
+      boost::to_upper(name);
+      auto it = BUToolVariables.find(name); 
+      if(it != BUToolVariables.end()){
+	BUToolVariables.erase(it);
+      }      
+    };
+    std::string GetVariable(std::string name){
+      boost::to_upper(name);
+      auto it = BUToolVariables.find(name); 
+      if(it == BUToolVariables.end()){
+	return std::string("");}
+      return it->second;
+    };
+    bool ExistsVariable(std::string name){
+      boost::to_upper(name);
+      bool ret = true;
+      if(BUToolVariables.find(name) == BUToolVariables.end()){
+	ret=false;
+      }
+      return ret;
+    };
+    std::vector<std::string> GetVariableNames(){
+      std::vector<std::string> ret;
+      for(auto it = BUToolVariables.begin(); it!=BUToolVariables.end();it++){
+	ret.push_back(it->first);
+      }
+      return ret;
+    };
   protected:
     void SetInfo(std::string _info){info=_info;};
   private:
     std::string info;
     std::string type;
     CommandListBase();
+    static std::map<std::string,std::string> BUToolVariables;
   };
 
   template<class T>
