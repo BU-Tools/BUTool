@@ -34,7 +34,7 @@ namespace BUTool{
       if(it != BUToolVariables.end()){
 	BUToolVariables.erase(it);
       }      
-    }
+    };
     std::string GetVariable(std::string name){
       boost::to_upper(name);
       auto it = BUToolVariables.find(name); 
@@ -42,13 +42,21 @@ namespace BUTool{
 	return std::string("");}
       return it->second;
     };
+    bool ExistsVariable(std::string name){
+      boost::to_upper(name);
+      bool ret = true;
+      if(BUToolVariables.find(name) == BUToolVariables.end()){
+	ret=false;
+      }
+      return ret;
+    };
     std::vector<std::string> GetVariableNames(){
       std::vector<std::string> ret;
       for(auto it = BUToolVariables.begin(); it!=BUToolVariables.end();it++){
 	ret.push_back(it->first);
       }
       return ret;
-    }
+    };
   protected:
     void SetInfo(std::string _info){info=_info;};
   private:
