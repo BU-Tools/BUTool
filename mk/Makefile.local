@@ -190,5 +190,5 @@ install: all
 
 FLAGS = $(ifeq $(MAKEFLAGS) "","",-$(MAKEFLAGS))
 
-plugin:
+plugin: ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
 	 ${MAKE} ${FLAGS} -C ${PLUGIN_DIR} 
