@@ -10,8 +10,8 @@ RUNTIME_LDPATH?=${PWD}
 
 
 #Exception class
-LIBRARY_EXCEPTION_PATH = external/BUException
-LIBRARY_EXCEPTION = lib/libToolException.so
+LIBRARY_EXCEPTION_PATH = ${BUTOOL_PATH}/external/BUException
+LIBRARY_EXCEPTION = ${BUTOOL_PATH}/lib/libToolException.so
 
 # BUTextIO class
 LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
