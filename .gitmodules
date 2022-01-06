@@ -1,0 +1,3 @@
+[submodule "external/BUException"]
+	path = external/BUException
+	url = git@gitlab.com:BU-EDF/butool-libs/buexception.git

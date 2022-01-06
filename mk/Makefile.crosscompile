@@ -1,3 +1,6 @@
+$(error "this is unmaintained")
+
+
 BUTOOL_PATH=$(shell pwd)
 BUILD_MODE = zynq
 

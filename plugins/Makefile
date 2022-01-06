@@ -28,7 +28,8 @@ build: _all
 buildall: _all
 _all:  ${PLUGIN_TARGETS}
 
-
+export INCLUDE_PATH
+export LIBRARY_PATH
 # -----------------------
 # make plug-ins 
 # -----------------------

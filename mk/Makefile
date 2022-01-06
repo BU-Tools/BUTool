@@ -1,30 +1,17 @@
-SHELL = bash
-BUTOOL_PATH=$(shell pwd)
-BUILD_MODE = x86
 
-export CACTUS_ROOT
-export UIO_UHAL_PATH
+default: build
+include mk/helpers.mk
+include mk/uhal.mk
 
-UHAL_VER_MAJOR ?= 2
-UHAL_VER_MINOR ?= 7
 
-#x86 linux
+BUTOOL_PATH=${MAKE_PATH}
 CXX=g++
 RUNTIME_LDPATH?=${PWD}
 
-HAS_FALLTHROUGH=$(shell ./mk/has_Wimplicit-fallthrough)
-ifeq (${HAS_FALLTHROUGH},1)
-     FALLTHROUGH_FLAGS= -Wimplicit-fallthrough=0
-else
-     FALLTHROUGH_FLAGS=
-endif
-
-export
 
 #Exception class
+LIBRARY_EXCEPTION_PATH = external/BUException
 LIBRARY_EXCEPTION = lib/libToolException.so
-LIBRARY_EXCEPTION_SOURCES  = $(wildcard src/BUException/*.cc)
-LIBRARY_EXCEPTION_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_EXCEPTION_SOURCES})
 
 # BUTextIO class
 LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
@@ -50,18 +37,16 @@ EXECUTABLES = $(patsubst src/%.cxx,bin/%.exe,${EXECUTABLE_SOURCES})
 
 PLUGIN_DIR=plugins/
 
-INCLUDE_PATH = \
-							-Iinclude  
+RELATIVE_INCLUDE_PATH = \
+			include  \
+			${LIBRARY_EXCEPTION_PATH}/include
+INCLUDE_PATH = $(patsubst %,-I%,$(abspath ${RELATIVE_INCLUDE_PATH}))
+export INCLUDE_PATH
 
-LIBRARY_PATH = \
-							-Llib 
-
-ifdef BOOST_INC
-INCLUDE_PATH +=-I$(BOOST_INC)
-endif
-ifdef BOOST_LIB
-LIBRARY_PATH +=-L$(BOOST_LIB)
-endif
+RELATIVE_LIBRARY_PATH = \
+			lib 
+LIBRARY_PATH = $(patsubst %,-L%,$(abspath ${RELATIVE_LIBRARY_PATH}))
+export LIBRARY_PATH
 
 LIBRARIES =    	-lToolException		\
 		-lreadline 		\
@@ -69,7 +54,7 @@ LIBRARIES =    	-lToolException		\
 		-lz 			\
 		-lboost_regex 		\
 		-lboost_program_options \
-		-ldl \
+		-ldl                    \
 		-lBUTool_BUTextIO
 
 INSTALL_PATH ?= ./install
@@ -95,13 +80,13 @@ LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH
 
 .PHONY: all _all clean _cleanall build _buildall self plugin 
 
-default: build
 clean: _cleanall
 _cleanall:
 	rm -rf obj
 	rm -rf bin
 	rm -rf lib
 	make -C ${PLUGIN_DIR} clean
+	make -C external/BUException clean
 
 
 all: _all
@@ -113,13 +98,9 @@ self: ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_TOOL}  ${EXECU
 # ------------------------
 # exception library
 # ------------------------
-${LIBRARY_EXCEPTION}: ${LIBRARY_EXCEPTION_OBJECT_FILES} ${LIBRARY_BUTEXTIO}
-	mkdir -p $(dir $@)
-	${CXX} -shared -fPIC -Wall -g -O3 -rdynamic ${LIBRARY_EXCEPTION_OBJECT_FILES} -o $@
+${LIBRARY_EXCEPTION}: 
+	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
 
-${LIBRARY_EXCEPTION_OBJECT_FILES}: obj/%.o : src/%.cc 
-	mkdir -p $(dir $@)
-	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
 # BUTextIO library
@@ -135,7 +116,7 @@ ${LIBRARY_BUTEXTIO_OBJECT_FILES}: obj/%.o : src/%.cc
 # ------------------------
 # Executables
 # ------------------------
-${EXECUTABLES}: bin/%.exe: obj/%.o ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS}
+${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_EXCEPTION} ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} $< -o $@ ${LINK_EXECUTABLE_FLAGS}
 
@@ -148,7 +129,7 @@ ${EXECUTABLE_OBJECT_FILES}: obj/%.o : src/%.cxx
 # ------------------------
 # tool library
 # ------------------------
-${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_EXCEPTION}
+${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LIBRARY_TOOL_OBJECT_FILES} ${LINK_LIBRARY_FLAGS} -o $@
 
