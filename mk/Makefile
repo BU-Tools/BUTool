@@ -78,7 +78,7 @@ LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${L
 
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
-.PHONY: all _all clean _cleanall build _buildall self plugin 
+.PHONY: all _all clean _cleanall build _buildall self plugin init git_remote_to_ssh git_remote_to_https
 
 clean: _cleanall
 _cleanall:
