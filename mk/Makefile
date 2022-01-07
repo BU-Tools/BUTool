@@ -161,6 +161,7 @@ install: all
 	 install -b -m 775 ./lib/* ${INSTALL_PATH}/lib
 	 install -m 775 -d ${INSTALL_PATH}/include
 	 cp -r ./include/* ${INSTALL_PATH}/include
+	 cp -r ${LIBRARY_EXCEPTION_PATH}/include/* ${INSTALL_PATH}/include
 	 ${MAKE} install ${FLAGS} -C ${PLUGIN_DIR} 
 
 
