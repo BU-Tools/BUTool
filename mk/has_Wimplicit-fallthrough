@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "int main(){return 0;}" > test.c
+g++ -c -Wimplicit-fallthrough=0 test.c -o test.o >& /dev/null
+if [ $? -ne 0 ] ; then
+    echo "0"
+else
+    echo "1"
+fi
+rm -f test.c test.o >& /dev/null
+

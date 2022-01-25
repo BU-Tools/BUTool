@@ -3,7 +3,7 @@
 #include <stdio.h>  
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-
+#include <fstream> // For BUTextIO file redirection of ofstreams
 using namespace BUTool;
 
 void Launcher::LoadCommandList()
@@ -50,6 +50,25 @@ void Launcher::LoadCommandList()
 	     "Change the print level for exceptions (9 == all).\n"\
 	     "  Usage:\n"\
 	     "  verbose <level>\n");  
+  AddCommand("add_dev_ofile",&Launcher::AddDeviceOutputFile,
+	     "Place device print calls in filename.\n"\
+	     "  Usage:\n"\
+	     "  add_dev_ofile filename <device#>\n"\
+             "  If no device# listed, it will be added to all devices\n");  
+  AddCommand("set_var",&Launcher::SetVariable,
+	     "Set an internal variable.\n"\
+	     "  Usage:\n"\
+	     "  set_var name value\n"\
+	     "  If no value is set, the variable is unset\n");
+  AddCommand("get_var",&Launcher::GetVariable,
+	     "Get an internal variable.\n"\
+	     "  Usage:\n"\
+	     "  get_var name\n");
+  AddCommand("list_vars",&Launcher::ListVariables,
+	     "Get a list of internal variable.\n"\
+	     "  Usage:\n"\
+	     "  list_vars\n");
+
 }
 
 CommandReturn::status Launcher::SetVerbosity(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
@@ -385,3 +404,86 @@ CommandReturn::status Launcher::SelectDevice(std::vector<std::string>,std::vecto
   return CommandReturn::BAD_ARGS;
 }
 
+
+CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> strArg,std::vector<uint64_t> iArg){
+  if(iArg.size() >= 1){
+    //create the file
+    std::ofstream * newStream = new std::ofstream(strArg[0].c_str(),std::ofstream::trunc);
+    //Check that the file is ok
+    if(NULL == newStream || newStream->fail()){
+      printf("Error: %s could not be opened\n",strArg[0].c_str());
+      return CommandReturn::BAD_ARGS;      
+    }
+    //add the newStream to the lis of ostreams that Launcher needs to clean up at the end. 
+    ownedOutputStreams.push_back(newStream);
+
+    //By default we add this stream to all devices
+    size_t iStartDev = 0;
+    size_t iEndDev = device.size();
+    if(iArg.size() > 1){
+      //A specific device has been added.
+      iStartDev = iArg[1];
+      iEndDev = iArg[1]+1; //Cause the following loop to end after iArg[i]
+    }
+
+    for(size_t iDev = iStartDev; 
+	iDev < device.size() && iDev < iEndDev;
+	iDev++){
+      if(iDev < device.size()){
+	BUTextIO * text_ptr = NULL; 
+	if(
+	   (text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) 
+	   ){
+	  text_ptr->AddOutputStream(Level::INFO,newStream);
+	}	
+      }else{
+	printf("Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
+      }   
+    } 
+    return CommandReturn::OK;
+  }
+  return CommandReturn::BAD_ARGS;
+}
+
+
+
+CommandReturn::status Launcher::SetVariable(std::vector<std::string> args,std::vector<uint64_t> /*arg*/){
+  CommandReturn::status ret = CommandReturn::OK;
+  switch (args.size()){
+  case 2:
+    ((CommandListBase *)this)->SetVariable(args[0],args[1]);
+    break;
+  case 1:
+    ((CommandListBase *)this)->UnsetVariable(args[0]);
+    break;
+  default:
+    ret = CommandReturn::BAD_ARGS;
+  }
+  return ret;
+}
+
+CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,std::vector<uint64_t> /*arg*/){
+  CommandReturn::status ret = CommandReturn::OK;
+  std::string val;
+  switch (args.size()){
+  case 1:
+    val = ((CommandListBase *)this)->GetVariable(args[0]);
+    break;
+  default:
+    ret = CommandReturn::BAD_ARGS;
+  }
+  if(ret == CommandReturn::OK){
+    printf("%s = \"%s\"\n",args[0].c_str(),val.c_str());
+  }
+
+  return ret;
+}
+
+CommandReturn::status Launcher::ListVariables(std::vector<std::string> /*args*/,std::vector<uint64_t> /*asdf*/){
+  std::vector<std::string> vars =  ((CommandListBase *)this)->GetVariableNames();
+  printf("BUTool Variables:\n");
+  for(auto it = vars.begin();it!=vars.end();it++){
+    printf("  %s\n",it->c_str());
+  }
+  return CommandReturn::OK;
+}

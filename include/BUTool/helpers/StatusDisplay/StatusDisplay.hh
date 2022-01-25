@@ -1,12 +1,19 @@
 #ifndef __STATUS_DISPLAY_HH__
 #define __STATUS_DISPLAY_HH__
 
+#if UHAL_VER_MAJOR >= 2 && UHAL_VER_MINOR >= 8
+#include <unordered_map>
+typedef std::unordered_map<std::string, std::string> uMap;
+#else
+#include <boost/unordered_map.hpp>
+typedef boost::unordered_map<std::string, std::string> uMap;
+#endif
+
 #include <ostream>
 #include <iostream> //for std::cout
 #include <vector>
 #include <string>
 #include <map>
-#include <boost/unordered_map.hpp>
 #include <boost/tokenizer.hpp> //for tokenize
 
 #include "StatusDisplayMatrix.hh"
@@ -20,8 +27,9 @@ namespace BUTool{
   class StatusDisplay{
   public:
     StatusDisplay();
-    virtual ~StatusDisplay(){};
+    virtual ~StatusDisplay(){Clear();};
 
+    void Clear(){tables.clear();};
     void ReportHeader(std::ostream & stream) const;
     std::string ReportHeader() const;
     void ReportStyle(std::ostream & stream) const;
@@ -73,6 +81,10 @@ namespace BUTool{
     void SetLaTeX();
     /*! Unselect LaTeX source output mode */
     void UnsetLaTeX();
+    /*! Select Graphite source output mode */
+    void SetGraphite();
+    /*! Unselect Graphite source output mode */
+    void UnsetGraphite();
     /*! Get a const pointer to a StatusDisplayMatrix item */
     const StatusDisplayMatrix* GetTable(const std::string& table) const;
     /*! Get a list of tables */

@@ -13,12 +13,21 @@ Launcher::Launcher():CommandList<Launcher>("Launcher")
   
 Launcher::~Launcher()
 {
+  //delete all devices
   while(device.size() != 0){
     if(device.back() != NULL){
       delete device.back();
     }
     device.pop_back();
   }
+  //delete all ostreams we created
+  while(ownedOutputStreams.size() != 0){
+    if(ownedOutputStreams.back() != NULL){
+      delete ownedOutputStreams.back();
+    }
+    ownedOutputStreams.pop_back();
+  }
+  
 }
 
 uint32_t Launcher::GetVerbosity(){

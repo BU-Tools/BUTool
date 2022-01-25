@@ -1,9 +1,13 @@
-BUTOOL_PATH=$(shell pwd)
-BUILD_MODE = x86
+$(error "this is unmaintained")
 
-#x86 linux
-CXX=g++
-RUNTIME_LDPATH=${PWD}
+
+BUTOOL_PATH=$(shell pwd)
+BUILD_MODE = zynq
+
+#zynq ARM
+CXX=source /opt/Xilinx/petalinux/2018.2/settings.sh && arm-linux-gnueabihf-g++
+RUNTIME_LDPATH?=/work
+COMPILETIME_ROOT?=--sysroot=/mnt
 FALLTHROUGH_FLAGS= -Wimplicit-fallthrough=0
 
 export
@@ -46,11 +50,12 @@ ifdef BOOST_LIB
 LIBRARY_PATH +=-L$(BOOST_LIB)
 endif
 
-LIBRARIES =    	-lToolException	\
-		-lreadline 	\
-		-lcurses 	\
-		-lz 		\
-		-lboost_regex 	\
+LIBRARIES =    	-lToolException		\
+		-lreadline		\
+		-lcurses		\
+		-lz			\
+		-lboost_regex		\
+		-lboost_program_options \
 		-ldl
 
 

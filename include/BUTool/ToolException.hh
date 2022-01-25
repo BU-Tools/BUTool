@@ -12,6 +12,8 @@ namespace BUException{
   ExceptionClassGenerator(REG_WRITE_DENIED,"Write access denied\n")
   ExceptionClassGenerator(BAD_REG_NAME,"Register name not found\n")
   ExceptionClassGenerator(BAD_VALUE,"Bad value\n")
+  // BUTextIO exception
+  ExceptionClassGenerator(TEXTIO_BAD_INIT, "BUTool::RegisterHelper TextIO pointer is NULL\n Did you forget to call SetupTextIO() in the device's constructor?\n")
 }
 
 

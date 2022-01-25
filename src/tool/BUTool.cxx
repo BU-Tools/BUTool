@@ -4,26 +4,29 @@
 #include <sstream>
 #include <stdlib.h>
 
-//TCLAP parser
-#include <tclap/CmdLine.h>
+//BUTool libraries
 #include <BUTool/Launcher.hh>
 #include <BUTool/CLI.hh>
 #include <BUTool/CommandReturn.hh>
 #include <BUTool/DeviceFactory.hh>
-
 #include <BUException/ExceptionBase.hh>
+#include <BUTool/helpers/parseHelpers.hh>
 
 #include <readline/readline.h> //for rl_delete_text
 #include <signal.h> //signals
 
-#include <BUTool/helpers/parseHelpers.hh>
+#define BUTOOL_AUTOLOAD_LIBRARY_LIST "BUTOOL_AUTOLOAD_LIBRARY_LIST" //Legacy method to add libraries
+//========================================================================
+//Boost program options
+#include <boost/program_options.hpp> //for configfile parsing
+#define DEFAULT_CONFIG_FILE "/etc/BUTool" //path to default config file
+namespace po = boost::program_options; //making life easier for boost                                 
 
-#define BUTOOL_AUTOLOAD_LIBRARY_LIST "BUTOOL_AUTOLOAD_LIBRARY_LIST"
-
-using namespace BUTool;                                                 
+//==========================================================================
 
 #define DevFac BUTool::DeviceFactory::Instance()
 
+using namespace BUTool;
 
 volatile bool running = true;
 
@@ -34,8 +37,7 @@ void signal_handler(int sig){
     sa.sa_handler = SIG_DFL;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGINT, &sa, NULL);    
-    
-    
+       
     //Set an alarm for a second from now
     alarm(1);
     
@@ -49,82 +51,13 @@ void signal_handler(int sig){
     rl_forced_update_display();
     
   }else if (sig == SIGALRM){    
-    //re-enable SIGINT capture
+
+    //re-enable SIGINT capture                                                                                                                                                                                    
     struct sigaction sa;
     sa.sa_handler = signal_handler;
     sigemptyset(&sa.sa_mask);
-    sigaction(SIGINT, &sa, NULL);    
+    sigaction(SIGINT, &sa, NULL);
   }
-}
-
-
-
-std::string LimitStringLines(std::string source,size_t beginLineCount = 5,size_t endLineCount = 2) {
-  //Load the first beginLineCount lines.
-  if((source.size() > 0)&&(source.find('\n') == std::string::npos)){
-    source=source+'\n';
-  }
-  std::string beginString;
-  while( beginLineCount && !source.empty()) {
-    //Find the next new line
-    size_t pos = source.find('\n');
-    if(pos == std::string::npos) {
-      source.clear();
-      break;
-    }
-    
-    //append the line associated with it to our begin string with a tab at the beginning
-    beginString += std::string("\t") + source.substr(0,pos) + std::string("\n");
-    //Move past the newline
-    pos++;
-    //trim string
-    source = source.substr(pos,source.size()-pos);
-    
-    beginLineCount--;
-  }
-
-  std::string endString;
-  while(endLineCount && !source.empty()) {
-    //Find the next new line
-    size_t pos = source.rfind('\n');
-    
-    if(pos == std::string::npos) {
-      //We didn't find a newline, so this is the last line
-      pos = 0;
-    } else if(++pos == source.size()) { //Move past the null line, but catch if it was the last char.
-      source.resize(source.size()-1);
-      continue;
-    }
-    
-    //reverse append the line associated with it to our begin string with a tab at the beginning
-    endString = std::string("\t") + source.substr(pos,source.size()-pos) + 
-      std::string("\n") + endString;
-    
-    //trim source string
-    if(pos >0) {
-      pos--; //Move back to the newline
-      source = source.substr(0,pos); //trim up to the newline
-    } else { // nothing left, so clear
-      source.clear();
-    }
-    
-    endLineCount--;
-  }
-  
-  //Build final string
-  if(!source.empty()) {
-    //Count the number of skipped lines if non-zero
-    size_t skippedLineCount = 1;
-    for(size_t iStr = 0; iStr < source.size();iStr++) {
-      if(source[iStr] == '\n')
-	skippedLineCount++;
-    }
-    std::ostringstream s;
-    s << "*** Skipping " << skippedLineCount << " lines! ***\n";
-    beginString += s.str();
-  }
-  beginString += endString;
-  return beginString;
 }
 
 int main(int argc, char* argv[]) 
@@ -136,122 +69,215 @@ int main(int argc, char* argv[])
   sigaction(SIGINT, &sa, NULL);
   sigaction(SIGALRM,&sa, NULL);
 
-  //Create CLI
+  //Create CLI and Create Command launcher (early, so we can set things)
   CLI cli;
-
-  //Create Command launcher (early, so we can set things)
   Launcher launcher;
 
-
-  //Load libraries from env variable
-  if (NULL != getenv(BUTOOL_AUTOLOAD_LIBRARY_LIST)){
-    std::vector<std::string> libFiles = splitString(getenv(BUTOOL_AUTOLOAD_LIBRARY_LIST),":");
-    for(size_t iLibFile = 0 ; iLibFile < libFiles.size() ; iLibFile++){
-      //Add a add_lib command for each library
-      cli.ProcessString("add_lib " + libFiles[iLibFile]);      
-      //Ask the CLI to process this command.
-      std::vector<std::string> command = cli.GetInput(&launcher);
-      //If the command was well formed, tell the launcher to launch it. 
-      if(command.size() > 0){
-	//Launch command function (for add lib)
-	launcher.EvaluateCommand(command);
-	//Ignore the return value.  It eithe works or not.
+  //============================================================================
+  // First add libraries from config file so device factory works
+  //============================================================================
+  //Big try catch here for all of program options
+  try {
+    //Single option for libraries
+    po::options_description lib_options("BUTool Options");
+    lib_options.add_options()
+      ("lib",         po::value<std::vector<std::string> >(), "Device library plugin to load");
+  
+    //Create variable map for libraries and store arguments from config file
+    std::ifstream configFile(DEFAULT_CONFIG_FILE);
+    po::variables_map lib_map;
+    if (configFile) {
+      try {
+	po::store(po::parse_config_file(configFile, lib_options, true), lib_map);
+      } catch (std::exception &e) {
+	//Probably superflous err message
+	//fprintf(stderr, "ERROR in BOOST parse_config_file: %s\n", e.what());
       }
     }
-  }
-
-
-  
-  try {
-    TCLAP::CmdLine cmd("Tool for talking to HW modules.",
-		       ' ',
-		       "BUTool v1.0");
+    //iterate over library arguments
+    if(lib_map.count("lib")){
+      std::vector<std::string> libVec = lib_map["lib"].as<std::vector<std::string> >();
+      for (auto iLib = libVec.begin(); iLib != libVec.end(); iLib++){
+	std::string process = "add_lib " + *iLib;
+	//Add a add_lib command for each library
+	cli.ProcessString(process);
+	//Ask the CLI to process this command.
+	std::vector<std::string> command = cli.GetInput(&launcher);
+	//If the command was well formed, tell the launcher to launch it. 
+	if(command.size() > 0){
+	  //Launch command function (for add lib)
+	  launcher.EvaluateCommand(command);
+	  //Ignore the return value.  It either works or not.
+	}
+      }
     
-    //Script files
-    TCLAP::ValueArg<std::string> scriptFile("X",              //one char flag
-					    "script",         // full flag name
-					    "script filename",//description
-					    false,            //required
-					    std::string(""),  //Default is empty
-					    "string",         // type
-					    cmd);
+      /* Legacy method for adding libraries from system enviornmental variable,
+	 will run if no libraries defined in config file */
+    } else if (NULL != getenv(BUTOOL_AUTOLOAD_LIBRARY_LIST)){
+      std::vector<std::string> libFiles = splitString(getenv(BUTOOL_AUTOLOAD_LIBRARY_LIST),":");
+      for(size_t iLibFile = 0 ; iLibFile < libFiles.size() ; iLibFile++){
+	//Add a add_lib command for each library
+	cli.ProcessString("add_lib " + libFiles[iLibFile]);      
+	//Ask the CLI to process this command.
+	std::vector<std::string> command = cli.GetInput(&launcher);
+	//If the command was well formed, tell the launcher to launch it. 
+	if(command.size() > 0){
+	  //Launch command function (for add lib)
+	  launcher.EvaluateCommand(command);
+	  //Ignore the return value.  It either works or not.
+	}
+      }
+    }
 
-    //connections
-    std::map<std::string,TCLAP::MultiArg<std::string>* >connections;
-    std::vector<std::string> Devices = DevFac->GetDeviceNames();
-    for(size_t iDevice = 0;
-	iDevice < Devices.size();
-	iDevice++){
+    //============================================================================
+    // Setup Boost programoptions
+    //============================================================================
+    po::options_description cli_options("BUTool Options");
+    cli_options.add_options()
+      ("help,h", "Help Screen")    
+      ("lib,l",       po::value<std::string >()->multitoken(), "Device library plugin to load")
+      ("script,X",    po::value<std::string >()->multitoken(), "Script files to load")    
+      ("cmd",         po::value<std::string >()->multitoken(), "Command to run")
+      ("var",         po::value<std::string >()->multitoken(), "Set local variable");
+    
+    std::vector<std::string> devices = DevFac->GetDeviceNames();
+    std::vector<std::string> deviceNames;
+    for(size_t iDevice = 0; iDevice < devices.size(); iDevice++){
       std::string  CLI_flag;      
       std::string  CLI_full_flag;
-      std::string  CLI_description;
-
-      if(DevFac->CLIArgs(Devices[iDevice],CLI_flag,CLI_full_flag,CLI_description)){
-	  connections[Devices[iDevice]] = new TCLAP::MultiArg<std::string>(CLI_flag,       //one char flag
-									   CLI_full_flag,  // full flag name
-									   CLI_description,//description
-									   false,          //required
-									   "string",       // type
-									   cmd);
+      std::string  CLI_description;  
+      if(DevFac->CLIArgs(devices[iDevice],CLI_flag,CLI_full_flag,CLI_description)){
+	std::string tmpName = CLI_full_flag + "," + CLI_flag;
+	char *cName = new char[tmpName.size() + 1];
+	char *cDesc = new char[CLI_description.size() + 1];
+	strcpy(cName, tmpName.c_str());
+	strcpy(cDesc, CLI_description.c_str());
+	cli_options.add_options()
+	  (cName, po::value<std::string>()->multitoken()->implicit_value(""), cDesc);
+	delete[] cName;
+	delete[] cDesc;
+	deviceNames.push_back(CLI_full_flag);
       }
+    }
+
+    //============================================================================
+    // Store arguments for program options
+    //============================================================================
+    //map of all parsed options
+    std::map<std::string, std::vector<std::string> > allOptions;
+
+    try {
+      //Get parsed options from command line
+      po::parsed_options cli_parsed = po::parse_command_line(argc, argv, cli_options);
+
+      //Store cli parsed options into allOptions
+      for(size_t iCli = 0; iCli < cli_parsed.options.size(); iCli++) { //iterate through all parsed cli options
+	std::string name = cli_parsed.options[iCli].string_key; //get name "string_key" of option
+	std::string value = ""; //Set value empty to start
+	if(cli_parsed.options[iCli].value.size()) { //if value of option is not empty
+	  for(size_t i = 0; i < cli_parsed.options[iCli].value.size(); i++) {//iterate through all values of this option, think vector
+	    value += " " + cli_parsed.options[iCli].value[i];
+	  } 
+	}
+	allOptions[name].push_back(value);
+      }
+    } catch (std::exception &e) {
+      fprintf(stderr, "ERROR storing command line arguments: %s\n", e.what());
+      std::cout << cli_options << std::endl;
+      return 0;
     }
     
-    //Device libraries
-    TCLAP::MultiArg<std::string> libraries("l",                    //one char flag
-					   "add_library",          // full flag name
-					   "Device library to add",//description
-					   false,                  //required
-					   "string",               // type
-					   cmd);
-
-
-
-    //Parse the command line arguments
-    cmd.parse(argc,argv);
-
-    //Load requested device libraries
-    for(std::vector<std::string>::const_iterator it = libraries.getValue().begin(); 
-	it != libraries.getValue().end();
-	it++)
-      {
-	cli.ProcessString("add_lib " + *it);
-      }
-
-
-    //setup connections
-    //Loop over all device types
-    for(std::map<std::string,TCLAP::MultiArg<std::string>* >::iterator itDeviceType = connections.begin();
-	itDeviceType != connections.end();
-	itDeviceType++){
-      //Loop over connections requests for each device
-      for(std::vector<std::string>::const_iterator itDev = itDeviceType->second->getValue().begin(); 
-	  itDev != itDeviceType->second->getValue().end();
-	  itDev++)
-	{
-	  cli.ProcessString("add_device " + itDeviceType->first + " " +  *itDev);
+    po::options_description cfg_options("BUTool Options"); //This needs to exist but doesn't actually need any values
+    try {
+      //Get parsed options from config file
+      std::ifstream configFile2(DEFAULT_CONFIG_FILE);
+      po::parsed_options cfg_parsed = po::parse_config_file(configFile2, cfg_options, true);
+      
+      //Store cfg parsed options into allOptions
+      for(size_t iCfg = 0; iCfg < cfg_parsed.options.size(); iCfg++) { //iterate through all parsed cfg options
+	if(cfg_parsed.options[iCfg].string_key != "lib") { //Ignore libraries, we ran those before declaring cli_options
+	  std::string name = cfg_parsed.options[iCfg].string_key; //get name "string_key" of option
+	  std::string value = ""; //Set value empty to start
+	  if(cfg_parsed.options[iCfg].value.size()) { //if value of option is not empty
+	    for(size_t i = 0; i < cfg_parsed.options[iCfg].value.size(); i++) {//iterate through all values of this option, think vector
+	      value +=  cfg_parsed.options[iCfg].value[i];
+	    } 
+	  }
+	  allOptions[name].push_back(value);
 	}
+      }
+    } catch (std::exception &e) {
+      fprintf(stderr, "ERROR storing config file arguments: %s\n", e.what());
+    }
+
+    //Bail quickly if "help" was specified
+    if(allOptions.find("help") != allOptions.end()){
+      std::cout << cli_options << std::endl;
+      return 0;
+    }
+
+    //Create a map of default arguments
+    std::map<std::string, std::string> default_map;
+    std::vector<std::string> defaults = allOptions["DEFAULT_ARGS"];
+    for (auto iDefault = defaults.begin(); iDefault != defaults.end(); iDefault++) {
+      std::string device = (*iDefault).substr(0, (*iDefault).find(" ")); //Device is first word before first " "
+      std::string device_args = (*iDefault).substr((*iDefault).find(" "), (*iDefault).size() - 1); //Arguments is everything after first " "
+      default_map.insert({device, device_args});
+    }
+
+    //============================================================================
+    // Run Program Options
+    //============================================================================
+    //Add libraries
+    std::vector<std::string> libraries = allOptions["lib"];
+    for (auto iLib = libraries.begin(); iLib != libraries.end(); iLib++) {
+      std::string command = "add_lib " + *iLib;
+      cli.ProcessString(command);
+    }
+
+    //Add devices
+    for (auto iDevice = deviceNames.begin(); iDevice != deviceNames.end(); iDevice++) {//iterate through devices
+      std::vector<std::string> device = allOptions[*iDevice]; //get arguments for device
+      for (auto iDeviceArgs = device.begin(); iDeviceArgs != device.end(); iDeviceArgs++) {//iterate device arguments
+	std::string command = "add_device ";
+	if (*iDeviceArgs == "") {//argument is empty so use value mapped in default_map
+	  command += *iDevice + " " + default_map[*iDevice];
+	} else {
+	  command += *iDevice + " " + *iDeviceArgs;
+	}
+	cli.ProcessString(command);
+      }
+    }
+
+    //set local variables
+    std::vector<std::string> vars = allOptions["var"];
+    for (auto iVar = vars.begin(); iVar != vars.end(); iVar++) {
+      std::string command = "set_var " + *iVar;
+      cli.ProcessString(command);
     }
 
 
-    //Load scripts
-    if(scriptFile.getValue().size()){
-      cli.ProcessFile(scriptFile.getValue());
+    //Run scripts
+    std::vector<std::string> scripts = allOptions["script"];
+    for (auto iScript = scripts.begin(); iScript != scripts.end(); iScript++) {
+      std::string command = "include " + *iScript;
+      cli.ProcessString(command);
     }
 
+    //Run commands from command line
+    std::vector<std::string> cmds = allOptions["cmd"];
+    for (auto iCmd = cmds.begin(); iCmd != cmds.end(); iCmd++) {
+      std::string command = *iCmd;
+      cli.ProcessString(command);
+    }
 
-
-  } catch (TCLAP::ArgException &e) {
-    fprintf(stderr, "Error %s for arg %s\n",
-	    e.error().c_str(), e.argId().c_str());
-    return 0;
+  } catch (std::exception &e) {
+    fprintf(stderr, "ERROR in program options: %s\n", e.what());
+    running = false; //Dont run Main loop
   }
-
-
-
-
-
+    
   //============================================================================
-  //Main loop
+  // Main loop
   //============================================================================
 
   while (running) 

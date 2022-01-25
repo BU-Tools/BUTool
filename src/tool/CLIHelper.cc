@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <BUTool/CLIHelper.hh>
 #include <BUTool/Launcher.hh>
 
@@ -119,6 +121,74 @@ namespace BUTool {
     return NULL;
   }
 
+
+  std::string LimitStringLines(std::string source, size_t beginLineCount, size_t endLineCount) {
+  //Load the first beginLineCount lines.
+  if((source.size() > 0)&&(source.find('\n') == std::string::npos)){
+    source=source+'\n';
+  }
+  std::string beginString;
+  while( beginLineCount && !source.empty()) {
+    //Find the next new line
+    size_t pos = source.find('\n');
+    if(pos == std::string::npos) {
+      source.clear();
+      break;
+    }
+    
+    //append the line associated with it to our begin string with a tab at the beginning
+    beginString += std::string("\t") + source.substr(0,pos) + std::string("\n");
+    //Move past the newline
+    pos++;
+    //trim string
+    source = source.substr(pos,source.size()-pos);
+    
+    beginLineCount--;
+  }
+
+  std::string endString;
+  while(endLineCount && !source.empty()) {
+    //Find the next new line
+    size_t pos = source.rfind('\n');
+    
+    if(pos == std::string::npos) {
+      //We didn't find a newline, so this is the last line
+      pos = 0;
+    } else if(++pos == source.size()) { //Move past the null line, but catch if it was the last char.
+      source.resize(source.size()-1);
+      continue;
+    }
+    
+    //reverse append the line associated with it to our begin string with a tab at the beginning
+    endString = std::string("\t") + source.substr(pos,source.size()-pos) + 
+      std::string("\n") + endString;
+    
+    //trim source string
+    if(pos >0) {
+      pos--; //Move back to the newline
+      source = source.substr(0,pos); //trim up to the newline
+    } else { // nothing left, so clear
+      source.clear();
+    }
+    
+    endLineCount--;
+  }
+  
+  //Build final string
+  if(!source.empty()) {
+    //Count the number of skipped lines if non-zero
+    size_t skippedLineCount = 1;
+    for(size_t iStr = 0; iStr < source.size();iStr++) {
+      if(source[iStr] == '\n')
+	skippedLineCount++;
+    }
+    std::ostringstream s;
+    s << "*** Skipping " << skippedLineCount << " lines! ***\n";
+    beginString += s.str();
+  }
+  beginString += endString;
+  return beginString;
+}
 
 
 }

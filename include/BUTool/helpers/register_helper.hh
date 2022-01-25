@@ -6,15 +6,26 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include <iostream>
 
+#include <BUTextIO/BUTextIO.hh>
+#include <BUTextIO/PrintLevel.hh>
+
+#include <BUException/ExceptionBase.hh>
+#include <BUTool/ToolException.hh>
 
 namespace BUTool{  
-  class RegisterHelper{  
+  class RegisterHelper {  
   protected:
     enum RegisterNameCase {UPPER,LOWER,CASE_SENSITIVE};
-  public:    
-    RegisterHelper(){regCase = UPPER;}
-    RegisterHelper(RegisterNameCase _regCase){regCase = _regCase;}
+
+    // only let derived classes (device classes) use this BUTextIO functionality
+    void AddStream(Level::level level, std::ostream*os);
+    void SetupTextIO();
+
+    RegisterHelper() : newTextIO(false) {regCase = UPPER;}
+    RegisterHelper(RegisterNameCase _regCase) : newTextIO(false) {regCase = _regCase;}
+    ~RegisterHelper() {if (newTextIO) {delete TextIO;}}
 
     virtual std::vector<std::string> myMatchRegex(std::string regex)=0;
     
@@ -25,6 +36,7 @@ namespace BUTool{
     virtual std::vector<uint32_t> RegReadRegisterFIFO(std::string const & reg,size_t count);
     virtual std::vector<uint32_t> RegBlockReadAddress(uint32_t addr,size_t count);
     virtual std::vector<uint32_t> RegBlockReadRegister(std::string const & reg,size_t count);
+    virtual std::string           RegReadString(std::string const & reg);
 
     //writes
     virtual void RegWriteAddress(uint32_t addr,uint32_t data)=0;
@@ -48,7 +60,6 @@ namespace BUTool{
 
 
 
-  protected:
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};
     void SetCase(RegisterNameCase _regCase){regCase = _regCase;};
@@ -58,6 +69,7 @@ namespace BUTool{
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
+    CommandReturn::status ReadString(std::vector<std::string> strArg,std::vector<uint64_t> intArg);    
     CommandReturn::status Write(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status WriteFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status WriteOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
@@ -68,6 +80,8 @@ namespace BUTool{
 
 
   private:
+    BUTextIO *TextIO;
+    bool newTextIO;
     RegisterNameCase regCase;
     void PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero);
     CommandReturn::status ReadWithOffsetHelper(uint32_t offset,std::vector<std::string> strArg,std::vector<uint64_t> intArg);

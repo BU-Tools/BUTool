@@ -16,6 +16,8 @@
 //helper for auto-complete
 #include "CLIHelper.hh"
 
+//std::string LimitStringLines(std::string, size_t, size_t);
+
 namespace BUTool {
   
   class CLI
@@ -43,7 +45,7 @@ namespace BUTool {
     //Get a command string
     int ProcessLine(std::string line);
     
-    //Interally stored commands
+    //Interally stored commands (bool is for if this command should be in the history)
     std::deque<std::string> Commands;
 
     //include file recusion overflow stopper

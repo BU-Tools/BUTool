@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <BUTool/CommandReturn.hh>
 #include <BUTool/CommandList.hh>
-
+#include <ostream> //for base class of vecetor of ostreams
 
 namespace BUTool{
 
@@ -21,6 +21,7 @@ namespace BUTool{
 				       std::string const & currentToken,int state);
     uint32_t GetVerbosity();
   private:    
+    std::vector<std::ostream*> ownedOutputStreams;
     uint32_t verbosity;
     int activeDevice;
     //  std::vector<DeviceContainer *> device;
@@ -51,7 +52,12 @@ namespace BUTool{
     CommandReturn::status AddLib(std::vector<std::string>,std::vector<uint64_t>);	        
     CommandReturn::status ListDevices(std::vector<std::string>,std::vector<uint64_t>);	        
     CommandReturn::status SelectDevice(std::vector<std::string>,std::vector<uint64_t>);	        
+    CommandReturn::status AddDeviceOutputFile(std::vector<std::string>,std::vector<uint64_t>); 
 
+    CommandReturn::status SetVariable(std::vector<std::string>,std::vector<uint64_t>); 
+    CommandReturn::status GetVariable(std::vector<std::string>,std::vector<uint64_t>); 
+    CommandReturn::status UnSetVariable(std::vector<std::string>,std::vector<uint64_t>); 
+    CommandReturn::status ListVariables(std::vector<std::string>,std::vector<uint64_t>); 
 
     //Add new command (sub command) auto-complete files here
     std::string autoComplete_Help(std::vector<std::string> const &,std::string const &,int);

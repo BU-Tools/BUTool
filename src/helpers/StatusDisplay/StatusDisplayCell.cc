@@ -10,6 +10,9 @@
 #include <BUTool/ToolException.hh>
 #include <BUTool/helpers/StatusDisplay/StatusDisplayCell.hh>
 
+#include <arpa/inet.h> //for inet_ntoa and in_addr_t
+
+
 //For PRI macros
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -122,7 +125,9 @@ namespace BUTool{
     }
     
     //We do not support signed integers that have more than 32 bits
-    if(iequals(format,std::string("d")) &&
+    if((iequals(format,std::string("d")) ||     //signed integer
+	iequals(format,std::string("linear"))   // linear11 or linear16
+	) &&
        word.size() == 1){
       //This is goign to be printed with "d", so we need to sign extend the number we just comptued
       uint64_t temp_mask = GetMask();
@@ -149,17 +154,17 @@ namespace BUTool{
     return val;
   }
 
-  std::string StatusDisplayCell::Print(int width = -1,bool html) const
+  std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
   { 
-    (void) html; // casting to void to keep comiler from complaining about unused var
     const int bufferSize = 20;
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
     memset(buffer,' ',20);
-    buffer[20] = '\0';
+    buffer[bufferSize] = '\0';
 
     //Build the format string for snprintf
     std::string fmtString("%");
-    if((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))){      
+    if((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))){
+      // t(T) is for enum
       std::map<uint64_t,std::string> enumMap;
       size_t iFormat = 1;
       while(iFormat < format.size()){
@@ -205,6 +210,10 @@ namespace BUTool{
 	snprintf(buffer,bufferSize,"0x%" PRIX64 ")",regValue);
       }
     }else if((format.size() > 1) && (('m' == format[0]) || ('M' == format[0]))){      
+      //Convert from integer to floating point using
+      //y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
+      //      [0]   [1] [2]       [3]    [4] [5]
+      // sign == 0 is negative, all others mean positive
       //Split the '_' separated values
       std::vector<uint64_t> mathValues;
       size_t iFormat = 1;
@@ -257,7 +266,84 @@ namespace BUTool{
       snprintf(buffer,bufferSize,	       
 	       "%3.2f",transformedValue);
 
+    }else if(iequals(format,std::string("linear11"))){
+      //union/struct magic to automatically convert the 11 base  and
+      //5 bit mantissa into ints which are assigned via the raw value
+      //This is the nused to build the floating point value
+      union {
+	struct {
+	  int16_t integer  : 11;
+	  int16_t exponent :  5;
+	} linear11;
+	int16_t raw;} val;
+      val.raw = ComputeValue();
+      double floatingValue = double(val.linear11.integer) * pow(2,val.linear11.exponent);
+      snprintf(buffer,bufferSize,
+	       "%3.3f",floatingValue);
+    }else if(iequals(format,std::string("fp16"))){
+      //union/struct magic to automatically convert the 1 sign, 10 base  and
+      //5 bit mantissa into ints which are assigned via the raw value
+      //This is the nused to build the floating point value
+      union {
+	struct {
+	  uint16_t significand : 10;
+	  uint16_t exponent    :  5;
+	  uint16_t sign        :  1;
+	} fp16;
+	int16_t raw;} val;
+      val.raw = ComputeValue();
+      double floatingValue;
+      switch (val.fp16.exponent){
+      case 0:
+	if (val.fp16.significand == 0){
+	  floatingValue = 0.0;
+	  if(val.fp16.sign){
+	    floatingValue *= -1.0;
+	  }
+	}else{
+	  floatingValue = pow(2,-14)*(val.fp16.significand/1024.0);
+	  if(val.fp16.sign){
+	    floatingValue *= -1.0;
+	  }
+	}
+	break;
+      case 31:
+	if (val.fp16.significand == 0){
+	  floatingValue = INFINITY;
+	  if(val.fp16.sign){
+	    floatingValue *= -1;
+	  }
+	}else{
+	  floatingValue = NAN;
+	}
+	break;
+      default:
+	floatingValue = pow(2,val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
+	if(val.fp16.sign){
+	  floatingValue *= -1.0;
+	}
+	break;
+      }
+      //only print e notation if very large or very small
+      if((fabs(floatingValue) < 10000) ||
+	 (fabs(floatingValue) > 0.001)
+	 ){
+	snprintf(buffer,bufferSize,
+		 "%3.2f",floatingValue);	
+      }else{
+	snprintf(buffer,bufferSize,
+		 "%3.2e",floatingValue);
+      }
+    }else if(iequals(format,std::string("IP"))){
+      struct in_addr addr;
+      addr.s_addr= in_addr_t(ComputeValue());
+      snprintf(buffer,bufferSize,
+	       "%s",inet_ntoa(addr));
+      
     }else{
+      //Normal numbers
+
+      //hex formatting
       if(iequals(format,std::string("x")) && ComputeValue() >= 10){
 	fmtString.assign("0x%");
 	if(width >= 0){

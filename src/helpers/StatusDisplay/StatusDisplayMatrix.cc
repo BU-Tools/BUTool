@@ -42,6 +42,10 @@ namespace BUTool{
     }
     //clear the vector
     cell.clear();
+    rowColMap.clear();
+    colRowMap.clear();
+    rowName.clear();
+    colName.clear();
   }
 
   std::vector<std::string> StatusDisplayMatrix::GetTableRows() const {
@@ -73,9 +77,9 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, boost::unordered_map<std::string,std::string> const & parameters)
+  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, uMap const & parameters)
   {
-    boost::unordered_map<std::string,std::string>::const_iterator itTable= parameters.find("Table");
+    uMap::const_iterator itTable= parameters.find("Table");
     if(itTable == parameters.end()){
       BUException::BAD_VALUE e;
       char tmp[256];
@@ -225,18 +229,18 @@ namespace BUTool{
       if(!isdigit(markup[iChar]) || (iChar+1 == markup.size())){
 	//append this number
 	tokens.push_back(strtoul(markup.substr(1,iChar).c_str(),NULL,0));
-	if(('.' == markup[iChar]) && ((iChar+1) < markup.size())){
-	  FindTokenPositions(markup.substr(iChar+1),tokens);
+	if((STATUS_DISPLAY_PARAMETER_PARSE_TOKEN == markup[iChar]) && ((iChar+1) < markup.size())){
+	  FindTokenPositions(markup.substr(iChar),tokens);
 	}
 	break;
       }
     }      
   }
 
-  std::string StatusDisplayMatrix::ParseRow(boost::unordered_map<std::string,std::string> const & parameters,
+  std::string StatusDisplayMatrix::ParseRow(uMap const & parameters,
 					    std::string const & addressBase) const
   {
-    boost::unordered_map<std::string,std::string>::const_iterator rowName = parameters.find("Row");
+    uMap::const_iterator rowName = parameters.find("Row");
     std::string newRow;
     //Row
     if(rowName != parameters.end()){
@@ -291,10 +295,10 @@ namespace BUTool{
     }
     return newRow;
   }
-  std::string StatusDisplayMatrix::ParseCol(boost::unordered_map<std::string,std::string> const & parameters,
+  std::string StatusDisplayMatrix::ParseCol(uMap const & parameters,
 					 std::string const & addressBase) const
   {    
-    boost::unordered_map<std::string,std::string>::const_iterator colName = parameters.find("Column");
+    uMap::const_iterator colName = parameters.find("Column");
     std::string newCol;
     //Col
     if(colName != parameters.end()){
@@ -433,6 +437,8 @@ namespace BUTool{
       PrintLaTeX(stream);
     }else if(statusMode == HTML || statusMode == BAREHTML){
       PrintHTML(stream,status,forceDisplay,headerColWidth,rowDisp,colWidth);
+    }else if (statusMode == GRAPHITE){
+      PrintGraphite(stream,status,forceDisplay,headerColWidth,rowDisp,colWidth);
     }else{
       Print(stream,status,forceDisplay,headerColWidth,rowDisp,colWidth);
     }
@@ -504,13 +510,12 @@ namespace BUTool{
     stream << std::endl;
   }
   void StatusDisplayMatrix::PrintHTML(std::ostream & stream,
-				   int status,
-				   bool forceDisplay,
-				   int headerColWidth,
-				   std::map<std::string,bool> & rowDisp,
-				   std::vector<int> & colWidth) const
+				      int status,
+				      bool forceDisplay,
+				      int /*headerColWidth*/,
+				      std::map<std::string,bool> & rowDisp,
+				      std::vector<int> & colWidth) const
   {
-    (void) headerColWidth; // casting to void to keep comiler from complaining about unused var
     //=====================
     //Print the header
     //=====================
@@ -670,5 +675,32 @@ namespace BUTool{
 
 
   
-  
+  void StatusDisplayMatrix::PrintGraphite(std::ostream & stream,
+					  int status,
+					  bool forceDisplay,
+					  int /*headerColWidth*/,
+					  std::map<std::string,bool> & rowDisp,
+					  std::vector<int> & colWidth) const
+  {
+    for(std::map<std::string,bool>::iterator itRow = rowDisp.begin();
+	itRow != rowDisp.end();
+	itRow++){
+      //Print the data
+      const std::map<std::string,StatusDisplayCell*> & colMap = rowColMap.at(itRow->first);
+      for(size_t iCol = 0; iCol < colName.size();iCol++){	  
+	if(colWidth[iCol] > 0){
+	  std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
+	  if(itMap != colMap.end()){
+	    time_t time_now = time(NULL);
+	    if(itMap->second->Display(status,forceDisplay)){	      
+	      stream << name << "." << itRow->first << "." << colName[iCol] << " "
+		     << itMap->second->Print(0,true) 
+		     << " " << time_now << "\n";
+	    }
+	  }
+	}
+      }
+    }
+  }
+ 
 }

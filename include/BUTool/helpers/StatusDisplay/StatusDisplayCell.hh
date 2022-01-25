@@ -1,14 +1,21 @@
 #ifndef __STATUS_DISPLAY_CELL_HH__
 #define __STATUS_DISPLAY_CELL_HH__
 
+#if UHAL_VER_MAJOR >= 2 && UHAL_VER_MINOR >= 8
+#include <unordered_map>
+typedef std::unordered_map<std::string, std::string> uMap;
+#else
+#include <boost/unordered_map.hpp>
+typedef boost::unordered_map<std::string, std::string> uMap;
+#endif
 
 #include <ostream>
 #include <iostream> //for std::cout
 #include <vector>
 #include <string>
 #include <map>
-#include <boost/unordered_map.hpp>
 #include <boost/tokenizer.hpp> //for tokenizer
+#include <cmath> // for pow
 
 namespace BUTool{
 
@@ -22,6 +29,7 @@ namespace BUTool{
   public:
     ///! Constructor
     StatusDisplayCell(){Clear();};
+    ~StatusDisplayCell(){Clear();};
     ///! Fill in values for a cell
     void Setup(std::string const & _address,  /// address table name stripped of Hi/Lo
 	       std::string const & _description, /// long description
