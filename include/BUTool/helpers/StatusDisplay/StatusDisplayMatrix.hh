@@ -45,6 +45,9 @@ namespace BUTool{
     const StatusDisplayCell* GetCell(const std::string& row, const std::string& col) const;
  private:
     void Clear();
+    
+    std::string NameBuilder(std::string const & markup,
+			    std::string const & name) const;
     void CheckName(std::string const & newName);
     std::string ParseRow(uMap const & parameters,
 			 std::string const & addressBase) const;

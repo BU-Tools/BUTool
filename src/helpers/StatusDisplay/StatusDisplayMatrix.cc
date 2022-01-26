@@ -13,6 +13,7 @@
 
 #include <BUTool/ToolException.hh>
 
+#include <string>
 
 namespace BUTool{
 
@@ -87,7 +88,7 @@ namespace BUTool{
       e.Append( tmp);
       throw e;
     }
-    CheckName(itTable->second);
+    CheckName(NameBuilder(itTable->second,address));
     
     //Determine address
     boost::to_upper(address);
@@ -218,43 +219,7 @@ namespace BUTool{
   }
 
 
-
-//  void FindTokenPositions(std::string const & markup, std::vector<size_t> & tokens){
-//    size_t iChar = 0;
-//    //check if first char is a number
-//    if(isdigit(markup[iChar])){
-//      iChar++;
-//    }
-//    //Check if current char is a parse token
-//    if(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN == markup[0]){      
-//      iChar++;
-//    }else{
-//      //this is a simple column name
-//      return;
-//    }
-//
-//    bool isReverseNumber = false;
-//    for(;iChar < markup.size();iChar++){
-//      //Check if this is a negative 
-//      if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-//	isReverseNumber = true;
-//      }
-//      for(;iChar < markup.size();iChar++){
-//	
-//      }
-//      //Search until we get to a non-digit character
-//      if(!isdigit(markup[iChar]) || (iChar+1 == markup.size())){
-//	//append this number
-//	tokens.push_back(strtoul(markup.substr(1,iChar).c_str(),NULL,0));
-//	if((STATUS_DISPLAY_PARAMETER_PARSE_TOKEN == markup[iChar]) && ((iChar+1) < markup.size())){
-//	  FindTokenPositions(markup.substr(iChar),tokens);
-//	}
-//	break;
-//      }
-//    }      
-//  }
-
-  std::string NameBuilder(std::string const & markup,std::string const & name){
+  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & name) const{
     //use a boost tokenizer to split up the name
     //this won't actually split up the string until we call .begin() on it
     boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
@@ -264,8 +229,26 @@ namespace BUTool{
     std::string ret;
     size_t iChar = 0;
     for(;iChar < markup.size();iChar++){
-      //look for the next special char
+      //look for the next special char (which is a run of two, a run of three is a reverse token)
       if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+	if(iChar+1 < markup.size()){
+	  if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+	    //there was only one parse token special character, so this is just a normal _
+	    //but " " is not allowed
+	    if(markup[iChar] == ' '){
+	      BUException::BAD_VALUE e;	    
+	      std::string error("Spaces are not allowed in markup ");
+	      error += markup;
+	      e.Append(error.c_str());
+	      throw e;
+	    }
+	    ret.push_back(markup[iChar]);	    	    
+	    continue;
+	  }else{
+	    iChar++;
+	  }
+	}
+
 	bool reverseToken = false;
 	//start parsing a special
 	iChar++;
@@ -321,6 +304,13 @@ namespace BUTool{
 	}
       }else{
 	//no special character, so just copy the string
+	if(markup[iChar] == ' '){
+	  BUException::BAD_VALUE e;	    
+	  std::string error("Spaces are not allowed in name ");
+	  error += "\""+markup+"\"";
+	  e.Append(error.c_str());
+	  throw e;
+	}
 	ret.push_back(markup[iChar]);
       }
     }
@@ -338,44 +328,6 @@ namespace BUTool{
       newRow = rowName->second;
       boost::to_upper(newRow);
       newRow = NameBuilder(newRow,addressBase);
-//      //Check if we have a special character at the beginning to tell us what to use for row
-//      if((newRow.size() > 1)&&
-//	 (newRow[0] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN)){
-//	//Parse the total token count
-//	std::vector<size_t> tokensForName;
-//	FindTokenPositions(newRow,tokensForName);
-//
-//	
-//
-//	//Build a BOOST tokenizer for the address name
-//	//This is for use with undefined rows and columns. 
-//	//This does not tokenize until .begin() is called
-//	boost::char_separator<char> sep(".");
-//	boost::tokenizer<boost::char_separator<char> > tokenizedAddressName(addressBase,sep);
-//	boost::tokenizer<boost::char_separator<char> >::iterator itTok = tokenizedAddressName.begin();
-//	std::vector<std::string> tokenNames;
-//	tokenNames.push_back(addressBase); // for _0
-//	for(;itTok!=tokenizedAddressName.end();itTok++){
-//	  tokenNames.push_back(*itTok); // for _n
-//	}
-//	newRow.clear();
-//	for(size_t iToken = 0; iToken < tokensForName.size();iToken++){		  	 
-//	    //Check that this is a valid value 
-//	    if(tokensForName[iToken] >= tokenNames.size()){
-//	      BUException::BAD_VALUE e;	    
-//	      std::string error("Bad row for ");
-//	      error += addressBase + " with token " + rowName->second;
-//	      e.Append(error.c_str());
-//	      throw e;
-//	    }
-//	    
-//	    if(newRow.size()){
-//	      //append spaces between items
-//	      newRow.append(" ");
-//	    }
-//	    newRow.append(tokenNames[tokensForName[iToken]]);
-//	}
-//      } 
     }else{
       //Missing row
       BUException::BAD_VALUE e;
@@ -397,46 +349,6 @@ namespace BUTool{
       newCol = colName->second;
       boost::to_upper(newCol);
       newCol = NameBuilder(newCol,addressBase);
-//      //Grab the col name and store it
-//      newCol = colName->second;
-//      boost::to_upper(newCol);
-//      //Check if we have a special character at the beginning to tell us what to use for col
-//      if((newCol.size() > 1)&&
-//	 (newCol[0] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN)){
-//
-//	//list of token positions to be used (negative values mean from the end)
-//	std::vector<int> tokensForName;
-//	FindTokenPositions(newCol,tokensForName);
-//
-//	//Build a BOOST tokenizer for the address name
-//	//This is for use with undefined cols and columns. 
-//	//This does not tokenize until .begin() is called
-//	boost::char_separator<char> sep(".");
-//	boost::tokenizer<boost::char_separator<char> > tokenizedAddressName(addressBase,sep);
-//	boost::tokenizer<boost::char_separator<char> >::iterator itTok = tokenizedAddressName.begin();
-//	std::vector<std::string> tokenNames;
-//	tokenNames.push_back(addressBase); // for _0
-//	for(;itTok!=tokenizedAddressName.end();itTok++){
-//	  tokenNames.push_back(*itTok); // for _n
-//	}
-//	newCol.clear();
-//
-//	for(size_t iToken = 0; iToken < tokensForName.size();iToken++){		  	 
-//	    if(tokensForName[iToken] >= tokenNames.size()){
-//	      BUException::BAD_VALUE e;	    
-//	      std::string error("Bad col for ");
-//	      error += addressBase + " with token " + colName->second;
-//	      e.Append(error.c_str());
-//	      throw e;
-//	    }
-//	    
-//	    if(newCol.size()){
-//	      //append spaces between items
-//	      newCol.append(" ");
-//	    }
-//	    newCol.append(tokenNames[tokensForName[iToken]]);
-//	}
-//      } 
     }else{
       //Missing col
       BUException::BAD_VALUE e;
@@ -676,17 +588,6 @@ namespace BUTool{
     std::string cols = "";
     std::vector<std::string> modColName;
 
-//    //Shrink the column list to not include redundant columns
-//    for (std::vector<std::string>::const_iterator colIt = colName.begin() ; colIt != colName.end(); ++colIt) {
-//      if (modColName.empty()) {
-//	modColName.push_back(*colIt);
-//      } else if (modColName.back().substr(0,3).compare((*colIt).substr(0,3))==0 && ((*colIt).substr(0,3) == "AMC" ||
-//										    (*colIt).substr(0,3) == "SFP")) {
-//	
-//      } else {
-//	modColName.push_back(*colIt);
-//      }
-//    }
 	    
     //Remove underscores from column names and create the suffix for the header
     for (std::vector<std::string>::iterator it = modColName.begin(); it != modColName.end(); ++it) {
