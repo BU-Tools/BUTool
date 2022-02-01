@@ -32,6 +32,13 @@ namespace BUTool{
     //reads
     virtual uint32_t              RegReadAddress(uint32_t addr)=0;
     virtual uint32_t              RegReadRegister(std::string const & reg)=0;
+    //convert functions
+    enum ConvertType {NONE=0,UINT=1,INT=2,FP=4,STRING=8};
+    ConvertType                   RegReadConvertType(std::string const & reg)=0;
+    unsigned int                  RegReadConvert(std::string const & reg);
+    int                           RegReadConvert(std::string const & reg);
+    double                        RegReadConvert(std::string const & reg);
+    std::string                   RegReadConvert(std::string const & reg);
     virtual std::vector<uint32_t> RegReadAddressFIFO(uint32_t addr,size_t count);
     virtual std::vector<uint32_t> RegReadRegisterFIFO(std::string const & reg,size_t count);
     virtual std::vector<uint32_t> RegBlockReadAddress(uint32_t addr,size_t count);
