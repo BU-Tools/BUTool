@@ -34,7 +34,8 @@ namespace BUTool{
     virtual uint32_t              RegReadRegister(std::string const & reg)=0;
     //convert functions
     enum ConvertType {NONE=0,UINT=1,INT=2,FP=4,STRING=8};
-    ConvertType                   RegReadConvertType(std::string const & reg)=0;
+    virtual ConvertType           RegReadConvertType(std::string const & reg)=0;
+    virtual std::string           RegReadConvertFormat(std::string const & reg)=0; 
     unsigned int                  RegReadConvert(std::string const & reg);
     int                           RegReadConvert(std::string const & reg);
     double                        RegReadConvert(std::string const & reg);
