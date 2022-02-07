@@ -194,6 +194,23 @@ CommandReturn::status BUTool::RegisterHelper::Read(std::vector<std::string> strA
   return ReadWithOffsetHelper(0,strArg,intArg);
 }
 
+CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::string> strArg,
+						   std::vector<uint64_t> intArg){
+  if (strArg.size() >= 1) {
+    for (auto arg : strArg) {
+      TextIO->Print(Level::INFO, arg.c_str());
+    }
+    std::string format = RegReadConvertFormat(strArg[0]);
+    TextIO->Print(Level::INFO, format.c_str());
+  }
+
+  if (intArg.size() >= 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+
+  return CommandReturn::BAD_ARGS; 
+}
+
 CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
   if(strArg.size() >= 2){
     //check that argument 2 is a number
