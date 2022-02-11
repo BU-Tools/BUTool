@@ -61,20 +61,70 @@ uint32_t BUTool::RegisterHelper::RegReadConvertUInt(std::string const & reg){
   return val;
 }
 
+double BUTool::RegisterHelper::convertFloatingPoint16(std::string const & reg){
+  // Helper function to do the "fp16->double" conversion
+  double doubleVal;
+
+  union {
+    struct {
+      uint16_t significand   : 10;
+      uint16_t exponent      : 5;
+      uint16_t sign          : 1;
+    } fp16;
+    int16_t raw;
+  } val;
+  val.raw = RegReadRegister(reg);
+
+  switch (val.fp16.exponent) {
+  // Case where the exponent is minimum
+  case 0:
+    if (val.fp16.significand == 0) {
+      doubleVal = 0.0;
+    }
+    else {
+      doubleVal = pow(2,-14)*(val.fp16.significand/1024.0);
+    }
+
+    // Apply sign
+    if (val.fp16.sign) {
+      doubleVal *= -1.0;
+    }
+    break;
+  // Case where the exponent is maximum
+  case 31:
+    if (val.fp16.significand == 0) {
+      doubleVal = INFINITY;
+      if (val.fp16.sign) {
+	doubleVal *= -1.0;
+      }   
+    }
+    else {
+      doubleVal = NAN;
+    }
+    break;
+  // Cases in between
+  default:
+    doubleVal = pow(2, val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
+    if (val.fp16.sign) {
+      doubleVal *= -1.0;
+    }
+    break;   
+  }
+
+  return doubleVal;
+}
+
 double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   // Read the value from the named register, and return the value after converting it into a double
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   
   // Check the conversion type we want:
-  // Is it a simple "fp16", or will we do some transformations? (i.e."m_...")
+  // Is it a "fp16", or will we do some transformations? (i.e."m_...")
   std::string format = RegReadConvertFormat(reg);
   double doubleVal;
-  // Simple double transformation
+  // 16-bit floating point to double transformation
   if (format == "fp16") {
-    uint32_t val = RegReadRegister(reg);
-    TextIO->Print(Level::INFO, std::to_string(val).c_str());
-    TextIO->Print(Level::INFO, "\n");
-    doubleVal = (double)val;
+    doubleVal = convertFloatingPoint16(reg);
   }
   
   // Need to do some arithmetic to transform

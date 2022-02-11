@@ -66,7 +66,8 @@ namespace BUTool{
     virtual std::string GetRegDebug(std::string const & /*reg*/){return "";}; 
     virtual std::string GetRegHelp(std::string const & /*reg*/){return "";};
 
-
+    // Helper functions for converting
+    double convertFloatingPoint16(std::string const & reg);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};
