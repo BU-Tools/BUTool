@@ -76,6 +76,7 @@ namespace BUTool{
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadConvert(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
+    CommandReturn::status ReadConvertDouble(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadString(std::vector<std::string> strArg,std::vector<uint64_t> intArg);    

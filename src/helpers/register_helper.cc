@@ -45,6 +45,58 @@ std::string BUTool::RegisterHelper::RegReadString(std::string const & /*reg*/){
   return std::string();
 }
 
+int32_t BUTool::RegisterHelper::RegReadConvertInt(std::string const & reg){
+  // Read the value from the named register, and return the value after converting it into an integer
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  uint32_t val = RegReadRegister(reg);
+  // Convert to int32 and return
+  int32_t intVal = (int32_t)val;
+  return intVal;
+}
+
+uint32_t BUTool::RegisterHelper::RegReadConvertUInt(std::string const & reg){
+  // Read the value from the named register, and return the value after converting it into an unsigned integer
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  uint32_t val = RegReadRegister(reg);
+  return val;
+}
+
+double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
+  // Read the value from the named register, and return the value after converting it into a double
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  
+  // Check the conversion type we want:
+  // Is it a simple "fp16", or will we do some transformations? (i.e."m_...")
+  std::string format = RegReadConvertFormat(reg);
+  double doubleVal;
+  // Simple double transformation
+  if (format == "fp16") {
+    uint32_t val = RegReadRegister(reg);
+    TextIO->Print(Level::INFO, std::to_string(val).c_str());
+    TextIO->Print(Level::INFO, "\n");
+    doubleVal = (double)val;
+  }
+  
+  // Need to do some arithmetic to transform
+  else if (format.rfind("m_", 0) == 0) {
+    // TODO: Do the transformation here
+    doubleVal = 0.0;
+  }
+
+  // TODO: Will throw an exception here: Invalid format
+  else {
+    doubleVal = 0.0;
+  }
+
+  return doubleVal;
+}
+
+std::string BUTool::RegisterHelper::RegReadConvertString(std::string const & reg){
+  // Read the value from the named register, and return the value after converting it into a string
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  // TODO: To be implemented here
+  return std::string(reg);
+}
 
 std::vector<uint32_t> BUTool::RegisterHelper::RegReadAddressFIFO(uint32_t addr,size_t count){
   //=============================================================================
@@ -208,6 +260,26 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
   }
 
   return CommandReturn::OK; 
+}
+
+CommandReturn::status BUTool::RegisterHelper::ReadConvertDouble(std::vector<std::string> strArg,
+                                                    std::vector<uint64_t> intArg){
+  // There should be only "0" default integer argument
+  if (intArg.size() > 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+  if (strArg.size() != 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+
+  std::string reg = strArg[0];  
+  double val = RegReadConvertDouble(reg);
+
+  TextIO->Print(Level::INFO, std::to_string(val).c_str());
+  TextIO->Print(Level::INFO, "\n");
+
+  return CommandReturn::OK;
+
 }
 
 CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
