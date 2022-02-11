@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <stdio.h>
+#include <stdlib.h> //strtoul
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h> //for PRI
@@ -61,7 +62,7 @@ uint32_t BUTool::RegisterHelper::RegReadConvertUInt(std::string const & reg){
   return val;
 }
 
-double BUTool::RegisterHelper::convertFloatingPoint16(std::string const & reg){
+double BUTool::RegisterHelper::ConvertFloatingPoint16(std::string const & reg){
   // Helper function to do the "fp16->double" conversion
   double doubleVal;
 
@@ -114,6 +115,57 @@ double BUTool::RegisterHelper::convertFloatingPoint16(std::string const & reg){
   return doubleVal;
 }
 
+double BUTool::RegisterHelper::ConvertIntegerToFloat(std::string const & reg, std::string const & format){
+  // Helper function to convert an integer to float using the following format:
+  // y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
+  //       [0]   [1] [2]        [3]   [4] [5]
+  // sign == 0 -> negative, other values mean positive
+
+  std::vector<uint64_t> mathValues;
+  size_t iFormat=1;
+ 
+  uint32_t rawVal = RegReadRegister(reg);
+ 
+  while (mathValues.size() != 6 && iFormat < format.size()) {
+    if (format[iFormat] == '_') {
+      // Start parsing the value after the '_' and add the corresponding value to mathValues array
+      for (size_t jFormat=++iFormat; jFormat < format.size(); jFormat++) {
+        if ( (format[jFormat] == '_') || (jFormat == format.size() - 1) ) {
+	  if (jFormat == format.size() - 1) { jFormat++; }
+          // Convert the string to a number
+          uint64_t val = strtoull(format.substr(iFormat, jFormat-iFormat).c_str(), NULL, 0);
+          mathValues.push_back(val);
+          iFormat = jFormat;
+          break;
+        }
+      }
+    }
+    else {
+      iFormat++;
+    } 
+  }
+
+  // TODO: Some checks needed, check that mathValues.size() == 6, and no 0s in denominator
+
+  // Compute the transformed value from the raw value
+  // Will compute: (m*x) + b
+  double transformedValue = rawVal;
+  transformedValue *= double(mathValues[1]);
+  transformedValue /= double(mathValues[2]);
+  // Apply the sign of m
+  if (mathValues[0] == 0) {
+    transformedValue *= -1;
+  }
+  
+  double b = double(mathValues[4]) / double(mathValues[5]);
+  if (mathValues[3] == 0) {
+    b *= -1;
+  }
+  transformedValue += b;
+
+  return transformedValue;
+}
+
 double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   // Read the value from the named register, and return the value after converting it into a double
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
@@ -124,12 +176,17 @@ double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   double doubleVal;
   // 16-bit floating point to double transformation
   if (format == "fp16") {
-    doubleVal = convertFloatingPoint16(reg);
+    doubleVal = ConvertFloatingPoint16(reg);
   }
   
   // Need to do some arithmetic to transform
   else if (format.rfind("m_", 0) == 0) {
-    // TODO: Do the transformation here
+    doubleVal = ConvertIntegerToFloat(reg, format);
+  }
+
+  // Enumerations
+  else if (format.rfind("t_", 0) == 0) {
+    // TODO: Implement the transformation here
     doubleVal = 0.0;
   }
 
