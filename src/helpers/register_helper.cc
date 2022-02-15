@@ -446,6 +446,26 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvertDouble(std::vector<std:
 
 }
 
+CommandReturn::status BUTool::RegisterHelper::ReadConvertEnum(std::vector<std::string> strArg,
+                                                     std::vector<uint64_t> intArg){
+  // There should be only "0" default integer argument
+  if (intArg.size() > 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+  if (strArg.size() != 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+
+  std::string reg = strArg[0];  
+  std::string val = RegReadConvertString(reg);
+
+  TextIO->Print(Level::INFO, val.c_str());
+  TextIO->Print(Level::INFO, "\n");
+
+  return CommandReturn::OK;
+
+}
+
 CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
   if(strArg.size() >= 2){
     //check that argument 2 is a number
