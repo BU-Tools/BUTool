@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <stdio.h>
 #include <stdlib.h> //strtoul
+#include <map> //map
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h> //for PRI
@@ -166,6 +167,52 @@ double BUTool::RegisterHelper::ConvertIntegerToFloat(std::string const & reg, st
   return transformedValue;
 }
 
+std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg, std::string const & format){
+  // Helper function to convert enum to std::string
+  std::map<uint64_t, std::string> enumMap;
+  
+  // Parse the format argument for enumerations
+  size_t iFormat = 1;
+  while (iFormat < format.size()) {
+    if (format[iFormat] == '_') {
+      // Read the integer corresponding to this enum
+      uint64_t val = 0;
+      for (size_t jFormat = ++iFormat; jFormat < format.size(); jFormat++) {
+        if ((format[jFormat] == '_') | (jFormat == format.size() - 1)) {
+          if (jFormat == format.size() - 1) { jFormat++; }
+          // Convert the value into number
+          val = strtoul(format.substr(iFormat, jFormat-iFormat).c_str(), NULL, 0);
+          iFormat = jFormat;
+          break;
+        }
+      }
+      // Now read the corresponding string
+      for (size_t jFormat = ++iFormat; jFormat < format.size(); jFormat++) {
+        if ((format[jFormat] == '_') || (jFormat == (format.size()-1))) {
+          if (jFormat == format.size() - 1) { jFormat++; }
+          // Get the string
+          enumMap[val] = format.substr(iFormat, jFormat-iFormat);
+          iFormat = jFormat;
+          break;  
+        }
+      } 
+    }
+    else {
+      iFormat++;
+    }
+  }
+
+  // Now we have the enumeration map, read the integer value from the register
+  // Then return the corresponding string
+  uint32_t regValue = RegReadRegister(reg);
+  if (enumMap.find(regValue) != enumMap.end()) {
+    return enumMap[regValue].c_str();
+  }
+
+  // Cannot find it, TODO: better handle this possibility
+  return "NOT_FOUND";
+}
+
 double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   // Read the value from the named register, and return the value after converting it into a double
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
@@ -201,8 +248,18 @@ double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
 std::string BUTool::RegisterHelper::RegReadConvertString(std::string const & reg){
   // Read the value from the named register, and return the value after converting it into a string
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
-  // TODO: To be implemented here
-  return std::string(reg);
+  
+  std::string format = RegReadConvertFormat(reg);
+  std::string resultString;
+
+  if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
+    resultString = ConvertEnumToString(reg, format);
+  }
+  // TODO: Throw exception, we shouldn't fall into the else case
+  else {
+    resultString = "";
+  }
+  return resultString;
 }
 
 std::vector<uint32_t> BUTool::RegisterHelper::RegReadAddressFIFO(uint32_t addr,size_t count){

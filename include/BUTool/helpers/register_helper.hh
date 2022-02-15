@@ -69,6 +69,7 @@ namespace BUTool{
     // Helper functions for converting
     double ConvertFloatingPoint16(std::string const & reg);
     double ConvertIntegerToFloat(std::string const & reg, std::string const & format);
+    std::string ConvertEnumToString(std::string const & reg, std::string const & format);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};
