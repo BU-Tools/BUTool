@@ -231,12 +231,6 @@ double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
     doubleVal = ConvertIntegerToFloat(reg, format);
   }
 
-  // Enumerations
-  else if (format.rfind("t_", 0) == 0) {
-    // TODO: Implement the transformation here
-    doubleVal = 0.0;
-  }
-
   // TODO: Will throw an exception here: Invalid format
   else {
     doubleVal = 0.0;
