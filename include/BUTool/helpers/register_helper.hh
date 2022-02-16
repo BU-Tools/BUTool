@@ -36,10 +36,6 @@ namespace BUTool{
     enum ConvertType {NONE=0,UINT=1,INT=2,FP=4,STRING=8};
     virtual ConvertType           RegReadConvertType(std::string const & reg)=0;
     virtual std::string           RegReadConvertFormat(std::string const & reg)=0; 
-    unsigned int                  RegReadConvertUInt(std::string const & reg);
-    int                           RegReadConvertInt(std::string const & reg);
-    double                        RegReadConvertDouble(std::string const & reg);
-    std::string                   RegReadConvertString(std::string const & reg);
     
     // Named register read+conversion functions, overloaded depending on the conversion value type
     void    RegReadConvert(std::string const & reg, unsigned int & val);
@@ -86,8 +82,6 @@ namespace BUTool{
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadConvert(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
-    CommandReturn::status ReadConvertDouble(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
-    CommandReturn::status ReadConvertEnum(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadString(std::vector<std::string> strArg,std::vector<uint64_t> intArg);    

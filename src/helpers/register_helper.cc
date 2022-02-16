@@ -47,22 +47,6 @@ std::string BUTool::RegisterHelper::RegReadString(std::string const & /*reg*/){
   return std::string();
 }
 
-int32_t BUTool::RegisterHelper::RegReadConvertInt(std::string const & reg){
-  // Read the value from the named register, and return the value after converting it into an integer
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
-  uint32_t val = RegReadRegister(reg);
-  // Convert to int32 and return
-  int32_t intVal = (int32_t)val;
-  return intVal;
-}
-
-uint32_t BUTool::RegisterHelper::RegReadConvertUInt(std::string const & reg){
-  // Read the value from the named register, and return the value after converting it into an unsigned integer
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
-  uint32_t val = RegReadRegister(reg);
-  return val;
-}
-
 double BUTool::RegisterHelper::ConvertFloatingPoint16ToDouble(std::string const & reg){
   // Helper function to do the "fp16->double" conversion
   double doubleVal;
@@ -213,32 +197,6 @@ std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg,
   return "NOT_FOUND";
 }
 
-double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
-  // Read the value from the named register, and return the value after converting it into a double
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
-  
-  // Check the conversion type we want:
-  // Is it a "fp16", or will we do some transformations? (i.e."m_...")
-  std::string format = RegReadConvertFormat(reg);
-  double doubleVal;
-  // 16-bit floating point to double transformation
-  if (format == "fp16") {
-    doubleVal = ConvertFloatingPoint16ToDouble(reg);
-  }
-  
-  // Need to do some arithmetic to transform
-  else if (format.rfind("m_", 0) == 0) {
-    doubleVal = ConvertIntegerToFloat(reg, format);
-  }
-
-  // TODO: Will throw an exception here: Invalid format
-  else {
-    doubleVal = 0.0;
-  }
-
-  return doubleVal;
-}
-
 void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & val){
   // Read the value from the named register, and update the value in place
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
@@ -276,23 +234,6 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string
     val = "";
   }
 
-}
-
-std::string BUTool::RegisterHelper::RegReadConvertString(std::string const & reg){
-  // Read the value from the named register, and return the value after converting it into a string
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
-  
-  std::string format = RegReadConvertFormat(reg);
-  std::string resultString;
-
-  if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
-    resultString = ConvertEnumToString(reg, format);
-  }
-  // TODO: Throw exception, we shouldn't fall into the else case
-  else {
-    resultString = "";
-  }
-  return resultString;
 }
 
 std::vector<uint32_t> BUTool::RegisterHelper::RegReadAddressFIFO(uint32_t addr,size_t count){
@@ -479,46 +420,6 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
   }
 
   return CommandReturn::OK; 
-}
-
-CommandReturn::status BUTool::RegisterHelper::ReadConvertDouble(std::vector<std::string> strArg,
-                                                    std::vector<uint64_t> intArg){
-  // There should be only "0" default integer argument
-  if (intArg.size() > 1) {
-    return CommandReturn::BAD_ARGS; 
-  }
-  if (strArg.size() != 1) {
-    return CommandReturn::BAD_ARGS; 
-  }
-
-  std::string reg = strArg[0];  
-  double val = RegReadConvertDouble(reg);
-
-  TextIO->Print(Level::INFO, std::to_string(val).c_str());
-  TextIO->Print(Level::INFO, "\n");
-
-  return CommandReturn::OK;
-
-}
-
-CommandReturn::status BUTool::RegisterHelper::ReadConvertEnum(std::vector<std::string> strArg,
-                                                     std::vector<uint64_t> intArg){
-  // There should be only "0" default integer argument
-  if (intArg.size() > 1) {
-    return CommandReturn::BAD_ARGS; 
-  }
-  if (strArg.size() != 1) {
-    return CommandReturn::BAD_ARGS; 
-  }
-
-  std::string reg = strArg[0];  
-  std::string val = RegReadConvertString(reg);
-
-  TextIO->Print(Level::INFO, val.c_str());
-  TextIO->Print(Level::INFO, "\n");
-
-  return CommandReturn::OK;
-
 }
 
 CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
