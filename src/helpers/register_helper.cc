@@ -190,7 +190,12 @@ std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg,
   // Then return the corresponding string
   uint32_t regValue = RegReadRegister(reg);
   if (enumMap.find(regValue) != enumMap.end()) {
-    return enumMap[regValue].c_str();
+    // If format starts with 't', just return the string value
+    // Otherwise, return the value together with the number
+    if (format[0] == 't') {
+      return enumMap[regValue].c_str();
+    }
+    return (enumMap[regValue] + " " + std::to_string(regValue)).c_str();
   }
 
   // Cannot find it, TODO: better handle this possibility
