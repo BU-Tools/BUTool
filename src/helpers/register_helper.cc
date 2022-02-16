@@ -1,12 +1,15 @@
 #include <BUTool/helpers/register_helper.hh>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <stdio.h>
 #include <stdlib.h> //strtoul
 #include <map> //map
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h> //for PRI
+
+using boost::algorithm::iequals;
 
 // used to check if RegisterHelper's TextIO pointer is NULL 
 // (occurs when device class does not call SetupTextIO in its c'tor)
@@ -100,7 +103,7 @@ double BUTool::RegisterHelper::ConvertFloatingPoint16ToDouble(std::string const 
   return doubleVal;
 }
 
-double BUTool::RegisterHelper::ConvertIntegerToFloat(std::string const & reg, std::string const & format){
+double BUTool::RegisterHelper::ConvertIntegerToDouble(std::string const & reg, std::string const & format){
   // Helper function to convert an integer to float using the following format:
   // y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
   //       [0]   [1] [2]        [3]   [4] [5]
@@ -149,6 +152,23 @@ double BUTool::RegisterHelper::ConvertIntegerToFloat(std::string const & reg, st
   transformedValue += b;
 
   return transformedValue;
+}
+
+double BUTool::RegisterHelper::ConvertLinear11ToDouble(std::string const & reg){
+  // Helper function to convert linear11 format to double
+
+  union {
+    struct {
+      int16_t integer  : 11;
+      int16_t exponent :  5;
+    } linear11;
+    int16_t raw;
+  } val;
+  
+  val.raw = RegReadRegister(reg);
+  double floatingValue = double(val.linear11.integer) * pow(2, val.linear11.exponent);
+  
+  return floatingValue;
 }
 
 std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg, std::string const & format){
@@ -210,13 +230,17 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & va
   // Is it a "fp16", or will we do some transformations? (i.e."m_...")
   std::string format = RegReadConvertFormat(reg);
   // 16-bit floating point to double transformation
-  if (format == "fp16") {
+  if (iequals(format, "fp16")) {
     val = ConvertFloatingPoint16ToDouble(reg);
   }
   
   // Need to do some arithmetic to transform
   else if (format.rfind("m_", 0) == 0) {
-    val = ConvertIntegerToFloat(reg, format);
+    val = ConvertIntegerToDouble(reg, format);
+  }
+
+  else if (iequals(format, "linear11")) {
+    val = ConvertLinear11ToDouble(reg);
   }
 
   // TODO: Will throw an exception here: Invalid format
