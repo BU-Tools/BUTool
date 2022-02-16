@@ -63,7 +63,7 @@ uint32_t BUTool::RegisterHelper::RegReadConvertUInt(std::string const & reg){
   return val;
 }
 
-double BUTool::RegisterHelper::ConvertFloatingPoint16(std::string const & reg){
+double BUTool::RegisterHelper::ConvertFloatingPoint16ToDouble(std::string const & reg){
   // Helper function to do the "fp16->double" conversion
   double doubleVal;
 
@@ -223,7 +223,7 @@ double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   double doubleVal;
   // 16-bit floating point to double transformation
   if (format == "fp16") {
-    doubleVal = ConvertFloatingPoint16(reg);
+    doubleVal = ConvertFloatingPoint16ToDouble(reg);
   }
   
   // Need to do some arithmetic to transform
@@ -237,6 +237,45 @@ double BUTool::RegisterHelper::RegReadConvertDouble(std::string const & reg){
   }
 
   return doubleVal;
+}
+
+void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & val){
+  // Read the value from the named register, and update the value in place
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  
+  // Check the conversion type we want:
+  // Is it a "fp16", or will we do some transformations? (i.e."m_...")
+  std::string format = RegReadConvertFormat(reg);
+  // 16-bit floating point to double transformation
+  if (format == "fp16") {
+    val = ConvertFloatingPoint16ToDouble(reg);
+  }
+  
+  // Need to do some arithmetic to transform
+  else if (format.rfind("m_", 0) == 0) {
+    val = ConvertIntegerToFloat(reg, format);
+  }
+
+  // TODO: Will throw an exception here: Invalid format
+  else {
+    val = 0.0;
+  }
+}
+
+void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string & val){
+  // Read the value from the named register, and update the value in place
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  
+  std::string format = RegReadConvertFormat(reg);
+  
+  if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
+    val = ConvertEnumToString(reg, format);
+  }
+  // TODO: Throw exception, we shouldn't fall into the else case
+  else {
+    val = "";
+  }
+
 }
 
 std::string BUTool::RegisterHelper::RegReadConvertString(std::string const & reg){
@@ -406,15 +445,37 @@ CommandReturn::status BUTool::RegisterHelper::Read(std::vector<std::string> strA
 
 CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::string> strArg,
 						   std::vector<uint64_t> intArg){
-  if (strArg.size() >= 1) {
-    std::string format = RegReadConvertFormat(strArg[0]);
-    TextIO->Print(Level::INFO, format.c_str());
-    TextIO->Print(Level::INFO, "\n");
-  }
-
   // There should be only "0" default integer argument
   if (intArg.size() > 1) {
     return CommandReturn::BAD_ARGS; 
+  }
+
+  // We expect only a single string argument: Name of the register
+  if (strArg.size() != 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+  
+  // The conversion type we want
+  std::string reg = strArg[0];
+  std::string format = RegReadConvertFormat(reg);
+
+  // Depending on the format, we'll call the appropriate function with the appropriate value
+  if ((format[0] == 'T') || (format[0] == 't')) {
+    std::string val;
+    RegReadConvert(reg, val);
+    // Display the value to the screen
+    TextIO->Print(Level::INFO, val.c_str());
+    TextIO->Print(Level::INFO, "\n");
+  }
+  else if ((format[0] == 'M') || (format[0] == 'm') || (format == "fp16")) {
+    double val;
+    RegReadConvert(reg, val);
+    // Display the value to the screen
+    TextIO->Print(Level::INFO, std::to_string(val).c_str());
+    TextIO->Print(Level::INFO, "\n");
+  }
+  else {
+    return CommandReturn::BAD_ARGS;
   }
 
   return CommandReturn::OK; 

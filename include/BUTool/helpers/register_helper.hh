@@ -40,6 +40,13 @@ namespace BUTool{
     int                           RegReadConvertInt(std::string const & reg);
     double                        RegReadConvertDouble(std::string const & reg);
     std::string                   RegReadConvertString(std::string const & reg);
+    
+    // Named register read+conversion functions, overloaded depending on the conversion value type
+    void    RegReadConvert(std::string const & reg, unsigned int & val);
+    void    RegReadConvert(std::string const & reg, int & val);
+    void    RegReadConvert(std::string const & reg, double & val);
+    void    RegReadConvert(std::string const & reg, std::string & val);
+
     virtual std::vector<uint32_t> RegReadAddressFIFO(uint32_t addr,size_t count);
     virtual std::vector<uint32_t> RegReadRegisterFIFO(std::string const & reg,size_t count);
     virtual std::vector<uint32_t> RegBlockReadAddress(uint32_t addr,size_t count);
@@ -67,7 +74,7 @@ namespace BUTool{
     virtual std::string GetRegHelp(std::string const & /*reg*/){return "";};
 
     // Helper functions for converting
-    double ConvertFloatingPoint16(std::string const & reg);
+    double ConvertFloatingPoint16ToDouble(std::string const & reg);
     double ConvertIntegerToFloat(std::string const & reg, std::string const & format);
     std::string ConvertEnumToString(std::string const & reg, std::string const & format);
 
