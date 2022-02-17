@@ -235,7 +235,7 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & va
   }
   
   // Need to do some arithmetic to transform
-  else if (format.rfind("m_", 0) == 0) {
+  else if ((format[0] == 'M') | (format[0] == 'm')) {
     val = ConvertIntegerToDouble(reg, format);
   }
 
@@ -425,27 +425,37 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     return CommandReturn::BAD_ARGS; 
   }
   
-  // The conversion type we want
-  std::string reg = strArg[0];
-  std::string format = RegReadConvertFormat(reg);
+  // Get the list of register names matching the regular expression specified
+  // This can be a single value, if an exact register name is given
+  // Or multiple values if a wildcard (*) is specified
+  std::vector<std::string> registerNames = RegNameRegexSearch(strArg[0]);
+  
+  // Loop over register names, do the reads+conversions and print them to the screen
+  for (size_t iName=0; iName < registerNames.size(); iName++) {
+    std::string reg = registerNames[iName];
+    // The conversion type we want
+    std::string format = RegReadConvertFormat(reg);
 
-  // Depending on the format, we'll call the appropriate function with the appropriate value
-  if ((format[0] == 'T') || (format[0] == 't')) {
-    std::string val;
-    RegReadConvert(reg, val);
-    // Display the value to the screen
-    TextIO->Print(Level::INFO, val.c_str());
-    TextIO->Print(Level::INFO, "\n");
-  }
-  else if ((format[0] == 'M') || (format[0] == 'm') || (format == "fp16")) {
-    double val;
-    RegReadConvert(reg, val);
-    // Display the value to the screen
-    TextIO->Print(Level::INFO, std::to_string(val).c_str());
-    TextIO->Print(Level::INFO, "\n");
-  }
-  else {
-    return CommandReturn::BAD_ARGS;
+    // Depending on the format, we'll call the appropriate function with the appropriate value
+    if ((format[0] == 'T') || (format[0] == 't')) {
+      std::string val;
+      RegReadConvert(reg, val);
+      // Display the value to the screen
+      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+      TextIO->Print(Level::INFO, val.c_str());
+      TextIO->Print(Level::INFO, "\n");
+    }
+    else if ((format[0] == 'M') || (format[0] == 'm') || (format == "fp16")) {
+      double val;
+      RegReadConvert(reg, val);
+      // Display the value to the screen
+      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+      TextIO->Print(Level::INFO, std::to_string(val).c_str());
+      TextIO->Print(Level::INFO, "\n");
+    }
+    else {
+      return CommandReturn::BAD_ARGS;
+    }
   }
 
   return CommandReturn::OK; 
