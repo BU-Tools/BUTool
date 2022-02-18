@@ -222,6 +222,25 @@ std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg,
   return "NOT_FOUND";
 }
 
+void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, int & val){
+  // Read the value from the named register, and update the value in place
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+
+  uint32_t rawVal = RegReadRegister(reg);
+
+  // Now comes the check:
+  // -55 is a placeholder for non-running fireflies
+  // That would mean rawVal 256 + (-55) = 201 since the raw value is an unsigned int
+  // We'll transform and return that value, in other cases our job is easier
+  int MAX_8_BIT_INT = 256;
+  if (rawVal == 201) {
+    val = -(int)(MAX_8_BIT_INT - rawVal);
+    return;
+  }
+  val = (int)rawVal;
+ 
+}
+
 void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & val){
   // Read the value from the named register, and update the value in place
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
@@ -454,6 +473,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     std::string format = RegReadConvertFormat(reg);
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
+    // Enumerations
     if ((format[0] == 'T') || (format[0] == 't')) {
       std::string val;
       RegReadConvert(reg, val);
@@ -462,8 +482,18 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
       TextIO->Print(Level::INFO, val.c_str());
       TextIO->Print(Level::INFO, "\n");
     }
+    // Double values
     else if ((format[0] == 'M') || (format[0] == 'm') || (format == "fp16")) {
       double val;
+      RegReadConvert(reg, val);
+      // Display the value to the screen
+      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+      TextIO->Print(Level::INFO, std::to_string(val).c_str());
+      TextIO->Print(Level::INFO, "\n");
+    }
+    // Integers
+    else if ((format.size() == 1) & (format[0] == 'd')) {
+      int val;
       RegReadConvert(reg, val);
       // Display the value to the screen
       TextIO->Print(Level::INFO, (reg + ":   ").c_str());
