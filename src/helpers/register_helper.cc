@@ -243,9 +243,12 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, double & va
     val = ConvertLinear11ToDouble(reg);
   }
 
-  // TODO: Will throw an exception here: Invalid format
+  // Undefined format, throw error
   else {
-    val = 0.0;
+    BUException::FORMATTING_NOT_IMPLEMENTED e;
+    e.Append("Format: " + format);
+    e.Append("\n");
+    throw e;
   }
 }
 
@@ -258,9 +261,12 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string
   if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
     val = ConvertEnumToString(reg, format);
   }
-  // TODO: Throw exception, we shouldn't fall into the else case
+  // Undefined format, throw error
   else {
-    val = "";
+    BUException::FORMATTING_NOT_IMPLEMENTED e;
+    e.Append("Format: " + format);
+    e.Append("\n");
+    throw e;
   }
 
 }
@@ -433,6 +439,17 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
   // Loop over register names, do the reads+conversions and print them to the screen
   for (size_t iName=0; iName < registerNames.size(); iName++) {
     std::string reg = registerNames[iName];
+
+    // First of all, find out if we have permission to read this register
+    // If not, let's skip it for now, and not seg fault
+    bool haveReadPermission = GetRegPermissions(reg).find('r') != std::string::npos;
+    
+    if (!haveReadPermission) { 
+      TextIO->Print(Level::INFO, (reg + ":    ").c_str());
+      TextIO->Print(Level::INFO, "No read permission.\n");
+      continue; 
+    }
+
     // The conversion type we want
     std::string format = RegReadConvertFormat(reg);
 

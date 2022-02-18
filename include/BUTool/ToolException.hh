@@ -14,6 +14,8 @@ namespace BUException{
   ExceptionClassGenerator(BAD_VALUE,"Bad value\n")
   // BUTextIO exception
   ExceptionClassGenerator(TEXTIO_BAD_INIT, "BUTool::RegisterHelper TextIO pointer is NULL\n Did you forget to call SetupTextIO() in the device's constructor?\n")
+  // RegisterHelper exceptions
+  ExceptionClassGenerator(FORMATTING_NOT_IMPLEMENTED, "BUTool::RegisterHelper: The formatting specified is not implemented\n")
 }
 
 
