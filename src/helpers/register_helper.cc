@@ -222,6 +222,14 @@ std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg,
   return "NOT_FOUND";
 }
 
+void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, unsigned int & val){
+  // Read the value from the named register, and update the value in place
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+
+  uint32_t rawVal = RegReadRegister(reg);
+  val = rawVal;
+}
+
 void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, int & val){
   // Read the value from the named register, and update the value in place
   CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
@@ -494,6 +502,15 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     // Integers
     else if ((format.size() == 1) & (format[0] == 'd')) {
       int val;
+      RegReadConvert(reg, val);
+      // Display the value to the screen
+      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+      TextIO->Print(Level::INFO, std::to_string(val).c_str());
+      TextIO->Print(Level::INFO, "\n");
+    }
+    // Unsigned integers
+    else if ((format.size() == 1) & (format[0] == 'u')) {
+      unsigned int val;
       RegReadConvert(reg, val);
       // Display the value to the screen
       TextIO->Print(Level::INFO, (reg + ":   ").c_str());
