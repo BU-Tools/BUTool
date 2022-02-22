@@ -6,6 +6,8 @@
 #include <stdlib.h> //strtoul
 #include <map> //map
 
+#include <arpa/inet.h> // for inet_ntoa and in_addr_t
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h> //for PRI
 
@@ -171,6 +173,15 @@ double BUTool::RegisterHelper::ConvertLinear11ToDouble(std::string const & reg){
   return floatingValue;
 }
 
+std::string BUTool::RegisterHelper::ConvertIPAddressToString(std::string const & reg){
+  // Helper function to convert IP addresses to string
+  struct in_addr addr;
+  int16_t val = RegReadRegister(reg);
+  addr.s_addr = in_addr_t(val);
+
+  return inet_ntoa(addr);
+}
+
 std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg, std::string const & format){
   // Helper function to convert enum to std::string
   std::map<uint64_t, std::string> enumMap;
@@ -287,6 +298,10 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string
   
   if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
     val = ConvertEnumToString(reg, format);
+  }
+  // IP addresses
+  else if (iequals(format, std::string("IP"))) {
+    val = ConvertIPAddressToString(reg);
   }
   // Undefined format, throw error
   else {
@@ -482,7 +497,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
     // Enumerations
-    if ((format[0] == 'T') || (format[0] == 't')) {
+    if ((format[0] == 'T') || (format[0] == 't') || iequals(format, std::string("IP"))) {
       std::string val;
       RegReadConvert(reg, val);
       // Display the value to the screen

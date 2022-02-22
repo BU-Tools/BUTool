@@ -74,6 +74,7 @@ namespace BUTool{
     double ConvertLinear11ToDouble(std::string const & reg);
     double ConvertIntegerToDouble(std::string const & reg, std::string const & format);
     std::string ConvertEnumToString(std::string const & reg, std::string const & format);
+    std::string ConvertIPAddressToString(std::string const & reg);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};
