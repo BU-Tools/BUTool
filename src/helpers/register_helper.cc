@@ -303,6 +303,10 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string
   else if (iequals(format, std::string("IP"))) {
     val = ConvertIPAddressToString(reg);
   }
+  // Hex numbers in string
+  else if (iequals(format, "x")) {
+    val = RegReadRegister(reg);
+  }
   // Undefined format, throw error
   else {
     BUException::FORMATTING_NOT_IMPLEMENTED e;
@@ -497,7 +501,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
     // Enumerations
-    if ((format[0] == 'T') || (format[0] == 't') || iequals(format, std::string("IP"))) {
+    if ((format[0] == 'T') || (format[0] == 't') || iequals(format, std::string("IP")) || iequals(format, "X")) {
       std::string val;
       RegReadConvert(reg, val);
       // Display the value to the screen
