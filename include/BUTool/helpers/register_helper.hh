@@ -68,6 +68,7 @@ namespace BUTool{
     virtual std::string GetRegDescription(std::string const & reg)=0;
     virtual std::string GetRegDebug(std::string const & /*reg*/){return "";}; 
     virtual std::string GetRegHelp(std::string const & /*reg*/){return "";};
+    virtual std::string GetRegParameter(std::string const & reg, std::string const & parameterName)=0;
 
     // Helper functions for converting
     double ConvertFloatingPoint16ToDouble(std::string const & reg);
@@ -75,6 +76,9 @@ namespace BUTool{
     double ConvertIntegerToDouble(std::string const & reg, std::string const & format);
     std::string ConvertEnumToString(std::string const & reg, std::string const & format);
     std::string ConvertIPAddressToString(std::string const & reg);
+
+    // Helper function to return list of register names with a specified parameter
+    std::vector<std::string> GetRegisterNamesWithParameter(std::string const & parameterName, std::string const & parameterValue);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};
@@ -90,6 +94,7 @@ namespace BUTool{
     CommandReturn::status Write(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status WriteFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status WriteOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
+    CommandReturn::status GetRegs(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ListRegs(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     std::string RegisterAutoComplete(std::vector<std::string> const &,std::string const &,int);
 

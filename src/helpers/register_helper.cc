@@ -182,6 +182,24 @@ std::string BUTool::RegisterHelper::ConvertIPAddressToString(std::string const &
   return inet_ntoa(addr);
 }
 
+std::vector<std::string> BUTool::RegisterHelper::GetRegisterNamesWithParameter(std::string const & parameterName, 
+                                                                               std::string const & parameterValue){
+  // Helper function to get a list of register names with the given parameter value
+  std::vector<std::string> registerNames;
+
+  // All register names
+  std::vector<std::string> allNames = RegNameRegexSearch("*");
+
+  for (size_t idx=0; idx < allNames.size(); idx++) {
+    std::string value = GetRegParameter(allNames[idx], parameterName);
+    if (value == parameterValue) {
+      registerNames.push_back(allNames[idx]);
+    }
+  }
+
+  return registerNames;
+}
+
 std::string BUTool::RegisterHelper::ConvertEnumToString(std::string const & reg, std::string const & format){
   // Helper function to convert enum to std::string
   std::map<uint64_t, std::string> enumMap;
@@ -849,6 +867,29 @@ std::vector<std::string> BUTool::RegisterHelper::RegNameRegexSearch(std::string 
   return myMatchRegex(regex);
 }
 
+CommandReturn::status BUTool::RegisterHelper::GetRegs(std::vector<std::string> strArg,
+						       std::vector<uint64_t> intArg){
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  (void) intArg; // keeps compiler from complaining about unused args
+
+  if (strArg.size() != 2) {
+    TextIO->Print(Level::INFO, "Need exactly two arguments\n");
+    return CommandReturn::BAD_ARGS;
+  }
+
+  std::string parameterName = strArg[0];
+  std::string parameterValue = strArg[1];
+
+  std::vector<std::string> registerNames = GetRegisterNamesWithParameter(parameterName, parameterValue);
+
+  for (size_t idx=0; idx < registerNames.size(); idx++) {
+    TextIO->Print(Level::INFO, registerNames[idx].c_str());
+    TextIO->Print(Level::INFO, "\n");
+  }
+
+  return CommandReturn::OK; 
+
+}
 
 CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> strArg,
 						       std::vector<uint64_t> intArg){
