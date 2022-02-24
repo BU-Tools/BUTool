@@ -7,6 +7,8 @@
 #include <vector>
 #include <stdint.h>
 #include <iostream>
+#include <math.h> // for NAN
+#include <cmath> // for pow
 
 #include <BUTextIO/BUTextIO.hh>
 #include <BUTextIO/PrintLevel.hh>
