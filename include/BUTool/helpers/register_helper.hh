@@ -11,60 +11,18 @@
 #include <BUTextIO/BUTextIO.hh>
 #include <BUTextIO/PrintLevel.hh>
 
-#include <BUException/ExceptionBase.hh>
-#include <BUTool/ToolException.hh>
+#include <register_helper_io.hh>
 
 namespace BUTool{  
-  class RegisterHelper {  
+  class RegisterHelper {      
   protected:
-    enum RegisterNameCase {UPPER,LOWER,CASE_SENSITIVE};
-
     // only let derived classes (device classes) use this BUTextIO functionality
     void AddStream(Level::level level, std::ostream*os);
     void SetupTextIO();
 
-    RegisterHelper() : newTextIO(false) {regCase = UPPER;}
-    RegisterHelper(RegisterNameCase _regCase) : newTextIO(false) {regCase = _regCase;}
+    RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO) :
+      regIO(_regIO), newTextIO(false) {}
     ~RegisterHelper() {if (newTextIO) {delete TextIO;}}
-
-    virtual std::vector<std::string> myMatchRegex(std::string regex)=0;
-    
-    //reads
-    virtual uint32_t              RegReadAddress(uint32_t addr)=0;
-    virtual uint32_t              RegReadRegister(std::string const & reg)=0;
-    virtual std::vector<uint32_t> RegReadAddressFIFO(uint32_t addr,size_t count);
-    virtual std::vector<uint32_t> RegReadRegisterFIFO(std::string const & reg,size_t count);
-    virtual std::vector<uint32_t> RegBlockReadAddress(uint32_t addr,size_t count);
-    virtual std::vector<uint32_t> RegBlockReadRegister(std::string const & reg,size_t count);
-    virtual std::string           RegReadString(std::string const & reg);
-
-    //writes
-    virtual void RegWriteAddress(uint32_t addr,uint32_t data)=0;
-    virtual void RegWriteRegister(std::string const & reg, uint32_t data)=0;
-    virtual void RegWriteAddressFIFO(uint32_t addr,std::vector<uint32_t> const & data);
-    virtual void RegWriteRegisterFIFO(std::string const & reg, std::vector<uint32_t> const & data);
-    virtual void RegBlockWriteAddress(uint32_t addr,std::vector<uint32_t> const & data);
-    virtual void RegBlockWriteRegister(std::string const & reg, std::vector<uint32_t> const & data);
-
-    //action writes
-    virtual void RegWriteAction(std::string const & reg)=0;
-
-    virtual uint32_t    GetRegAddress(std::string const & reg)=0;
-    virtual uint32_t    GetRegMask(std::string const & reg)=0;
-    virtual uint32_t    GetRegSize(std::string const & reg)=0;
-    virtual std::string GetRegMode(std::string const & reg)=0;
-    virtual std::string GetRegPermissions(std::string const & reg)=0;
-    virtual std::string GetRegDescription(std::string const & reg)=0;
-    virtual std::string GetRegDebug(std::string const & /*reg*/){return "";}; 
-    virtual std::string GetRegHelp(std::string const & /*reg*/){return "";};
-
-
-
-    //Handle address table name case (default is upper case)
-    RegisterNameCase GetCase(){return regCase;};
-    void SetCase(RegisterNameCase _regCase){regCase = _regCase;};
-
-    void ReCase(std::string & name);
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
@@ -80,6 +38,7 @@ namespace BUTool{
 
 
   private:
+    std::shared_ptr<RegisterHelperIO> regIO;
     BUTextIO *TextIO;
     bool newTextIO;
     RegisterNameCase regCase;

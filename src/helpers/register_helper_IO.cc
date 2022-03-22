@@ -37,9 +37,118 @@ void BUTool::RegisterHelper::AddStream(Level::level level, std::ostream* os) {
   TextIO->AddOutputStream(level, os);
 }
 
+std::string BUTool::RegisterHelper::RegReadString(std::string const & /*reg*/){
+  //=============================================================================
+  //placeholder for string read
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  return std::string();
+}
+
+
+std::vector<uint32_t> BUTool::RegisterHelper::RegReadAddressFIFO(uint32_t addr,size_t count){
+  //=============================================================================
+  //placeholder for fifo read
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  std::vector<uint32_t> ret;
+  for(size_t iRead = 0; iRead < count; iRead++){
+    ret.push_back(RegReadAddress(addr)); 
+  }
+  return ret;
+}
+std::vector<uint32_t> BUTool::RegisterHelper::RegReadRegisterFIFO(std::string const & reg,size_t count){
+  //=============================================================================
+  //placeholder for fifo read
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  uint32_t address = GetRegAddress(reg);
+  return RegReadAddressFIFO(address,count);
+}
+
+std::vector<uint32_t> BUTool::RegisterHelper::RegBlockReadAddress(uint32_t addr,size_t count){
+  //=============================================================================
+  //placeholder for block read
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  std::vector<uint32_t> ret;
+  uint32_t addrEnd = addr + uint32_t(count);
+  for(;addr < addrEnd;addr++){
+    ret.push_back(RegReadAddress(addr)); 
+  }
+  return ret;
+}
+std::vector<uint32_t> BUTool::RegisterHelper::RegBlockReadRegister(std::string const & reg,size_t count){
+  //=============================================================================
+  //placeholder for block read
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  uint32_t address = GetRegAddress(reg);
+  return RegBlockReadAddress(address,count);
+}
+
+void BUTool::RegisterHelper::RegWriteAddressFIFO(uint32_t addr,std::vector<uint32_t> const & data){
+  //=============================================================================
+  //placeholder for fifo write
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  for(size_t i = 0; i < data.size();i++){
+    RegWriteAddress(addr,data[i]);
+  }
+}
+void BUTool::RegisterHelper::RegWriteRegisterFIFO(std::string const & reg, std::vector<uint32_t> const & data){
+  //=============================================================================
+  //placeholder for fifo write
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  for(size_t i = 0; i < data.size();i++){
+    RegWriteRegister(reg,data[i]);
+  }
+}
+void BUTool::RegisterHelper::RegBlockWriteAddress(uint32_t addr,std::vector<uint32_t> const & data){
+  //=============================================================================
+  //placeholder for block write
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  for(size_t i =0;i < data.size();i++){
+    RegWriteAddress(addr,data[i]);
+    addr++;
+  }
+}
+void BUTool::RegisterHelper::RegBlockWriteRegister(std::string const & reg, std::vector<uint32_t> const & data){
+  //=============================================================================
+  //placeholder for block write
+  //These should be overloaded if the firmware/software natively supports these features
+  //=============================================================================
+  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
+  uint32_t addr = GetRegAddress(reg);
+  RegBlockWriteAddress(addr,data);
+}
 
 
 
+
+void BUTool::RegisterHelper::ReCase(std::string & name){
+  switch(regCase){
+  case LOWER:
+    boost::algorithm::to_lower(name);    
+    break;
+  case UPPER:
+    boost::algorithm::to_upper(name);    
+    break;
+  case CASE_SENSITIVE:
+    //Do nothing
+  default:
+    break;
+  }
+}
 
 
 void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero){
@@ -153,9 +262,9 @@ CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offs
   if(numericAddr){
     //Do the read
     if(1 == readCount){
-      readData.push_back(regIO->RegReadAddress(intArg[0]+offset));
+      readData.push_back(RegReadAddress(intArg[0]+offset));
     }else{
-      readData = regIO->RegBlockReadAddress(intArg[0]+offset,finalReadCount);
+      readData = RegBlockReadAddress(intArg[0]+offset,finalReadCount);
     }
     //Print the read data
     if(0 != offset){
@@ -166,38 +275,38 @@ CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offs
       std::vector<std::string> names = RegNameRegexSearch(strArg[0]);
       for(size_t iName = 0; iName < names.size();iName++){
         //figure out if this is an action register (write only) so we don't read it. 
-        bool actionRegister = (regIO->GetRegPermissions(names[iName]).find('r') == std::string::npos);
+        bool actionRegister = (GetRegPermissions(names[iName]).find('r') == std::string::npos);
         if(!actionRegister){
           if(1 == readCount){
             //normal printing
             if(0 == offset){
-              uint32_t val = regIO->RegReadRegister(names[iName]);
+              uint32_t val = RegReadRegister(names[iName]);
               if(!skipPrintZero || (val != 0)){
                 TextIO->Print(Level::INFO, "%50s: 0x%08X\n",names[iName].c_str(),val);
               }	  
             }else{
-              uint32_t address = regIO->GetRegAddress(names[iName]);
-              uint32_t val = regIO->RegReadAddress(address+offset);
+              uint32_t address = GetRegAddress(names[iName]);
+              uint32_t val = RegReadAddress(address+offset);
               if(!skipPrintZero || (val != 0)){
                 TextIO->Print(Level::INFO, "%50s + 0x%08X: 0x%08X\n",names[iName].c_str(),offset,val);
               }
             }
           }else{
             //switch to numeric printing because of count
-            uint32_t address = regIO->GetRegAddress(names[iName])+offset;
+            uint32_t address = GetRegAddress(names[iName])+offset;
             if(0 == offset){
               TextIO->Print(Level::INFO, "%s:\n",names[iName].c_str());
             }else{
               TextIO->Print(Level::INFO, "%s + 0x%08X:\n",names[iName].c_str(),offset);
             }
-            readData = regIO->RegBlockReadAddress(address,finalReadCount);
+            readData = RegBlockReadAddress(address,finalReadCount);
             PrintRegAddressRange(address,readData,printWord64,skipPrintZero);
             TextIO->Print(Level::INFO, "\n");
           }
         }else{
-	  if(1 == readCount){
+	        if(1 == readCount){
             TextIO->Print(Level::INFO, "%50s: write-only\n",names[iName].c_str());
-	  }
+	        }
         }
       }
     }
@@ -231,10 +340,10 @@ CommandReturn::status BUTool::RegisterHelper::ReadFIFO(std::vector<std::string> 
   
   std::vector<uint32_t> data;
   if(numericAddr){
-    data = regIO->RegReadAddressFIFO(intArg[0],readCount);
+    data = RegReadAddressFIFO(intArg[0],readCount);
     TextIO->Print(Level::INFO, "Read %zu words from 0x%08X:\n",data.size(),uint32_t(intArg[0]));
   }else{
-    data = regIO->RegReadRegisterFIFO(strArg[0],readCount);
+    data = RegReadRegisterFIFO(strArg[0],readCount);
     TextIO->Print(Level::INFO, "Read %zu words from %s:\n",data.size(),strArg[0].c_str());
   }
   PrintRegAddressRange(0,data,false,false);
@@ -247,7 +356,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadString(std::vector<std::string
   if (strArg.size() ==0){
     return CommandReturn::BAD_ARGS;
   }
-  TextIO->Print(Level::INFO, "%s: %s\n",strArg[0].c_str(),regIO->RegReadString(strArg[0]).c_str());
+  TextIO->Print(Level::INFO, "%s: %s\n",strArg[0].c_str(),RegReadString(strArg[0]).c_str());
   return CommandReturn::OK;
 }
 
@@ -265,7 +374,7 @@ CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> str
   switch( strArg.size()) {
   case 1:			// address only means Action(masked) write
     TextIO->Print(Level::INFO, "Mask write to %s\n", saddr.c_str() );
-    regIO->RegWriteAction(saddr);
+    RegWriteAction(saddr);
     return CommandReturn::OK;
   case 3:                       // We have a count
     if(! isdigit(strArg[2][0])){
@@ -286,22 +395,22 @@ CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> str
   if(isNumericAddress ) {
     if(1 == count){
       TextIO->Print(Level::INFO, "address 0x%08X\n", uint32_t(intArg[0]) );
-      regIO->RegWriteAddress(uint32_t(intArg[0]),uint32_t(intArg[1]));    
+      RegWriteAddress(uint32_t(intArg[0]),uint32_t(intArg[1]));    
     }else{
       std::vector<uint32_t> data(count,uint32_t(intArg[1]));
       TextIO->Print(Level::INFO, "address 0x%08X to 0x%08X\n", uint32_t(intArg[0]), uint32_t(intArg[0])+count );
-      regIO->RegBlockWriteAddress(uint32_t(intArg[0]),data);
+      RegBlockWriteAddress(uint32_t(intArg[0]),data);
     }
     
   } else {
     if(1 == count){
       TextIO->Print(Level::INFO, "register %s\n", saddr.c_str());
-      regIO->RegWriteRegister(saddr,uint32_t(intArg[1]));
+      RegWriteRegister(saddr,uint32_t(intArg[1]));
     }else{
       std::vector<uint32_t> data(count,uint32_t(intArg[1]));
       uint32_t address = GetRegAddress(strArg[0]);
       TextIO->Print(Level::INFO, "address 0x%08X to 0x%08X\n", address, address+count );
-      regIO->RegBlockWriteAddress(address,data);
+      RegBlockWriteAddress(address,data);
     }
   }
 
@@ -372,9 +481,9 @@ CommandReturn::status BUTool::RegisterHelper::WriteFIFO(std::vector<std::string>
 
   //Check if the address is name or number
   if(isdigit(strArg[0][0])){
-    regIO->RegWriteAddressFIFO(intArg[0],data);
+    RegWriteAddressFIFO(intArg[0],data);
   }else{
-    regIO->RegWriteRegisterFIFO(strArg[0],data);
+    RegWriteRegisterFIFO(strArg[0],data);
   }
   return CommandReturn::OK;
 }
@@ -438,10 +547,10 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
     TextIO->Print(Level::INFO, "  %3zu: %-60s (addr=%08x mask=%08x) ", iReg+1, regNames[iReg].c_str(), addr, mask);
 
     //Print mode attribute
-    TextIO->Print(Level::INFO, "%s",regIO->GetRegMode(regName).c_str());
+    TextIO->Print(Level::INFO, "%s",GetRegMode(regName).c_str());
 
     //Print permission attribute
-    TextIO->Print(Level::INFO, "%s",regIO->GetRegPermissions(regName).c_str());
+    TextIO->Print(Level::INFO, "%s",GetRegPermissions(regName).c_str());
     if(size > 1){
       //Print permission attribute
       TextIO->Print(Level::INFO, " size=0x%08X",size);
@@ -451,16 +560,16 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
 
     //optional description
     if(describe){
-      TextIO->Print(Level::DEBUG, "       %s\n",regIO->GetRegDescription(regName).c_str());
+      TextIO->Print(Level::DEBUG, "       %s\n",GetRegDescription(regName).c_str());
     }
     
     //optional debugging info
     if(debug){
-      TextIO->Print(Level::DEBUG, "%s\n",regIO->GetRegDebug(regName).c_str());
+      TextIO->Print(Level::DEBUG, "%s\n",GetRegDebug(regName).c_str());
     }
     //optional help
     if(help){
-      TextIO->Print(Level::DEBUG, "%s\n",regIO->GetRegHelp(regName).c_str());
+      TextIO->Print(Level::DEBUG, "%s\n",GetRegHelp(regName).c_str());
     }
 
   }
