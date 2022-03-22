@@ -528,6 +528,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         TextIO->Print(Level::INFO, (reg + ":   ").c_str());
         TextIO->Print(Level::INFO, val.c_str());
         TextIO->Print(Level::INFO, "\n");
+        break;
       }
       case FP:
       {
@@ -537,6 +538,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         TextIO->Print(Level::INFO, (reg + ":   ").c_str());
         TextIO->Print(Level::INFO, std::to_string(val).c_str());
         TextIO->Print(Level::INFO, "\n");
+        break;
       }
       case INT:
       {
@@ -546,6 +548,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         TextIO->Print(Level::INFO, (reg + ":   ").c_str());
         TextIO->Print(Level::INFO, std::to_string(val).c_str());
         TextIO->Print(Level::INFO, "\n");
+        break;
       }
       case UINT:
       {
@@ -555,6 +558,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         TextIO->Print(Level::INFO, (reg + ":   ").c_str());
         TextIO->Print(Level::INFO, std::to_string(val).c_str());
         TextIO->Print(Level::INFO, "\n");
+        break;
       }
       default: 
       {
