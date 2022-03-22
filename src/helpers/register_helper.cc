@@ -515,7 +515,6 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     }
 
     // The conversion type we want
-    std::string format = RegReadConvertFormat(reg);
     ConvertType convertType = RegReadConvertType(reg);
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
