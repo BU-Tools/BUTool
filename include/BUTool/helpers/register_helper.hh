@@ -35,6 +35,8 @@ namespace BUTool{
     virtual uint32_t              RegReadAddress(uint32_t addr)=0;
     virtual uint32_t              RegReadRegister(std::string const & reg)=0;
     //convert functions
+    enum ConvertType {NONE=0, UINT=1, INT=2, FP=4, STRING=8};
+    virtual ConvertType           RegReadConvertType(std::string const & reg)=0;
     virtual std::string           RegReadConvertFormat(std::string const & reg)=0; 
     
     // Named register read+conversion functions, overloaded depending on the conversion value type

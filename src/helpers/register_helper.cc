@@ -516,46 +516,50 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
 
     // The conversion type we want
     std::string format = RegReadConvertFormat(reg);
+    ConvertType convertType = RegReadConvertType(reg);
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
-    // Enumerations
-    if ((format[0] == 'T') || (format[0] == 't') || iequals(format, std::string("IP")) || iequals(format, "X")) {
-      std::string val;
-      RegReadConvert(reg, val);
-      // Display the value to the screen
-      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-      TextIO->Print(Level::INFO, val.c_str());
-      TextIO->Print(Level::INFO, "\n");
-    }
-    // Double values
-    else if ((format[0] == 'M') || (format[0] == 'm') || (format == "fp16")) {
-      double val;
-      RegReadConvert(reg, val);
-      // Display the value to the screen
-      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-      TextIO->Print(Level::INFO, std::to_string(val).c_str());
-      TextIO->Print(Level::INFO, "\n");
-    }
-    // Integers
-    else if ((format.size() == 1) & (format[0] == 'd')) {
-      int val;
-      RegReadConvert(reg, val);
-      // Display the value to the screen
-      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-      TextIO->Print(Level::INFO, std::to_string(val).c_str());
-      TextIO->Print(Level::INFO, "\n");
-    }
-    // Unsigned integers
-    else if ((format.size() == 1) & (format[0] == 'u')) {
-      unsigned int val;
-      RegReadConvert(reg, val);
-      // Display the value to the screen
-      TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-      TextIO->Print(Level::INFO, std::to_string(val).c_str());
-      TextIO->Print(Level::INFO, "\n");
-    }
-    else {
-      return CommandReturn::BAD_ARGS;
+    switch(convertType) {
+      case STRING:
+      {
+        std::string val;
+        RegReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, val.c_str());
+        TextIO->Print(Level::INFO, "\n");
+      }
+      case FP:
+      {
+        double val;
+        RegReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+      }
+      case INT:
+      {
+        int val;
+        RegReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+      }
+      case UINT:
+      {
+        unsigned int val;
+        RegReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+      }
+      default: 
+      {
+        return CommandReturn::BAD_ARGS;
+      }
     }
   }
 
