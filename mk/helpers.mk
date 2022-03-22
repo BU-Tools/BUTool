@@ -5,7 +5,8 @@ SHELL=/bin/bash -o pipefail
 
 #add path so build can be more generic
 #
-MAKE_PATH ?= $(shell dirname $(realpath ./))
+#MAKE_PATH ?= $(shell dirname $(realpath ./))
+MAKE_PATH ?= $(realpath ./)
 
 OUTPUT_MARKUP= 2>&1 | tee -a ../make_log.txt | ccze -A
 

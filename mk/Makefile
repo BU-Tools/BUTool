@@ -10,8 +10,8 @@ RUNTIME_LDPATH?=${PWD}
 
 
 #Exception class
-LIBRARY_EXCEPTION_PATH = ${BUTOOL_PATH}/external/BUException
-LIBRARY_EXCEPTION = ${BUTOOL_PATH}/lib/libToolException.so
+LIBRARY_BUEXCEPTION_PATH ?= ${BUTOOL_PATH}/external/BUException
+LIBRARY_BUEXCEPTION      = ${LIBRARY_BUEXCEPTION_PATH}/lib/libToolException.so
 
 # BUTextIO class
 LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
@@ -38,15 +38,17 @@ EXECUTABLES = $(patsubst src/%.cxx,bin/%.exe,${EXECUTABLE_SOURCES})
 PLUGIN_DIR=plugins/
 
 RELATIVE_INCLUDE_PATH = \
-			include  \
-			${LIBRARY_EXCEPTION_PATH}/include
+			include \
+			${LIBRARY_BUEXCEPTION_PATH}/include/
 INCLUDE_PATH = $(patsubst %,-I%,$(abspath ${RELATIVE_INCLUDE_PATH}))
-export INCLUDE_PATH
+
+#export INCLUDE_PATH
 
 RELATIVE_LIBRARY_PATH = \
-			lib 
+			lib \
+			${LIBRARY_BUEXCEPTION_PATH}/lib 
 LIBRARY_PATH = $(patsubst %,-L%,$(abspath ${RELATIVE_LIBRARY_PATH}))
-export LIBRARY_PATH
+#export LIBRARY_PATH
 
 LIBRARIES =    	-lToolException		\
 		-lreadline 		\
@@ -98,8 +100,9 @@ self: ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_TOOL}  ${EXECU
 # ------------------------
 # exception library
 # ------------------------
-${LIBRARY_EXCEPTION}: 
-	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
+${LIBRARY_BUEXCEPTION}:
+	${MAKE} -C external/BUException
+#	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
 
 
 # ------------------------
@@ -116,7 +119,7 @@ ${LIBRARY_BUTEXTIO_OBJECT_FILES}: obj/%.o : src/%.cc
 # ------------------------
 # Executables
 # ------------------------
-${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_EXCEPTION} ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_BUTEXTIO}
+${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_BUEXCEPTION} ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} $< -o $@ ${LINK_EXECUTABLE_FLAGS}
 
@@ -129,7 +132,7 @@ ${EXECUTABLE_OBJECT_FILES}: obj/%.o : src/%.cxx
 # ------------------------
 # tool library
 # ------------------------
-${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO}
+${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LIBRARY_TOOL_OBJECT_FILES} ${LINK_LIBRARY_FLAGS} -o $@
 
@@ -140,7 +143,7 @@ ${LIBRARY_TOOL_OBJECT_FILES}: obj/%.o : src/%.cc
 # ------------------------
 # helpers library
 # ------------------------
-${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_EXCEPTION}
+${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION}
 	mkdir -p $(dir $@)
 	${CXX} ${LINK_LIBRARY_FLAGS} ${LIBRARY_HELPERS_OBJECT_FILES} -o $@
 
@@ -161,7 +164,7 @@ install: all
 	 install -b -m 775 ./lib/* ${INSTALL_PATH}/lib
 	 install -m 775 -d ${INSTALL_PATH}/include
 	 cp -r ./include/* ${INSTALL_PATH}/include
-	 cp -r ${LIBRARY_EXCEPTION_PATH}/include/* ${INSTALL_PATH}/include
+	 ${MAKE} install ${FLAGS} -C external/BUException
 	 ${MAKE} install ${FLAGS} -C ${PLUGIN_DIR} 
 
 
@@ -172,5 +175,5 @@ install: all
 
 FLAGS = $(ifeq $(MAKEFLAGS) "","",-$(MAKEFLAGS))
 
-plugin: ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
+plugin: ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
 	 ${MAKE} ${FLAGS} -C ${PLUGIN_DIR} 
