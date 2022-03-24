@@ -18,7 +18,7 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 
 #include "StatusDisplayMatrix.hh"
 #include "StatusDisplayCell.hh"
-
+#include <RegisterHelper/RegisterHelperIO.hh>
 
 namespace BUTool{
 
@@ -26,7 +26,7 @@ namespace BUTool{
   
   class StatusDisplay{
   public:
-    StatusDisplay();
+    StatusDisplay(RegisterHelperIO * _regIO);
     virtual ~StatusDisplay(){Clear();};
 
     void Clear(){tables.clear();};
@@ -98,12 +98,14 @@ namespace BUTool{
     std::string TableStrip(const std::string & s1);
     bool TableNameCompare(const std::string & s1, const std::string & s2);
   protected:
+    RegisterHelperIO * regIO;
     void AppendAuthor(std::string const & author);
     void SetTitle(std::string const & _title){title=_title;};
     virtual void Process(std::string const & singleTable) = 0;
     std::map<std::string,StatusDisplayMatrix> tables;
     void SetVersion(int ver){version = ver;};
   private:
+    StatusDisplay(); //do not implement
     std::string title;
     std::string authorList;
     bool debug;

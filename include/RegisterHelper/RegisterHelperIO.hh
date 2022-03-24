@@ -13,7 +13,7 @@ namespace BUTool{
     enum RegisterNameCase {UPPER,LOWER,CASE_SENSITIVE};
 
     RegisterHelperIO()  {regCase = UPPER;}
-    RegisterHelperIO(RegisterNameCase _regCase) : {regCase = _regCase;}
+    RegisterHelperIO(RegisterNameCase _regCase) {regCase = _regCase;}
     ~RegisterHelperIO() {}
 
     virtual std::vector<std::string> myMatchRegex(std::string regex)=0;

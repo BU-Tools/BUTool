@@ -1,7 +1,7 @@
 #ifndef __REGISTER_HELPER_HH__
 #define __REGISTER_HELPER_HH__
 
-#include "../CommandReturn.hh"
+#include <BUTool/CommandReturn.hh>
 
 #include <string>
 #include <vector>
@@ -11,7 +11,7 @@
 #include <BUTextIO/BUTextIO.hh>
 #include <BUTextIO/PrintLevel.hh>
 
-#include <register_helper_io.hh>
+#include <RegisterHelper/RegisterHelperIO.hh>
 
 namespace BUTool{  
   class RegisterHelper {      
@@ -36,12 +36,11 @@ namespace BUTool{
 
     std::vector<std::string> RegNameRegexSearch(std::string regex);
 
-
-  private:
+  protected:
     std::shared_ptr<RegisterHelperIO> regIO;
     BUTextIO *TextIO;
     bool newTextIO;
-    RegisterNameCase regCase;
+  private:   
     void PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero);
     CommandReturn::status ReadWithOffsetHelper(uint32_t offset,std::vector<std::string> strArg,std::vector<uint64_t> intArg);
   };
