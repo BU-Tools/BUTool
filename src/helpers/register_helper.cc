@@ -322,7 +322,7 @@ void BUTool::RegisterHelper::RegReadConvert(std::string const & reg, std::string
     val = ConvertIPAddressToString(reg);
   }
   // Hex numbers in string
-  else if (iequals(format, "x")) {
+  else if ((format[0] == 'X') || (format[0] == 'x')) {
     val = RegReadRegister(reg);
   }
   // Undefined format, throw error
