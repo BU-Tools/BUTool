@@ -8,7 +8,7 @@
 #include <stdlib.h> //strtoul
 
 #include <BUTool/ToolException.hh>
-#include <BUTool/helpers/StatusDisplay/StatusDisplayCell.hh>
+#include <StatusDisplay/StatusDisplayCell.hh>
 
 #include <arpa/inet.h> //for inet_ntoa and in_addr_t
 

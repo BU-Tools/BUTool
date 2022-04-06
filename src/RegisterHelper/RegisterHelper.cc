@@ -1,49 +1,15 @@
-#include <BUTool/helpers/register_helper.hh>
+#include <RegisterHelper/RegisterHelper.hh>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <stdio.h>
 
+#include <BUTool/ToolException.hh>
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h> //for PRI
 
-// used to check if RegisterHelper's TextIO pointer is NULL 
-// (occurs when device class does not call SetupTextIO in its c'tor)
-inline void CheckTextIO(BUTextIO* IO) {
-  if (NULL == IO) {
-    BUException::TEXTIO_BAD_INIT e;
-    throw e;
-  }
-}
-
-void BUTool::RegisterHelper::SetupTextIO() {
-  char* TEXTIO_DEBUG = getenv("TEXTIO_DEBUG");
-  if (dynamic_cast<BUTextIO*>(this)) {
-    TextIO = dynamic_cast<BUTextIO*>(this);
-    if (NULL != TEXTIO_DEBUG) {
-      printf("dynamic_cast RegisterHelper this -> BUTextIO succeeded\n");
-    }
-  }
-  else {
-    TextIO = new BUTextIO();
-    newTextIO = true;
-    if (NULL != TEXTIO_DEBUG) {
-      printf("dynamic_cast RegisterHelper this -> BUTextIO failed, creating new BUTextIO in RegisterHelper\n");
-    }
-  }
-}
-
-void BUTool::RegisterHelper::AddStream(Level::level level, std::ostream* os) {
-  // call the BUTextIO method
-  TextIO->AddOutputStream(level, os);
-}
-
-
-
-
-
 
 void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   uint32_t addr_incr = printWord64 ? 2 : 1;
   uint32_t readNumber = 0;
   uint32_t lineWordCount = printWord64 ? 4 : 8;
@@ -102,7 +68,6 @@ CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string
 
 
 CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offset,std::vector<std::string> strArg,std::vector<uint64_t> intArg){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   // sort out arguments
   size_t readCount = 1;
   std::string flags("");
@@ -132,7 +97,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offs
   case 1:                     // one must be an address
     //===================================
     numericAddr = isdigit( strArg[0].c_str()[0]);
-    ReCase(strArg[0]);
+    regIO->ReCase(strArg[0]);
     break;
   default:
     //===================================
@@ -207,7 +172,6 @@ CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offs
 
 
 CommandReturn::status BUTool::RegisterHelper::ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   // sort out arguments
   size_t readCount = 1;
   bool numericAddr = true;
@@ -243,7 +207,6 @@ CommandReturn::status BUTool::RegisterHelper::ReadFIFO(std::vector<std::string> 
 
 CommandReturn::status BUTool::RegisterHelper::ReadString(std::vector<std::string> strArg,
 							 std::vector<uint64_t> /*intArg*/){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   if (strArg.size() ==0){
     return CommandReturn::BAD_ARGS;
   }
@@ -253,12 +216,11 @@ CommandReturn::status BUTool::RegisterHelper::ReadString(std::vector<std::string
 
 CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> strArg,
 						    std::vector<uint64_t> intArg) {
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   if (strArg.size() ==0){
     return CommandReturn::BAD_ARGS;
   }
   std::string saddr = strArg[0];
-  ReCase(saddr);
+  regIO->ReCase(saddr);
   bool isNumericAddress = isdigit( saddr.c_str()[0]); 
   uint32_t count = 1;
 
@@ -299,7 +261,7 @@ CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> str
       regIO->WriteRegister(saddr,uint32_t(intArg[1]));
     }else{
       std::vector<uint32_t> data(count,uint32_t(intArg[1]));
-      uint32_t address = GetRegAddress(strArg[0]);
+      uint32_t address = regIO->GetRegAddress(strArg[0]);
       TextIO->Print(Level::INFO, "address 0x%08X to 0x%08X\n", address, address+count );
       regIO->BlockWriteAddress(address,data);
     }
@@ -309,7 +271,6 @@ CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> str
 }
 
 CommandReturn::status BUTool::RegisterHelper::WriteOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   if(strArg.size() >= 2){
     //check that argument 2 is a number
     if(isdigit(strArg[1][0])){
@@ -332,7 +293,7 @@ CommandReturn::status BUTool::RegisterHelper::WriteOffset(std::vector<std::strin
 	if(0 != offset){
 	  TextIO->Print(Level::INFO, "Addr %s + 0x%08X\n",strArg[0].c_str(),offset);
 	}
-	uint32_t addr = GetRegAddress(strArg[0]);
+	uint32_t addr = regIO->GetRegAddress(strArg[0]);
 	strArg[0] = "0"; //make it a number 
 	intArg[0] = addr + offset;
 	return Write(strArg,intArg);
@@ -345,7 +306,6 @@ CommandReturn::status BUTool::RegisterHelper::WriteOffset(std::vector<std::strin
 
 
 CommandReturn::status BUTool::RegisterHelper::WriteFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   uint32_t count = 1;
   uint32_t dataVal;
   
@@ -385,15 +345,14 @@ CommandReturn::status BUTool::RegisterHelper::WriteFIFO(std::vector<std::string>
 std::vector<std::string> BUTool::RegisterHelper::RegNameRegexSearch(std::string regex)
 {
   // return a list of nodes matching regular expression
-  ReCase(regex);
+  regIO->ReCase(regex);
   //Run the regex on the derived class's myMatchRegex
-  return myMatchRegex(regex);
+  return regIO->myMatchRegex(regex);
 }
 
 
 CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> strArg,
 						       std::vector<uint64_t> /*intArg*/){
-  CheckTextIO(TextIO); // make sure TextIO pointer isn't NULL
   std::vector<std::string> regNames;
   std::string regex;
 
@@ -429,9 +388,9 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
   for(size_t iReg = 0; iReg < matchingRegCount;iReg++){
     std::string const & regName = regNames[iReg];
     //Get register parameters
-    uint32_t addr = GetRegAddress(regName);
-    uint32_t mask = GetRegMask(regName);
-    uint32_t size = GetRegSize(regName);
+    uint32_t addr = regIO->GetRegAddress(regName);
+    uint32_t mask = regIO->GetRegMask(regName);
+    uint32_t size = regIO->GetRegSize(regName);
     
     //Print main line
     TextIO->Print(Level::INFO, "  %3zu: %-60s (addr=%08x mask=%08x) ", iReg+1, regNames[iReg].c_str(), addr, mask);

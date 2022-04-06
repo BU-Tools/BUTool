@@ -1,5 +1,5 @@
-#include <BUTool/helpers/register_helper_io.hh>
-
+#include <RegisterHelper/RegisterHelperIO.hh>
+#include <boost/algorithm/string/case_conv.hpp>
 
 std::string BUTool::RegisterHelperIO::ReadString(std::string const & /*reg*/){
   //=============================================================================
@@ -94,19 +94,19 @@ std::string BUTool::RegisterHelperIO::GetRegDebug(std::string const & /*reg*/){
   //These should be overloaded if the firmware/software natively supports these features
   //=============================================================================
   return "";
-}; 
+}
 std::string BUTool::RegisterHelperIO::GetRegHelp(std::string const & /*reg*/){
   //=============================================================================
   //placeholder for register help
   //These should be overloaded if the firmware/software natively supports these features
   //=============================================================================
   return "";
-};
+}
 
 
 
 
-void BUTool::RegisterHelper::ReCase(std::string & name){
+void BUTool::RegisterHelperIO::ReCase(std::string & name){
   switch(regCase){
   case LOWER:
     boost::algorithm::to_lower(name);    
@@ -121,14 +121,5 @@ void BUTool::RegisterHelper::ReCase(std::string & name){
   }
 }
 
-
-
-std::vector<std::string> BUTool::RegisterHelper::RegNameRegexSearch(std::string regex)
-{
-  // return a list of nodes matching regular expression
-  ReCase(regex);
-  //Run the regex on the derived class's myMatchRegex
-  return myMatchRegex(regex);
-}
 
 

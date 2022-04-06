@@ -19,19 +19,16 @@ LIBRARY_BUTEXTIO_SOURCES = $(wildcard src/BUTextIO/*.cc)
 LIBRARY_BUTEXTIO_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_BUTEXTIO_SOURCES})
 
 LIBRARY_TOOL = lib/libBUTool.so
-LIBRARY_TOOL_SOURCES  = $(wildcard src/tool/*.cc)
+LIBRARY_TOOL_SOURCES  = $(wildcard src/BUTool/*.cc)
 LIBRARY_TOOL_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_TOOL_SOURCES})
 
 LIBRARY_HELPERS = lib/libBUTool_Helpers.so
-LIBRARY_HELPERS_SOURCES  = $(wildcard src/helpers/*.cc)
-LIBRARY_HELPERS_SOURCES += $(wildcard src/helpers/StatusDisplay/*.cc)
+LIBRARY_HELPERS_SOURCES  = $(wildcard src/BUTool/helpers/*.cc)
+LIBRARY_HELPERS_SOURCES += $(wildcard src/StatusDisplay/*.cc)
+LIBRARY_HELPERS_SOURCES += $(wildcard src/RegisterHelper/*.cc)
 LIBRARY_HELPERS_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_HELPERS_SOURCES})
 
-LIBRARY_WIBDEVICE = lib/libBUTool_WIBDevice.so
-LIBRARY_WIBDEVICE_SOURCES = $(wildcard src/wib_device/*.cc)
-LIBRARY_WIBDEVICE_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_WIBDEVICE_SOURCES})
-
-EXECUTABLE_SOURCES = $(wildcard src/tool/*.cxx)
+EXECUTABLE_SOURCES = $(wildcard src/BUTool/*.cxx)
 EXECUTABLE_OBJECT_FILES = $(patsubst src/%.cxx,obj/%.o,${EXECUTABLE_SOURCES})
 EXECUTABLES = $(patsubst src/%.cxx,bin/%.exe,${EXECUTABLE_SOURCES})
 

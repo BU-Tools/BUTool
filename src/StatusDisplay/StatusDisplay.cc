@@ -5,9 +5,9 @@
 #include <ctype.h> // for isDigit()
 #include <sstream> //string streamer
 
-#include <BUTool/helpers/StatusDisplay/StatusDisplay.hh>
-#include <BUTool/helpers/StatusDisplay/StatusDisplayMatrix.hh>
-#include <BUTool/helpers/StatusDisplay/StatusDisplayCell.hh>
+#include <StatusDisplay/StatusDisplay.hh>
+#include <StatusDisplay/StatusDisplayMatrix.hh>
+#include <StatusDisplay/StatusDisplayCell.hh>
 
 #include <BUTool/ToolException.hh>
 
@@ -22,8 +22,8 @@ namespace BUTool{
   //=============================================================================
   //===== Status Class
   //=============================================================================
-  StatusDisplay::StatusDisplay()
-  {
+  StatusDisplay::StatusDisplay(RegisterHelperIO * _regIO):
+    regIO(_regIO){
     //store local copy of the svn version so we can reference it while debugging
     SetTitle("");
     AppendAuthor("Dan Gastler");

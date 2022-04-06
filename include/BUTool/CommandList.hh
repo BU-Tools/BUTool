@@ -3,89 +3,24 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "CommandReturn.hh"
-#include "CommandDataStructure.hh"
+#include <BUTool/CommandReturn.hh>
+#include <BUTool/CommandDataStructure.hh>
 #include <boost/tokenizer.hpp>
 #include "ToolException.hh"
 
-#include <BUTextIO/BUTextIO.hh>
-
 #include <boost/algorithm/string.hpp> //for to_upper
+
+#include <BUTool/CommandListBase.hh>
 
 namespace BUTool{
 
-  class CommandListBase: public BUTextIO {
-  public:
-    CommandListBase(std::string const & typeName):type(typeName){};
-    virtual ~CommandListBase(){};
-    virtual CommandReturn::status EvaluateCommand(std::vector<std::string> command)=0;
-    virtual std::string AutoCompleteCommand(std::string const & line,int state)=0;
-    virtual std::string AutoCompleteSubCommand(std::vector<std::string> const & line,
-					       std::string const & currentToken,int state)=0;
-    virtual std::string GetHelp(std::string const & command)=0;
-    virtual std::map<std::string,std::vector<std::string> > const & GetCommandList()=0;
-    virtual std::string GetType(){return type;};
-    virtual std::string GetInfo(){return info;};
-    //local BUTool variables. 
-    void SetVariable(std::string name,std::string const & value){boost::to_upper(name);BUToolVariables[name] = value;};
-    void UnsetVariable(std::string name){
-      boost::to_upper(name);
-      auto it = BUToolVariables.find(name); 
-      if(it != BUToolVariables.end()){
-	BUToolVariables.erase(it);
-      }      
-    };
-    std::string GetVariable(std::string name){
-      boost::to_upper(name);
-      auto it = BUToolVariables.find(name); 
-      if(it == BUToolVariables.end()){
-	return std::string("");}
-      return it->second;
-    };
-    bool ExistsVariable(std::string name){
-      boost::to_upper(name);
-      bool ret = true;
-      if(BUToolVariables.find(name) == BUToolVariables.end()){
-	ret=false;
-      }
-      return ret;
-    };
-    std::vector<std::string> GetVariableNames(){
-      std::vector<std::string> ret;
-      for(auto it = BUToolVariables.begin(); it!=BUToolVariables.end();it++){
-	ret.push_back(it->first);
-      }
-      return ret;
-    };
-  protected:
-    void SetInfo(std::string _info){info=_info;};
-  private:
-    std::string info;
-    std::string type;
-    CommandListBase();
-    static std::map<std::string,std::string> BUToolVariables;
-  };
 
   template<class T>
   class CommandList: public CommandListBase {
   public:
-    CommandList(std::string const & deviceType):CommandListBase(deviceType){
-      itCommand = command.begin();
-      itAlias = command_alias.begin();
-    };
+    CommandList(std::string const & deviceType);
     virtual ~CommandList(){};
-    /*=============================================================================
-      Description: 
-      Return a text string with the device type
-      =============================================================================*/
-    //    std::string GetType();  
-
-    /*=============================================================================
-      Description: 
-      Return a text string with the device information
-      =============================================================================*/
-    //    std::string GetInfo();  
-
+    
 
     /*=============================================================================
       Description: 
@@ -138,37 +73,13 @@ namespace BUTool{
     void AddCommand(std::string name, 
 		    CommandReturn::status (T::* fPtr)(std::vector<std::string>,std::vector<uint64_t>),
 		    std::string help, 
-		    std::string (T::* acPtr)(std::vector<std::string> const &,std::string const &,int)=NULL){
-      if(name.size() == 0){
-	BUException::COMMAND_LIST_ERROR e;
-	e.Append("Trying to set command with empty name\n");
-	throw e;
-      }
-      //Add teh command
-      command[name].set(fPtr,help,acPtr);
-
-      //Clear the current mapping
-      commandAndAliasList.clear();
-      //Update the commandAndAliasList;
-      GetCommandList();
-    };
+		    std::string (T::* acPtr)(std::vector<std::string> const &,std::string const &,int)=NULL);
     /*=============================================================================
       Description: 
       Makes a duplicate entry for an existing command with a new name. 
       =============================================================================*/
-    void AddCommandAlias( std::string alias, std::string existingCommand ){
-      command_map_iterator it = command.find(existingCommand);    
-      //Only add an alias if the command exists and the alias has a non-zero size
-      if(it != command.end() && (alias.size() > 0)){
-	command_alias[alias] = it->first;
-      
-	//Clear the current mapping
-	commandAndAliasList.clear();
-	//Update the commandAndAliasList;
-	GetCommandList();
+    void AddCommandAlias( std::string alias, std::string existingCommand );
 
-      }      
-    };
   private:    
 
     typedef typename std::map<std::string,CMD_DS<T> >::iterator command_map_iterator;
@@ -183,27 +94,19 @@ namespace BUTool{
 
   };
 
-//  template<class T>
-//  std::string CommandList<T>::GetType(){
-////    std::string info("Type: ");
-////    size_t typeColumnSize = 8;
-////    if(type.size() > typeColumnSize){
-////      //punt on padding and just print the type
-////      info+=type;
-////    }else{
-////      //right justify the type
-////      for(size_t paddingCharacter = 0;
-////	  paddingCharacter <  (typeColumnSize - type.size());
-////	  paddingCharacter++){
-////	info+=" ";
-////      }
-////      info+=type;
-////    }
-////    return info;
-//    return type;
-//  }
 
+  //=============================================================================
+  //Public functions:
+  //=============================================================================
 
+  //=====================================
+  template<class T>  
+  CommandList<T>::CommandList(std::string const & deviceType):CommandListBase(deviceType){
+    itCommand = command.begin();
+    itAlias = command_alias.begin();
+  }
+
+  //=====================================
   template<class T>
   CommandReturn::status CommandList<T>::EvaluateCommand(std::vector<std::string> command_line){
     //Handle no command
@@ -236,6 +139,7 @@ namespace BUTool{
     return CommandReturn::NOT_FOUND;    
   }
 
+  //=====================================
   template<class T>  
   std::string CommandList<T>::AutoCompleteCommand(std::string const & line,int state){
     // we want a static iterator that holds the current command we've considered
@@ -269,6 +173,7 @@ namespace BUTool{
     return std::string("");      
   }
   
+  //=====================================
   template<class T>
   std::string CommandList<T>::AutoCompleteSubCommand(std::vector<std::string> const & line,
 						     std::string const & currentToken,int state){
@@ -295,6 +200,7 @@ namespace BUTool{
     return std::string("");
   }
 
+  //=====================================
   template<class T>
   std::string CommandList<T>::GetHelp(std::string const & commandName){        
     command_map_iterator itCommand = command.find(commandName);	
@@ -305,6 +211,7 @@ namespace BUTool{
     return std::string("");  
   }
 
+  //=====================================
   template<class T>
   std::map<std::string,std::vector<std::string> > const & CommandList<T>::GetCommandList(){
     if(commandAndAliasList.empty()){
@@ -330,6 +237,49 @@ namespace BUTool{
     //REturn the list
     return commandAndAliasList;
   }
+
+
+  //=============================================================================
+  //Protected functions:
+  //=============================================================================
+
+  //=====================================
+  template<class T>
+  void CommandList<T>::AddCommand(std::string name, 
+				  CommandReturn::status (T::* fPtr)(std::vector<std::string>,std::vector<uint64_t>),
+				  std::string help, 
+				  std::string (T::* acPtr)(std::vector<std::string> const &,std::string const &,int)){
+    if(name.size() == 0){
+      BUException::COMMAND_LIST_ERROR e;
+      e.Append("Trying to set command with empty name\n");
+      throw e;
+    }
+    //Add teh command
+    command[name].set(fPtr,help,acPtr);
+    
+    //Clear the current mapping
+    commandAndAliasList.clear();
+    //Update the commandAndAliasList;
+    GetCommandList();
+  }
+
+  //=====================================
+  template<class T>
+  void CommandList<T>::AddCommandAlias( std::string alias, std::string existingCommand ){
+    command_map_iterator it = command.find(existingCommand);    
+    //Only add an alias if the command exists and the alias has a non-zero size
+    if(it != command.end() && (alias.size() > 0)){
+      command_alias[alias] = it->first;
+      
+      //Clear the current mapping
+      commandAndAliasList.clear();
+      //Update the commandAndAliasList;
+      GetCommandList();
+      
+    }      
+  }
+  
+
 }
 #endif
   

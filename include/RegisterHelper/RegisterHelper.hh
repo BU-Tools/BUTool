@@ -11,6 +11,8 @@
 #include <BUTextIO/BUTextIO.hh>
 #include <BUTextIO/PrintLevel.hh>
 
+#include <memory> //std::shared_ptr
+
 #include <RegisterHelper/RegisterHelperIO.hh>
 
 namespace BUTool{  
@@ -18,11 +20,13 @@ namespace BUTool{
   protected:
     // only let derived classes (device classes) use this BUTextIO functionality
     void AddStream(Level::level level, std::ostream*os);
-    void SetupTextIO();
 
-    RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO) :
-      regIO(_regIO), newTextIO(false) {}
-    ~RegisterHelper() {if (newTextIO) {delete TextIO;}}
+    RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO,
+		   std::shared_ptr<BUTextIO> _textIO) :
+      regIO(_regIO),
+      TextIO(_textIO){
+    }
+    ~RegisterHelper() {}
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
@@ -38,9 +42,9 @@ namespace BUTool{
 
   protected:
     std::shared_ptr<RegisterHelperIO> regIO;
-    BUTextIO *TextIO;
-    bool newTextIO;
+    std::shared_ptr<BUTextIO> TextIO;
   private:   
+    RegisterHelper();//never implement
     void PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero);
     CommandReturn::status ReadWithOffsetHelper(uint32_t offset,std::vector<std::string> strArg,std::vector<uint64_t> intArg);
   };
