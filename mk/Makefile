@@ -156,7 +156,7 @@ ${LIBRARY_HELPERS_OBJECT_FILES}: obj/%.o : src/%.cc
 # -----------------------
 install: all
 	 install -m 775 -d ${INSTALL_PATH}/bin
-	 install -b -m 775 ./bin/tool/BUTool.exe ${INSTALL_PATH}/bin
+	 install -b -m 775 ./bin/BUTool/BUTool.exe ${INSTALL_PATH}/bin
 	 install -m 775 -d ${INSTALL_PATH}/lib
 	 install -b -m 775 ./lib/* ${INSTALL_PATH}/lib
 	 install -m 775 -d ${INSTALL_PATH}/include
