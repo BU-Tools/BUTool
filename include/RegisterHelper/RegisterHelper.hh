@@ -22,10 +22,7 @@ namespace BUTool{
     void AddStream(Level::level level, std::ostream*os);
 
     RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO,
-		   std::shared_ptr<BUTextIO> _textIO) :
-      regIO(_regIO),
-      TextIO(_textIO){
-    }
+		   std::shared_ptr<BUTextIO> _textIO);
     ~RegisterHelper() {}
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);

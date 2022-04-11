@@ -9,6 +9,13 @@
 #include <inttypes.h> //for PRI
 
 
+BUTool::RegisterHelper::RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO,
+				       std::shared_ptr<BUTextIO> _textIO) :
+  regIO(_regIO),
+  TextIO(_textIO){
+}
+
+
 void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero){
   uint32_t addr_incr = printWord64 ? 2 : 1;
   uint32_t readNumber = 0;
