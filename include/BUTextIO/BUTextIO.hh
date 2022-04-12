@@ -11,6 +11,7 @@ public:
     void RemoveOutputStream(Level::level level, std::ostream* os);
     void ResetStreams(Level::level level);
     void Print(Level::level level, const char *fmt, ...);
+    void Print(Level::level level, const char *fmt, va_list argp);
 private:
     std::vector<BUTextController> controllers;
 };

@@ -102,9 +102,9 @@ CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
   (void) intArg; // makes compiler not complain about unused arg
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
-      printf("%s ",strArg[iArg].c_str());
+      Print(Level::INFO,"%s ",strArg[iArg].c_str());
     }
-  printf("\n");
+  Print(Level::INFO,"\n");
   return  CommandReturn::OK;
 }
 
@@ -130,19 +130,19 @@ void Launcher::HelpPrinter(std::string const &commandName,
 
   //print the help for this command
   if(!fullPrint && commandHelp.find('\n')){ 
-    printf(" %-20s:   %s\n",nameString.c_str(),
+    Print(Level::INFO," %-20s:   %s\n",nameString.c_str(),
 	   commandHelp.substr(0,commandHelp.find('\n')).c_str());
   } else { // Print full help
-    printf(" %-20s:   ",nameString.c_str());
+    Print(Level::INFO," %-20s:   ",nameString.c_str());
     boost::char_separator<char> sep("\n");
     boost::tokenizer<boost::char_separator<char> > tokens(commandHelp, sep);
     boost::tokenizer<boost::char_separator<char> >::iterator it = tokens.begin();
     if(it != tokens.end()){
-      printf("%s\n",(*it).c_str());
+      Print(Level::INFO,"%s\n",(*it).c_str());
       it++;
     }
     for ( ;it != tokens.end();++it){
-      printf("                         %s\n",(*it).c_str());
+      Print(Level::INFO,"                         %s\n",(*it).c_str());
     }
   }  
 }
@@ -358,7 +358,7 @@ std::string Launcher::autoComplete_Help(std::vector<std::string> const & line,st
 CommandReturn::status Launcher::Sleep(std::vector<std::string> strArg,
 		    std::vector<uint64_t> intArg) {
   if( strArg.size() < 1) {
-    printf("Need a delay time in seconds\n");
+    Print(Level::INFO,"Need a delay time in seconds\n");
   } else {
     double s_time = strtod( strArg[0].c_str(), NULL);
     if( s_time > 5.0) {
@@ -373,17 +373,17 @@ CommandReturn::status Launcher::Sleep(std::vector<std::string> strArg,
 #define TYPE_PADDING 10
 CommandReturn::status Launcher::ListDevices(std::vector<std::string>,std::vector<uint64_t>){
   if(device.size() > 0){
-    printf("Connected devices\n");
+    Print(Level::INFO,"Connected devices\n");
     for(size_t iDevice = 0;
 	iDevice < device.size();
 	iDevice++){    
       if(iDevice==size_t(activeDevice)){
 	//Add "*" to currently active device
-	printf("*%-2zu: %-*s%s\n",iDevice,
+	Print(Level::INFO,"*%-2zu: %-*s%s\n",iDevice,
 	       TYPE_PADDING,device[iDevice]->GetType().c_str(),
 	       device[iDevice]->GetInfo().c_str());
       }else{
-	printf("%-3zu: %-*s%s\n",iDevice,
+	Print(Level::INFO,"%-3zu: %-*s%s\n",iDevice,
 	       TYPE_PADDING,device[iDevice]->GetType().c_str(),
 	       device[iDevice]->GetInfo().c_str());
       }
@@ -397,7 +397,7 @@ CommandReturn::status Launcher::SelectDevice(std::vector<std::string>,std::vecto
     if(iArg[0] < device.size()){
       activeDevice = iArg[0];
     }else{
-      printf("Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
+      Print(Level::INFO,"Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
     }
     return CommandReturn::OK;
   }
@@ -411,7 +411,7 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
     std::ofstream * newStream = new std::ofstream(strArg[0].c_str(),std::ofstream::trunc);
     //Check that the file is ok
     if(NULL == newStream || newStream->fail()){
-      printf("Error: %s could not be opened\n",strArg[0].c_str());
+      Print(Level::INFO,"Error: %s could not be opened\n",strArg[0].c_str());
       return CommandReturn::BAD_ARGS;      
     }
     //add the newStream to the lis of ostreams that Launcher needs to clean up at the end. 
@@ -437,7 +437,7 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
 	  text_ptr->AddOutputStream(Level::INFO,newStream);
 	}	
       }else{
-	printf("Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
+	Print(Level::INFO,"Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
       }   
     } 
     return CommandReturn::OK;
@@ -473,7 +473,7 @@ CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,std::v
     ret = CommandReturn::BAD_ARGS;
   }
   if(ret == CommandReturn::OK){
-    printf("%s = \"%s\"\n",args[0].c_str(),val.c_str());
+    Print(Level::INFO,"%s = \"%s\"\n",args[0].c_str(),val.c_str());
   }
 
   return ret;
@@ -481,9 +481,9 @@ CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,std::v
 
 CommandReturn::status Launcher::ListVariables(std::vector<std::string> /*args*/,std::vector<uint64_t> /*asdf*/){
   std::vector<std::string> vars =  ((CommandListBase *)this)->GetVariableNames();
-  printf("BUTool Variables:\n");
+  Print(Level::INFO,"BUTool Variables:\n");
   for(auto it = vars.begin();it!=vars.end();it++){
-    printf("  %s\n",it->c_str());
+    Print(Level::INFO,"  %s\n",it->c_str());
   }
   return CommandReturn::OK;
 }
