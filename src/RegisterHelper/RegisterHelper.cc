@@ -1,7 +1,12 @@
 #include <RegisterHelper/RegisterHelper.hh>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <stdio.h>
+#include <stdlib.h> //strtoul
+#include <map> //map
+
+#include <arpa/inet.h> // for inet_ntoa and in_addr_t
 
 #include <BUTool/ToolException.hh>
 
@@ -56,6 +61,89 @@ CommandReturn::status BUTool::RegisterHelper::Read(std::vector<std::string> strA
 						   std::vector<uint64_t> intArg){
   //Call the print with offset code with a zero offset
   return ReadWithOffsetHelper(0,strArg,intArg);
+}
+
+CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::string> strArg,
+						   std::vector<uint64_t> intArg){
+  // There should be only "0" default integer argument
+  if (intArg.size() > 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+
+  // We expect only a single string argument: Name of the register
+  if (strArg.size() != 1) {
+    return CommandReturn::BAD_ARGS; 
+  }
+  
+  // Get the list of register names matching the regular expression specified
+  // This can be a single value, if an exact register name is given
+  // Or multiple values if a wildcard (*) is specified
+  std::vector<std::string> registerNames = regIO->GetRegsRegex(strArg[0]);
+  
+  // Loop over register names, do the reads+conversions and print them to the screen
+  for (size_t iName=0; iName < registerNames.size(); iName++) {
+    std::string reg = registerNames[iName];
+
+    // First of all, find out if we have permission to read this register
+    // If not, let's skip it for now, and not seg fault
+    bool haveReadPermission = regIO->GetRegPermissions(reg).find('r') != std::string::npos;
+    
+    if (!haveReadPermission) { 
+      TextIO->Print(Level::INFO, (reg + ":    ").c_str());
+      TextIO->Print(Level::INFO, "No read permission.\n");
+      continue; 
+    }
+
+    // The conversion type we want
+    RegisterHelperIO::ConvertType convertType = regIO->ReadConvertType(reg);
+
+    // Depending on the format, we'll call the appropriate function with the appropriate value
+    switch(convertType) {
+    case RegisterHelperIO::STRING:
+      {
+        std::string val;
+        regIO->ReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, val.c_str());
+        TextIO->Print(Level::INFO, "\n");
+        break;
+      }
+    case  RegisterHelperIO::FP:
+      {
+        double val;
+        regIO->ReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+        break;
+      }
+      case RegisterHelperIO::INT:
+      {
+        int val;
+        regIO->ReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+        break;
+      }
+    case  RegisterHelperIO::UINT:
+    default: 
+      {
+        unsigned int val;
+        regIO->ReadConvert(reg, val);
+        // Display the value to the screen
+        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
+        TextIO->Print(Level::INFO, std::to_string(val).c_str());
+        TextIO->Print(Level::INFO, "\n");
+        break;
+      }
+    }
+  }
+
+  return CommandReturn::OK; 
 }
 
 CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
@@ -135,7 +223,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offs
     }
     PrintRegAddressRange(intArg[0]+offset,readData,printWord64,skipPrintZero);
   } else {
-      std::vector<std::string> names = RegNameRegexSearch(strArg[0]);
+      std::vector<std::string> names = regIO->GetRegsRegex(strArg[0]);
       for(size_t iName = 0; iName < names.size();iName++){
         //figure out if this is an action register (write only) so we don't read it. 
         bool actionRegister = (regIO->GetRegPermissions(names[iName]).find('r') == std::string::npos);
@@ -348,16 +436,6 @@ CommandReturn::status BUTool::RegisterHelper::WriteFIFO(std::vector<std::string>
 
 
 
-
-std::vector<std::string> BUTool::RegisterHelper::RegNameRegexSearch(std::string regex)
-{
-  // return a list of nodes matching regular expression
-  regIO->ReCase(regex);
-  //Run the regex on the derived class's myMatchRegex
-  return regIO->myMatchRegex(regex);
-}
-
-
 CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> strArg,
 						       std::vector<uint64_t> /*intArg*/){
   std::vector<std::string> regNames;
@@ -368,15 +446,25 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
   bool debug = false;
   bool describe = false;
   bool help = false;
+  std::string parameterName,parameterValue;
   if( strArg.size() < 1) {
     TextIO->Print(Level::INFO, "Need regular expression after command\n");
     return CommandReturn::BAD_ARGS;
   }    
   regex = strArg[0];
 
-  if( strArg.size() > 1) {
-    boost::algorithm::to_upper(strArg[1]);
-    switch(strArg[1][0]) {
+  
+  size_t iArg = 1;
+  if((strArg[0].size() == 1) &&
+     ((strArg[0][0] == 'P') || (strArg[0][0] == 'p'))){
+    //If the first argument is just 'P' or 'p' we are doing a parameter search and we need
+    //to start parsing from 0
+    iArg = 0;
+  }					      
+  for(;iArg < strArg.size();
+      iArg++){
+    boost::algorithm::to_upper(strArg[iArg]);
+    switch(strArg[iArg][0]) {
     case 'D':
       debug = true;
       break;
@@ -386,11 +474,27 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
     case 'H':
       help = true;
       break;
+    case 'P':
+      if (iArg+2 >= strArg.size()){
+	TextIO->Print(Level::INFO,"Option P missing an argument\n");
+	return CommandReturn::BAD_ARGS;
+      }else{
+	parameterName = strArg[iArg];
+	parameterName = strArg[iArg+1];
+	//Skip the next two iargs since they are the string arguments for 'P'
+	iArg+=2;
+	
+      }
     }
   }
-
+  
   //Get the list of registers associated with the search term
-  regNames = RegNameRegexSearch(regex);
+
+  if(parameterName.size()){
+    regNames = regIO->FindRegistersWithParameter(parameterName, parameterValue);
+  }else{
+    regNames = regIO->GetRegsRegex(regex);
+  }
   size_t matchingRegCount = regNames.size();
   for(size_t iReg = 0; iReg < matchingRegCount;iReg++){
     std::string const & regName = regNames[iReg];
@@ -440,7 +544,7 @@ std::string BUTool::RegisterHelper::RegisterAutoComplete(std::vector<std::string
   if(!state) {
     //Check if we are just starting out
     pos = 0;
-    completionList = RegNameRegexSearch(currentToken+std::string("*"));
+    completionList = regIO->GetRegsRegex(currentToken+std::string("*"));
   } else {
     //move forward in pos
     pos++;

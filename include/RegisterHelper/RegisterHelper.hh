@@ -26,6 +26,7 @@ namespace BUTool{
     ~RegisterHelper() {}
 
     CommandReturn::status Read(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
+    CommandReturn::status ReadConvert(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadFIFO(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadOffset(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     CommandReturn::status ReadString(std::vector<std::string> strArg,std::vector<uint64_t> intArg);    
@@ -35,7 +36,7 @@ namespace BUTool{
     CommandReturn::status ListRegs(std::vector<std::string> strArg,std::vector<uint64_t> intArg);
     std::string RegisterAutoComplete(std::vector<std::string> const &,std::string const &,int);
 
-    std::vector<std::string> RegNameRegexSearch(std::string regex);
+    //    std::vector<std::string> RegNameRegexSearch(std::string regex);
 
   protected:
     std::shared_ptr<RegisterHelperIO> regIO;
