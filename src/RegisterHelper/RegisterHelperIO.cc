@@ -202,8 +202,8 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string 
 
 }
 
-std::map<std::string,std::string> static emptyMap;
-std::map<std::string,std::string> const & BUTool::RegisterHelperIO::GetRegParameters(std::string const & /*reg*/){
+std::unordered_map<std::string,std::string> static emptyMap;
+std::unordered_map<std::string,std::string> const & BUTool::RegisterHelperIO::GetRegParameters(std::string const & /*reg*/){
 
   BUException::FUNCTION_NOT_IMPLEMENTED e;
   e.Append("GetRegParameters wasn't overloaded, but called\n");

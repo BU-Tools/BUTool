@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
-#include <map>
+#include <unordered_map>
 
 namespace BUTool{  
   class RegisterHelperIO {  
@@ -61,7 +61,7 @@ namespace BUTool{
     virtual std::string GetRegDescription(std::string const & reg)=0;
     virtual std::string GetRegDebug(std::string const & reg);
     virtual std::string GetRegHelp(std::string const & reg);
-    virtual std::map<std::string,std::string> const & GetRegParameters(std::string const & reg);
+    virtual std::unordered_map<std::string,std::string> const & GetRegParameters(std::string const & reg);
     virtual std::string GetRegParameterValue(std::string const & reg, std::string const & name);
 
     //Handle address table name case (default is upper case)
