@@ -128,7 +128,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         unsigned int val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, "%50s: %u\n",reg.c_str(),val);
+        TextIO->Print(Level::INFO, "%50s: 0x%08X\n",reg.c_str(),val);
         break;
       }
     }
