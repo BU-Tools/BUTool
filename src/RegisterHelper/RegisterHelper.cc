@@ -89,8 +89,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     bool haveReadPermission = regIO->GetRegPermissions(reg).find('r') != std::string::npos;
     
     if (!haveReadPermission) { 
-      TextIO->Print(Level::INFO, (reg + ":    ").c_str());
-      TextIO->Print(Level::INFO, "No read permission.\n");
+      TextIO->Print(Level::INFO, "%50s: No read permission.\n",reg.c_str());
       continue; 
     }
 
@@ -104,9 +103,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         std::string val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-        TextIO->Print(Level::INFO, val.c_str());
-        TextIO->Print(Level::INFO, "\n");
+        TextIO->Print(Level::INFO, "%50s: %s\n",reg.c_str(),val.c_str());
         break;
       }
     case  RegisterHelperIO::FP:
@@ -114,9 +111,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         double val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-        TextIO->Print(Level::INFO, std::to_string(val).c_str());
-        TextIO->Print(Level::INFO, "\n");
+        TextIO->Print(Level::INFO, "%50s: %g\n",reg.c_str(),val);
         break;
       }
       case RegisterHelperIO::INT:
@@ -124,9 +119,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         int val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-        TextIO->Print(Level::INFO, std::to_string(val).c_str());
-        TextIO->Print(Level::INFO, "\n");
+        TextIO->Print(Level::INFO, "%50s: %d\n",reg.c_str(),val);
         break;
       }
     case  RegisterHelperIO::UINT:
@@ -135,9 +128,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         unsigned int val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, (reg + ":   ").c_str());
-        TextIO->Print(Level::INFO, std::to_string(val).c_str());
-        TextIO->Print(Level::INFO, "\n");
+        TextIO->Print(Level::INFO, "%50s: %u\n",reg.c_str(),val);
         break;
       }
     }
