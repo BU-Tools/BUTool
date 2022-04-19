@@ -95,7 +95,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     }
 
     // The conversion type we want
-    RegisterHelperIO::ConvertType convertType = regIO->ReadConvertType(reg);
+    RegisterHelperIO::ConvertType convertType = regIO->GetConvertType(reg);
 
     // Depending on the format, we'll call the appropriate function with the appropriate value
     switch(convertType) {

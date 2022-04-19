@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
-
+#include <map>
 
 namespace BUTool{  
   class RegisterHelperIO {  
@@ -18,7 +18,8 @@ namespace BUTool{
 
     // Register search
     virtual std::vector<std::string> GetRegsRegex(std::string regex)=0;
-    virtual std::vector<std::string> FindRegistersWithParameter(std::string const & parameterName, std::string const & parameterValue);
+    virtual std::vector<std::string> FindRegistersWithParameter(std::string const & parameterName,
+								std::string const & parameterValue);
 
    
     //reads
@@ -32,13 +33,13 @@ namespace BUTool{
 
     //convert functions
     enum ConvertType {NONE=0, UINT=1, INT=2, FP=4, STRING=8};
-    virtual ConvertType           ReadConvertType(std::string const & reg)=0;
-    virtual std::string           ReadConvertFormat(std::string const & reg)=0; 
+    ConvertType                   GetConvertType(std::string const & reg);
+    std::string                   GetConvertFormat(std::string const & reg);
     // Named register read+conversion functions, overloaded depending on the conversion value type
-    virtual void                  ReadConvert(std::string const & reg, unsigned int & val);
-    virtual void                  ReadConvert(std::string const & reg, int & val);
-    virtual void                  ReadConvert(std::string const & reg, double & val);
-    virtual void                  ReadConvert(std::string const & reg, std::string & val);
+    void                          ReadConvert(std::string const & reg, unsigned int & val);
+    void                          ReadConvert(std::string const & reg, int & val);
+    void                          ReadConvert(std::string const & reg, double & val);
+    void                          ReadConvert(std::string const & reg, std::string & val);
     
     //writes
     virtual void WriteAddress      (uint32_t addr,           uint32_t data)=0;
@@ -60,10 +61,8 @@ namespace BUTool{
     virtual std::string GetRegDescription(std::string const & reg)=0;
     virtual std::string GetRegDebug(std::string const & reg);
     virtual std::string GetRegHelp(std::string const & reg);
-    virtual std::vector<std::string> GetRegParameters(std::string const & reg);
-    virtual std::string GetRegParameterValue(std::string const & reg,std::string const & name);
-
-
+    virtual std::map<std::string,std::string> const & GetRegParameters(std::string const & reg);
+    virtual std::string GetRegParameterValue(std::string const & reg, std::string const & name);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};

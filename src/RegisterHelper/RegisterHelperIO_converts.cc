@@ -7,6 +7,54 @@
 
 #include <math.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
+std::string BUTool::RegisterHelperIO::GetConvertFormat(std::string const & reg){
+  // From a given node address, retrieve the "Format" parameter of the node
+  auto parameter = GetRegParameters(reg);
+  std::string format("none");
+  auto formatVal = parameter.find("Format");
+  if(formatVal != parameter.end()){
+    format = formatVal->second;
+  }
+  return format;   
+}
+
+BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(std::string const & reg){
+  ConvertType ret = ConvertType::NONE;
+  
+  // get conversion type
+  auto parameter = GetRegParameters(reg);
+  auto formatVal = parameter.find("Format");
+  //Search for Format
+  if(formatVal != parameter.end()){
+    std::string format = formatVal->second;
+    if(format.size() > 0){
+      if (( format[0] == 'T') ||
+	  ( format[0] == 't') ||
+	  ( boost::algorithm::iequals(format, std::string("IP")) ) ||
+	  ( boost::algorithm::iequals(format, "X")) ) {
+	ret = STRING;
+      }
+      if ((format[0] == 'M') |
+	  (format[0] == 'm') |
+	  (format == "fp16")) {
+	ret = FP;
+      }
+      if ((format.size() == 1) &&
+	  (format[0] == 'd')) {
+	ret = INT;
+      }
+      if ((format.size() == 1) &&
+	  (format[0] == 'u')) {
+	ret = UINT;
+      }
+    }
+  }
+  return ret;
+}
+
+
 double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string const & reg){
   // Helper function to do the "fp16->double" conversion
   double doubleVal;
@@ -146,9 +194,12 @@ std::vector<std::string> BUTool::RegisterHelperIO::FindRegistersWithParameter(st
   std::vector<std::string> allNames = GetRegsRegex("*");
 
   for (size_t idx=0; idx < allNames.size(); idx++) {
-    std::string value = GetRegParameterValue(allNames[idx], parameterName);
-    if (value == parameterValue) {
-      registerNames.push_back(allNames[idx]);
+    auto params = GetRegParameters(allNames[idx]);
+    auto pair = params.find(parameterName);
+    if(pair != params.end()){      
+      if (parameterValue == pair->second) {
+	registerNames.push_back(allNames[idx]);
+      }
     }
   }
 
