@@ -140,7 +140,7 @@ ${LIBRARY_TOOL_OBJECT_FILES}: obj/%.o : src/%.cc
 # ------------------------
 # helpers library
 # ------------------------
-${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION}
+${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LINK_LIBRARY_FLAGS} ${LIBRARY_HELPERS_OBJECT_FILES} -o $@
 
