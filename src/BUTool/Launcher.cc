@@ -14,14 +14,14 @@ Launcher::Launcher():CommandList<Launcher>("Launcher")
 Launcher::~Launcher()
 {
   //delete all devices
-  while(device.size() != 0){
+  while(!device.empty()){
     if(device.back() != NULL){
       delete device.back();
     }
     device.pop_back();
   }
   //delete all ostreams we created
-  while(ownedOutputStreams.size() != 0){
+  while(!ownedOutputStreams.empty()){
     if(ownedOutputStreams.back() != NULL){
       delete ownedOutputStreams.back();
     }
@@ -62,7 +62,7 @@ std::string Launcher::AutoCompleteCommand(std::string const & line, int state){
 
   std::string ret = CommandList<Launcher>::AutoCompleteCommand(line,state);
   //Try to auto complete command in Launcher
-  if(ret.size() > 0){
+  if(!ret.empty()){
     return ret;
   }else if((activeDevice >=0) && (size_t(activeDevice) < device.size())){
     //Search active device
@@ -84,7 +84,7 @@ std::string Launcher::AutoCompleteSubCommand(std::vector<std::string> const & li
 
   std::string ret = CommandList<Launcher>::AutoCompleteSubCommand(line,currentToken,state);
   //Try to auto complete command in Launcher
-  if(ret.size() > 0){
+  if(!ret.empty()){
     return ret;
   }else if((activeDevice >=0) && (size_t(activeDevice) < device.size())){
     //Search active device

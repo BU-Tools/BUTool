@@ -70,9 +70,12 @@ namespace BUTool{
   const StatusDisplayCell* StatusDisplayMatrix::GetCell(const std::string & row, const std::string & col) const {
     if (rowColMap.find(row) == rowColMap.end() || colRowMap.find(col) == colRowMap.end()) {
       BUException::BAD_VALUE e;
-      char buffer[50];
-      snprintf(buffer,49,"No cell in (\"%s\",\"%s\") position\n",row.c_str(),col.c_str());
-      e.Append(buffer);
+      
+      e.Append("No cell in (\"");
+      e.Append(row.c_str());
+      e.Append("\",\"");
+      e.Append(col.c_str());
+      e.Append("\") position\n");
       throw e;
     }
     return rowColMap.at(row).at(col);
@@ -83,9 +86,8 @@ namespace BUTool{
     uMap::const_iterator itTable= parameters.find("Table");
     if(itTable == parameters.end()){
       BUException::BAD_VALUE e;
-      char tmp[256];
-      snprintf(tmp, 255, "Missing Table value for %s \n",address.c_str());
-      e.Append( tmp);
+      e.Append("Missing Table value for ");
+      e.Append(address.c_str());
       throw e;
     }
     CheckName(NameBuilder(itTable->second,address));
@@ -110,7 +112,7 @@ namespace BUTool{
       }
       if(address.find("_HI") == (address.size()-3)){
 	baseAddress = address.substr(0,address.find("_HI"));
-	bitShift = 32;
+	bitShift = 32; //NOLINT 
 	std::string LO_address(baseAddress);
 	LO_address.append("_LO");
 	//Check if the LO word has already been placed
@@ -156,7 +158,7 @@ namespace BUTool{
 
     bool enabled=true;
     if(parameters.find("Enabled") != parameters.end()){
-      enabled = parameters.find("Enabled")->second.compare("0"); //True if string isn't equal to "0"
+      enabled = parameters.find("Enabled")->second != "0"; //True if string isn't equal to "0"
     }
 
     StatusDisplayCell * ptrCell;
@@ -268,10 +270,10 @@ namespace BUTool{
 	      position.push_back(markup[iChar]);
 	    }
 	  }
-	  if(position.size() > 0){
+	  if(!position.empty()){
 	    int pos = std::stoi(position);
 	    //build the parsed vector of position names if we haven't
-	    if(positionNames.size() == 0){
+	    if(positionNames.empty()){
 	      positionNames.push_back(name); // for _0
 	      auto itTok = tokenizedName.begin();
 	      for(;itTok!=tokenizedName.end();itTok++){
@@ -289,7 +291,7 @@ namespace BUTool{
 	      e.Append(error.c_str());
 	      throw e;
 	    }
-	    if(ret.size()){
+	    if(!ret.empty()){
 	      //add whitespace if we need it
 	      ret += " ";
 	    }
@@ -363,7 +365,7 @@ namespace BUTool{
   // render one table
   void StatusDisplayMatrix::Render(std::ostream & stream,int status,StatusMode statusMode) const
   {
-    bool forceDisplay = (status >= 99) ? true : false;
+    bool forceDisplay = (status >= 99); //NOLINT
 
     //==========================================================================
     //Rebuild our col/row map since we added something new
@@ -402,12 +404,13 @@ namespace BUTool{
 	  //update the table,row, and column display variables
 	  printTable = true;
 	  // check if this row is already marked to be suppressed
-	  if( rowKill[itColCell->first])
+	  if( rowKill[itColCell->first]) {
 	    // yes, delete entry in rowDisp if any
 	    rowDisp.erase(itColCell->first);
-	  else 
+	  } else {
 	    // nope, mark it for display
 	    rowDisp[itColCell->first] = true;
+	  }
 	  // deal with the width
 	  int width = itColCell->second->Print(-1).size();
 	  if(width > colWidth[iCol]){
@@ -427,7 +430,7 @@ namespace BUTool{
     }
     
     //Determine the width of the row header
-    int headerColWidth = 16;
+    int headerColWidth = 16; //NOLINT
     if(name.size() > size_t(headerColWidth)){
       headerColWidth = name.size();
     } 
@@ -550,7 +553,7 @@ namespace BUTool{
 	  if(itMap != colMap.end()){
 
 	    //sets the class for the td element for determining its color
-	    std::string tdClass = "";
+	    std::string tdClass;
 	    if((itMap->second->GetDesc().find("error") != std::string::npos)){
 	      tdClass = "error";
 	    }else if((itMap->second->GetDesc().find("warning") != std::string::npos)){
@@ -584,8 +587,8 @@ namespace BUTool{
     //=====================
     //Print the header
     //=====================
-    std::string headerSuffix = "";
-    std::string cols = "";
+    std::string headerSuffix;
+    std::string cols;
     std::vector<std::string> modColName;
 
 	    
@@ -623,7 +626,8 @@ namespace BUTool{
     //========================
     for (std::vector<std::string>::const_iterator itRow = rowName.begin(); itRow != rowName.end(); itRow++) {
       std::string thisRow = *itRow; 
-      char s_mask[10];
+      size_t const  s_maskSize = 10;
+      char s_mask[s_maskSize+1];
 
       while (thisRow.find("_") != std::string::npos) {
 	thisRow = thisRow.replace(thisRow.find("_"),1," ");
@@ -632,7 +636,7 @@ namespace BUTool{
       for(std::vector<std::string>::iterator itCol = modColName.begin(); itCol != modColName.end(); itCol++) {
 	std::string addr;
 
-	if (true) {
+	//	if (true) { //WTF? why is this here?
 	  if (rowColMap.at(*itRow).find(*itCol) == rowColMap.at(*itRow).end()) {
 	    addr = " ";
 	    *s_mask = '\0';
@@ -640,7 +644,7 @@ namespace BUTool{
 	  else {
 	    addr = rowColMap.at(*itRow).at(*itCol)->GetAddress();
 	    uint32_t mask = rowColMap.at(*itRow).at(*itCol)->GetMask();
-	    snprintf( s_mask, 10, "0x%x", mask );
+	    snprintf( s_mask, s_maskSize, "0x%x", mask );
 
 	    if (addr.find(".") != std::string::npos) {
 	      addr = addr.substr(addr.find_last_of(".")+1);
@@ -652,9 +656,9 @@ namespace BUTool{
 
 
 	  thisRow = thisRow + " & " + s_mask + "/" + addr;
-	} else {
-	  thisRow = thisRow + " & " + " ";
-	}
+//	} else {
+//	  thisRow = thisRow + " & " + " ";
+//	}
       }
       
       

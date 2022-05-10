@@ -114,7 +114,7 @@ namespace BUTool {
     }
 
     //Match subcommands
-    if (command.size() > 0){
+    if (!command.empty()){
       return rl_completion_matches(text,helperFunctionSubCommand);
     }
     //auto complete filenames
@@ -124,7 +124,7 @@ namespace BUTool {
 
   std::string LimitStringLines(std::string source, size_t beginLineCount, size_t endLineCount) {
   //Load the first beginLineCount lines.
-  if((source.size() > 0)&&(source.find('\n') == std::string::npos)){
+  if( (!source.empty()) && (source.find('\n') == std::string::npos)){
     source=source+'\n';
   }
   std::string beginString;
@@ -179,8 +179,9 @@ namespace BUTool {
     //Count the number of skipped lines if non-zero
     size_t skippedLineCount = 1;
     for(size_t iStr = 0; iStr < source.size();iStr++) {
-      if(source[iStr] == '\n')
+      if(source[iStr] == '\n'){
 	skippedLineCount++;
+      }
     }
     std::ostringstream s;
     s << "*** Skipping " << skippedLineCount << " lines! ***\n";

@@ -158,7 +158,7 @@ namespace BUTool{
   { 
     const int bufferSize = 20;
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
-    memset(buffer,' ',20);
+    memset(buffer,' ',bufferSize);
     buffer[bufferSize] = '\0';
 
     //Build the format string for snprintf
@@ -217,7 +217,7 @@ namespace BUTool{
       //Split the '_' separated values
       std::vector<uint64_t> mathValues;
       size_t iFormat = 1;
-      while(mathValues.size() != 6 && iFormat < format.size()){
+      while(mathValues.size() != 6 && iFormat < format.size()){//NOLINT
 	if(format[iFormat] == '_'){
 	  //start parsing
 	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
@@ -237,26 +237,26 @@ namespace BUTool{
 	}
       }
       //check that there are 6 values
-      if(mathValues.size() != 6){
+      if(mathValues.size() != 6){//NOLINT
 	return std::string(buffer);	
       }
       //check that no demoniator is 0
-      if((mathValues[2] == 0) || (mathValues[5] == 0)){
+      if((mathValues[2] == 0) || (mathValues[5] == 0)){//NOLINT
 	return std::string(buffer);
       }
 
       //computer the value ((m * x) + b)      
       double transformedValue = ComputeValue();
       //multiply by absolute value of m
-      transformedValue *= double(mathValues[1]);
-      transformedValue /= double(mathValues[2]); 
+      transformedValue *= double(mathValues[1]); //NOLINT
+      transformedValue /= double(mathValues[2]); //NOLINT
       if(mathValues[0] == 0){
 	//apply sign of m
 	transformedValue *= -1;
       }
       
-      double b = double(mathValues[4])/double(mathValues[5]);
-      if(mathValues[3] != 0){
+      double b = double(mathValues[4])/double(mathValues[5]);//NOLINT
+      if(mathValues[3] != 0){//NOLINT
 	transformedValue += b;
       }else{
 	transformedValue -= b;
@@ -301,13 +301,13 @@ namespace BUTool{
 	    floatingValue *= -1.0;
 	  }
 	}else{
-	  floatingValue = pow(2,-14)*(val.fp16.significand/1024.0);
+	  floatingValue = pow(2,-14)*(val.fp16.significand/1024.0);//NOLINT
 	  if(val.fp16.sign){
 	    floatingValue *= -1.0;
 	  }
 	}
 	break;
-      case 31:
+      case 31: //NOLINT special numbers
 	if (val.fp16.significand == 0){
 	  floatingValue = INFINITY;
 	  if(val.fp16.sign){
@@ -318,15 +318,15 @@ namespace BUTool{
 	}
 	break;
       default:
-	floatingValue = pow(2,val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
+	floatingValue = pow(2,val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));//NOLINT
 	if(val.fp16.sign){
 	  floatingValue *= -1.0;
 	}
 	break;
       }
       //only print e notation if very large or very small
-      if((fabs(floatingValue) < 10000) ||
-	 (fabs(floatingValue) > 0.001)
+      if((fabs(floatingValue) < 10000) || //NOLINT
+	 (fabs(floatingValue) > 0.001)    //NOLINT
 	 ){
 	snprintf(buffer,bufferSize,
 		 "%3.2f",floatingValue);	
@@ -344,12 +344,12 @@ namespace BUTool{
       //Normal numbers
 
       //hex formatting
-      if(iequals(format,std::string("x")) && ComputeValue() >= 10){
+      if(iequals(format,std::string("x")) && ComputeValue() >= 10){ //NOLINT
 	fmtString.assign("0x%");
 	if(width >= 0){
 	  width -= 2;
 	}
-      } else if (iequals(format,std::string("x")) && ComputeValue() < 10) {
+      } else if (iequals(format,std::string("x")) && ComputeValue() < 10) { //NOLINT
 	// get rid of the leading zeros, looks better
 	fmtString.assign("%");
       }
@@ -387,7 +387,7 @@ namespace BUTool{
 			   std::string const & thing2) const
   {
     //Checks
-    if(thing1.size() == 0){
+    if(thing1.empty()){
       thing1 = thing2;
     } else if(!iequals(thing1,thing2)) {
       BUException::BAD_VALUE e;

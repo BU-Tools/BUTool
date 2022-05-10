@@ -32,7 +32,7 @@ namespace BUTool{
     debug = false;
   }
   void StatusDisplay::AppendAuthor(std::string const & author){
-    if(!authorList.size()){
+    if(authorList.empty()){
       //list is empty
       authorList = author;
     }else{
@@ -181,9 +181,9 @@ namespace BUTool{
   const StatusDisplayMatrix* StatusDisplay::GetTable(const std::string & table) const {
     if (tables.find(table) == tables.end()) {
       BUException::BAD_VALUE e;
-      char buffer[50];
-      snprintf(buffer,49,"Table %s not found\n",table.c_str());
-      e.Append(buffer);
+      e.Append("Table ");
+      e.Append(table.c_str());
+      e.Append(" not found\n");
       throw e;
     }
     return &tables.at(table);

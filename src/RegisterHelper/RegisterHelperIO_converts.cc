@@ -29,7 +29,7 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
   //Search for Format
   if(formatVal != parameter.end()){
     std::string format = formatVal->second;
-    if(format.size() > 0){
+    if(!format.empty()){
       if (( format[0] == 'T') ||
 	  ( format[0] == 't') ||
 	  ( boost::algorithm::iequals(format, std::string("IP")) ) ||
@@ -76,7 +76,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string cons
       doubleVal = 0.0;
     }
     else {
-      doubleVal = pow(2,-14)*(val.fp16.significand/1024.0);
+      doubleVal = pow(2,-14)*(val.fp16.significand/1024.0); //NOLINT
     }
 
     // Apply sign
@@ -85,7 +85,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string cons
     }
     break;
   // Case where the exponent is maximum
-  case 31:
+  case 31: //NOLINT
     if (val.fp16.significand == 0) {
       doubleVal = INFINITY;
       if (val.fp16.sign) {
@@ -98,7 +98,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string cons
     break;
   // Cases in between
   default:
-    doubleVal = pow(2, val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
+    doubleVal = pow(2, val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0)); //NOLINT
     if (val.fp16.sign) {
       doubleVal *= -1.0;
     }
@@ -119,7 +119,7 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg,
  
   uint32_t rawVal = ReadRegister(reg);
  
-  while (mathValues.size() != 6 && iFormat < format.size()) {
+  while (mathValues.size() != 6 && iFormat < format.size()) { //NOLINT
     if (format[iFormat] == '_') {
       // Start parsing the value after the '_' and add the corresponding value to mathValues array
       for (size_t jFormat=++iFormat; jFormat < format.size(); jFormat++) {
@@ -150,7 +150,7 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg,
     transformedValue *= -1;
   }
   
-  double b = double(mathValues[4]) / double(mathValues[5]);
+  double b = double(mathValues[4]) / double(mathValues[5]); //NOLINT
   if (mathValues[3] == 0) {
     b *= -1;
   }
@@ -248,9 +248,9 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & re
     // If format starts with 't', just return the string value
     // Otherwise, return the value together with the number
     if (format[0] == 't') {
-      return enumMap[regValue].c_str();
+      return enumMap[regValue];
     }
-    return (enumMap[regValue] + " " + std::to_string(regValue)).c_str();
+    return (enumMap[regValue] + " " + std::to_string(regValue));
   }
 
   // Cannot find it, TODO: better handle this possibility

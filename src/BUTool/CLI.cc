@@ -117,7 +117,7 @@ namespace BUTool{
     int foundCommands = 0;
     
     //eat white space at the beginning of the line
-    while((line.size() > 0) && (line[0] == ' '))
+    while((!line.empty()) && (line[0] == ' '))
       {
 	line.erase(0,1); //remove the first char
       }
@@ -136,7 +136,7 @@ namespace BUTool{
       }
 
     //eat white space at the end of the line
-    while(line.size() && (line[line.size()-1] == ' '))
+    while(!line.empty() && (line[line.size()-1] == ' '))
       {
 	line.erase(line.size()-1);
       }
@@ -157,7 +157,7 @@ namespace BUTool{
 	add_history(line.c_str());	  
 	
 	//remove any white space
-	while((includeFilename.size() > 0) && (includeFilename[0] == ' '))
+	while((!includeFilename.empty()) && (includeFilename[0] == ' '))
 	  {
 	    includeFilename.erase(0,1); //remove the first char
 	  }      
@@ -187,7 +187,7 @@ namespace BUTool{
   std::vector<std::string> CLI::GetInput(Launcher * launcher)
   {
     //Command string
-    std::string currentCommand("");
+    std::string currentCommand;
     bool addToHistory=true;
 
     //Connect to the Launcher's auto-complete if it is used.
@@ -196,7 +196,7 @@ namespace BUTool{
     //Load a command
     
     //Check if we have a command from a loadedfile
-    if(Commands.size())
+    if(!Commands.empty())
       {
 	//load the first command into currentCommand
 	currentCommand = Commands.front();
@@ -225,7 +225,7 @@ namespace BUTool{
 	    
 	    //Parse the command string
 	    ProcessLine(currentCommand);
-	    if(Commands.size() && !commandsFromScript)			      
+	    if(!Commands.empty() && !commandsFromScript)			      
 	      {
 		//load the first command into currentCommand
 		currentCommand = Commands.front();

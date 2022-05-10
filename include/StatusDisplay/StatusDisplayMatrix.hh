@@ -48,7 +48,7 @@ namespace BUTool{
     
     std::string NameBuilder(std::string const & markup,
 			    std::string const & name) const;
-    void CheckName(std::string const & newName);
+    void CheckName(std::string const & newTableName);
     std::string ParseRow(uMap const & parameters,
 			 std::string const & addressBase) const;
     std::string ParseCol(uMap const & parameters,

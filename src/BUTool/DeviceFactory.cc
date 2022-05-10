@@ -32,8 +32,7 @@ bool BUTool::DeviceFactory::Register(std::string type,
     for(it = deviceMap.begin();
 	it != deviceMap.end();
 	it++){
-      if((it->second.CLI_flag.compare(CLI_flag) == 0)||
-	 (it->second.CLI_flag.compare(CLI_flag) == 0)){
+      if(it->second.CLI_flag == CLI_flag){
 	printf("Device %s's CLI arguments conflict with %s's\n",name.c_str(),it->first.c_str());
 	printf("Device %s's CLI arguments ignored\n",name.c_str());
 	registerCLI = false;
@@ -57,7 +56,7 @@ bool BUTool::DeviceFactory::Register(std::string type,
   }else{
     //This name is already registered.
     //This can happen since multiple files can include the header. 
-    if(0 != it->second.type.compare(type)){
+    if(it->second.type != type){
       //This is trying to register a device with the same name, but different type.
       //This is very bad and we are going to explode.
       BUException::CREATOR_UNREGISTERED e;
@@ -125,10 +124,9 @@ std::string BUTool::DeviceFactory::Help(std::string name){
 bool BUTool::DeviceFactory::Exists(std::string name){
   boost::algorithm::to_upper(name);
   std::map<std::string,device>::iterator it = deviceMap.find(name);
-  if(it == deviceMap.end()){
-    return false;
-  }
-  return true;
+
+  bool ret = it != deviceMap.end();
+  return ret;
 }
 
 bool BUTool::DeviceFactory::CLIArgs(std::string const & name,std::string & flag, std::string & full_flag, std::string &description){
