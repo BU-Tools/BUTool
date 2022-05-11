@@ -38,7 +38,7 @@ namespace BUTool{
   public:
     StatusDisplayMatrix(){Clear();};
     ~StatusDisplayMatrix(){Clear();};
-    void Add(std::string registerName, RegisterHelperIO* regIO);
+    void Add(std::string registerName, RegisterHelperIO* regIO, uMap const & parameters);
     void Add(std::string  address,uint32_t value, uint32_t value_mask, uMap const & parameters);
     void Render(std::ostream & stream,int status,StatusMode statusMode = TEXT) const;
     std::vector<std::string> GetTableRows() const;

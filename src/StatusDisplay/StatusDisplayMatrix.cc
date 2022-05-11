@@ -78,11 +78,9 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO)
+  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO, uMap const & parameters)
   // Add the register with registerName into a StatusDisplayMatrix table instance.
   {
-    uMap parameters = dynamic_cast<IPBusIO*>(regIO)->GetParameters(registerName);
-
     // Find the table name for this register. If we can't find one, throw an exception
     uMap::const_iterator itTable = parameters.find("Table");
     if(itTable == parameters.end()) {
