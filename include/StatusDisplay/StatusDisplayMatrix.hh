@@ -16,7 +16,7 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 #include <map>
 #include <boost/tokenizer.hpp> //for tokenizer
 #include "StatusDisplayCell.hh"
-
+#include "RegisterHelper/RegisterHelperIO.hh"
 
 #define STATUS_DISPLAY_DEFAULT_FORMAT "X"
 #define STATUS_DISPLAY_PARAMETER_PARSE_TOKEN '_'
@@ -38,6 +38,7 @@ namespace BUTool{
   public:
     StatusDisplayMatrix(){Clear();};
     ~StatusDisplayMatrix(){Clear();};
+    void Add(std::string registerName, RegisterHelperIO* regIO);
     void Add(std::string  address,uint32_t value, uint32_t value_mask, uMap const & parameters);
     void Render(std::ostream & stream,int status,StatusMode statusMode = TEXT) const;
     std::vector<std::string> GetTableRows() const;

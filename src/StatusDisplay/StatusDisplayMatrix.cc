@@ -78,40 +78,158 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, uMap const & parameters)
+  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO)
+  // Add the register with registerName into a StatusDisplayMatrix table instance.
+  {
+    uMap parameters = dynamic_cast<IPBusIO*>(regIO)->GetParameters(registerName);
+
+    // Find the table name for this register. If we can't find one, throw an exception
+    uMap::const_iterator itTable = parameters.find("Table");
+    if(itTable == parameters.end()) {
+      BUException::BAD_VALUE e;
+      char tmp[256];
+      snprintf(tmp, 255, "Missing Table value for %s \n",registerName.c_str());
+      e.Append(tmp);
+      throw e;
+    }
+    CheckName(NameBuilder(itTable->second,registerName));
+
+    // Determine row and column
+    std::string row = ParseRow(parameters,registerName);
+    std::string col = ParseCol(parameters,registerName);
+    int bitShift = 0;
+
+    // Check if registerName contains a "_HI" or a "_LO"    
+    if((registerName.find("_LO") == (registerName.size()-3)) ||
+       (registerName.find("_HI") == (registerName.size()-3))) {
+      // Search for an existing base register name
+      std::string baseRegisterName;
+      if(registerName.find("_LO") == (registerName.size()-3)) {
+        baseRegisterName = registerName.substr(0,registerName.find("_LO"));
+        bitShift = 0;
+      }
+      if(registerName.find("_HI") == (registerName.size()-3)) {
+        baseRegisterName = registerName.substr(0,registerName.find("_HI"));
+        bitShift = 32;
+        std::string LO_address(baseRegisterName);
+        LO_address.append("_LO");
+        // Check if the LO word has already been placed
+        if (cell.find(LO_address) != cell.end()) {
+          uint32_t mask = cell.at(LO_address)->GetMask();
+          while ( (mask & 0x1) == 0) {
+            mask >>= 1;
+          }
+          int count = 0;
+          while ( (mask & 0x1) == 1) {
+            count++;
+            mask >>= 1;
+          }
+          bitShift = count; //Set bitShift to be the number of bits in the LO word
+        }
+      // If LO word hasn't been placed into the table yet, assume 32
+      }
+      std::map<std::string,StatusDisplayCell*>::iterator itCell;
+      if(((itCell = cell.find(baseRegisterName)) != cell.end()) ||  //Base address exists already
+        ((itCell = cell.find(baseRegisterName+std::string("_HI"))) != cell.end()) || //Hi address exists already
+        ((itCell = cell.find(baseRegisterName+std::string("_LO"))) != cell.end())) { //Low address exists already
+        
+        if(iequals(itCell->second->GetRow(),row) && 
+          iequals(itCell->second->GetCol(),col)) {
+          // We want to combine these entries so we need to rename the old one
+          StatusDisplayCell * ptrCell = itCell->second;
+          cell.erase(ptrCell->GetAddress());
+          cell[baseRegisterName] = ptrCell;
+          ptrCell->SetAddress(baseRegisterName);	  
+          registerName=baseRegisterName;
+
+        }
+      }
+    }
+
+    //Get description,format,rule, and statuslevel    
+    std::string description = (parameters.find("Description") != parameters.end()) ? parameters.find("Description")->second : std::string("");
+    std::string statusLevel = (parameters.find("Status") != parameters.end())      ? parameters.find("Status")->second      : std::string("");
+    std::string rule        = (parameters.find("Show") != parameters.end())        ? parameters.find("Show")->second        : std::string(""); 
+    std::string format      = (parameters.find("Format") != parameters.end())      ? parameters.find("Format")->second      : STATUS_DISPLAY_DEFAULT_FORMAT; 
+
+    boost::to_upper(rule);
+
+    // Determine if this register is "enabled" to be shown
+    bool enabled=true;
+    if(parameters.find("Enabled") != parameters.end()){
+      enabled = parameters.find("Enabled")->second.compare("0"); // True if string isn't equal to "0"
+    }
+ 
+    StatusDisplayCell * ptrCell;
+    // Add or append this entry
+    if(cell.find(registerName) == cell.end()) {
+      ptrCell = new StatusDisplayCell;
+      cell[registerName] = ptrCell;
+    }
+    else {
+      ptrCell = cell[registerName];
+    }
+    ptrCell->Setup(registerName,description,row,col,format,rule,statusLevel,enabled);
+    // Read the value if it is as non-zero status level
+    // A status level of zero is for write only registers
+    if(ptrCell->DisplayLevel() > 0){
+      uint32_t value;
+      try {
+        value = regIO->ReadRegister(registerName);
+      }
+      #ifdef USE_UIO_UHAL
+      catch(uhal::exception::UIOBusError & e) {
+        continue;
+      }
+      #endif
+      catch(std::exception & e) {
+        throw e;
+      }
+      ptrCell->Fill(value,bitShift);
+    }
+    //Setup should have thrown if something bad happened, so we are safe to update the search maps
+    rowColMap[row][col] = ptrCell;
+    colRowMap[col][row] = ptrCell;
+
+    uint32_t valueMask = regIO->GetRegMask(registerName); 
+    ptrCell->SetMask(valueMask);
+
+  }
+
+  void StatusDisplayMatrix::Add(std::string registerName,uint32_t value,uint32_t value_mask, uMap const & parameters)
   {
     uMap::const_iterator itTable= parameters.find("Table");
     if(itTable == parameters.end()){
       BUException::BAD_VALUE e;
       char tmp[256];
-      snprintf(tmp, 255, "Missing Table value for %s \n",address.c_str());
+      snprintf(tmp, 255, "Missing Table value for %s \n",registerName.c_str());
       e.Append( tmp);
       throw e;
     }
-    CheckName(NameBuilder(itTable->second,address));
+    CheckName(NameBuilder(itTable->second,registerName));
     
-    //Determine address
-    boost::to_upper(address);
+    //Determine registerName
+    // boost::to_upper(registerName);
 
     //Check if the rows/columns are the same
     //Determine row and column
-    std::string row = ParseRow(parameters,address);
-    std::string col = ParseCol(parameters,address);    
+    std::string row = ParseRow(parameters,registerName);
+    std::string col = ParseCol(parameters,registerName);    
     int bitShift = 0;
     
-    //Check if address contains a "_HI" or a "_LO"    
-    if((address.find("_LO") == (address.size()-3)) ||
-       (address.find("_HI") == (address.size()-3))){
-      //Search for an existing base address
-      std::string baseAddress;
-      if(address.find("_LO") == (address.size()-3)){
-	baseAddress = address.substr(0,address.find("_LO"));
+    //Check if registerName contains a "_HI" or a "_LO"    
+    if((registerName.find("_LO") == (registerName.size()-3)) ||
+       (registerName.find("_HI") == (registerName.size()-3))){
+      //Search for an existing base register name
+      std::string baseRegisterName;
+      if(registerName.find("_LO") == (registerName.size()-3)){
+	baseRegisterName = registerName.substr(0,registerName.find("_LO"));
 	bitShift = 0;
       }
-      if(address.find("_HI") == (address.size()-3)){
-	baseAddress = address.substr(0,address.find("_HI"));
+      if(registerName.find("_HI") == (registerName.size()-3)){
+	baseRegisterName = registerName.substr(0,registerName.find("_HI"));
 	bitShift = 32;
-	std::string LO_address(baseAddress);
+	std::string LO_address(baseRegisterName);
 	LO_address.append("_LO");
 	//Check if the LO word has already been placed
 	if (cell.find(LO_address) != cell.end()) {
@@ -129,17 +247,17 @@ namespace BUTool{
 	//If LO word hasn't been placed into the table yet, assume 32
       }
       std::map<std::string,StatusDisplayCell*>::iterator itCell;
-      if(((itCell = cell.find(baseAddress)) != cell.end()) ||  //Base address exists alread
-	 ((itCell = cell.find(baseAddress+std::string("_HI"))) != cell.end()) || //Hi address exists alread
-	 ((itCell = cell.find(baseAddress+std::string("_LO"))) != cell.end())){ //Low address exists alread
+      if(((itCell = cell.find(baseRegisterName)) != cell.end()) ||  //Base address exists alread
+	 ((itCell = cell.find(baseRegisterName+std::string("_HI"))) != cell.end()) || //Hi address exists alread
+	 ((itCell = cell.find(baseRegisterName+std::string("_LO"))) != cell.end())){ //Low address exists alread
 	if(iequals(itCell->second->GetRow(),row) && 
 	   iequals(itCell->second->GetCol(),col)){
 	  //We want to combine these entries so we need to rename the old one
 	  StatusDisplayCell * ptrCell = itCell->second;
 	  cell.erase(ptrCell->GetAddress());
-	  cell[baseAddress] = ptrCell;
-	  ptrCell->SetAddress(baseAddress);	  
-	  address=baseAddress;
+	  cell[baseRegisterName] = ptrCell;
+	  ptrCell->SetAddress(baseRegisterName);	  
+	  registerName=baseRegisterName;
 
 	}
       }
@@ -161,13 +279,13 @@ namespace BUTool{
 
     StatusDisplayCell * ptrCell;
     //Add or append this entry
-    if(cell.find(address) == cell.end()){
+    if(cell.find(registerName) == cell.end()){
       ptrCell = new StatusDisplayCell;
-      cell[address] = ptrCell;
+      cell[registerName] = ptrCell;
     }else{
-      ptrCell = cell[address];
+      ptrCell = cell[registerName];
     }
-    ptrCell->Setup(address,description,row,col,format,rule,statusLevel,enabled);
+    ptrCell->Setup(registerName,description,row,col,format,rule,statusLevel,enabled);
     //Read the value if it is as non-zero status level
     //A status level of zero is for write only registers
     if(ptrCell->DisplayLevel() > 0){
