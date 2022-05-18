@@ -104,11 +104,11 @@ namespace BUTool{
 
   void StatusDisplay::ReportBody(size_t level, std::ostream & stream, std::string const & singleTable)
   {
-    //Clear any entries
+    // Clear any entries
     tables.clear();
     
-    //Call the function that processes the derived class address table
-    this->Process(singleTable);
+    // Call the function that processes a single table
+    Process(singleTable);
     printf("Process done\n");
     // Now output the content, looping over the tables
     // Eventually calls one of PrintLaTeX(), PrintHTML() or Print() for each table
@@ -117,7 +117,7 @@ namespace BUTool{
 	itTable++){
       itTable->second.Render(stream,level,statusMode);
     }
-    //Clean up tables for next time
+    // Clean up tables for next time
     tables.clear();
   }
 
@@ -208,6 +208,44 @@ namespace BUTool{
 //  const StatusDisplayCell* StatusDisplay::GetStatusDisplayCell(const std::string& table, const std::string& row, const std::string& col) const {
 //    return GetTable(table)->GetStatusDisplayCell(row,col);
 //  }
+
+  void StatusDisplay::Process(std::string const & singleTable) {
+    // Build tables
+    std::vector<std::string> Names = regIO->GetRegsRegex("*");
+    // Process all the nodes and build table structure
+    for(std::vector<std::string>::iterator itName = Names.begin();
+        itName != Names.end();
+        itName++){
+
+      // Look for a "Status" parameter
+      // If there is no such parameter, skip the register
+      std::string status;
+      try {
+        status = regIO->GetRegParameterValue(*itName, "Status");
+      } catch (BUException::BAD_REG_NAME & e) {
+        continue;
+      }
+      
+      // Check for a table name
+      std::string tableName;
+      try {
+        tableName = regIO->GetRegParameterValue(*itName, "Table");
+      } catch (BUException::BAD_REG_NAME & e) {
+        continue;
+      }
+      // Add this Address to our Tables if it matches our singleTable option, or we are looking at all tables
+      if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
+        // Add the register to the given table, with a pointer to a RegHelperIO
+        // class to read values later.
+        // If we encounter a BUS_ERROR since we cannot read the register, skip that register.
+        try {
+          tables[tableName].Add(*itName, regIO);
+        } catch (BUException::BUS_ERROR & e) {
+          continue;
+        }
+      }
+    }
+  }
 
   void StatusDisplay::SetOutputMode(StatusMode mode) { statusMode = mode;}
   /*! Get output mode */
