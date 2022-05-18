@@ -82,8 +82,9 @@ namespace BUTool{
   // Add the register with registerName into a StatusDisplayMatrix table instance.
   {
     // Find the table name for this register. If we can't find one, throw an exception
+    std::string tableName;
     try{
-      std::string tableName = regIO->GetRegParameterValue(registerName, "Table");
+      tableName = regIO->GetRegParameterValue(registerName, "Table");
     }catch (BUException::BAD_REG_NAME & e){
       BUException::BAD_VALUE e2;
       char tmp[256];
@@ -182,7 +183,7 @@ namespace BUTool{
     bool enabled=true;
     try {
       // True if string isn't equal to "0"
-      enabled=regIO->GetRegParameterValue("Enabled").compare("0");
+      enabled=regIO->GetRegParameterValue(registerName, "Enabled").compare("0");
     } catch (BUException::BAD_REG_NAME & e) {
       enabled=true;
     }
@@ -201,12 +202,7 @@ namespace BUTool{
     // A status level of zero is for write only registers
     if(ptrCell->DisplayLevel() > 0){
       uint32_t value;
-      try {
-        value = regIO->ReadRegister(registerName);
-      }
-      catch(BUException::BUS_ERROR & e) {
-        continue;
-      }
+      value = regIO->ReadRegister(registerName);
       ptrCell->Fill(value,bitShift);
     }
     //Setup should have thrown if something bad happened, so we are safe to update the search maps
