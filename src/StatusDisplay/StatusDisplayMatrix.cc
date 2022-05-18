@@ -78,23 +78,26 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO, uMap const & parameters)
+  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO)
   // Add the register with registerName into a StatusDisplayMatrix table instance.
   {
     // Find the table name for this register. If we can't find one, throw an exception
-    uMap::const_iterator itTable = parameters.find("Table");
-    if(itTable == parameters.end()) {
-      BUException::BAD_VALUE e;
+    try{
+      std::string tableName = regIO->GetRegParameterValue(registerName, "Table");
+    }catch (BUException::BAD_REG_NAME & e){
+      BUException::BAD_VALUE e2;
       char tmp[256];
       snprintf(tmp, 255, "Missing Table value for %s \n",registerName.c_str());
-      e.Append(tmp);
-      throw e;
+      e2.Append(tmp);
+      throw e2;
     }
-    CheckName(NameBuilder(itTable->second,registerName));
+    
+    CheckName(NameBuilder(tableName,registerName));
 
     // Determine row and column
-    std::string row = ParseRow(parameters,registerName);
-    std::string col = ParseCol(parameters,registerName);
+    std::string row = ParseRowOrCol(regIO,registerName,"Row");
+    std::string col = ParseRowOrCol(regIO,registerName,"Column");
+
     int bitShift = 0;
 
     // Check if registerName contains a "_HI" or a "_LO"    
@@ -144,18 +147,44 @@ namespace BUTool{
       }
     }
 
-    //Get description,format,rule, and statuslevel    
-    std::string description = (parameters.find("Description") != parameters.end()) ? parameters.find("Description")->second : std::string("");
-    std::string statusLevel = (parameters.find("Status") != parameters.end())      ? parameters.find("Status")->second      : std::string("");
-    std::string rule        = (parameters.find("Show") != parameters.end())        ? parameters.find("Show")->second        : std::string(""); 
-    std::string format      = (parameters.find("Format") != parameters.end())      ? parameters.find("Format")->second      : STATUS_DISPLAY_DEFAULT_FORMAT; 
+    // Get description,format,rule, and statuslevel
+    std::string description;
+    try {
+      description = regIO->GetRegParameterValue(registerName, "Description");
+    } catch (BUException::BAD_REG_NAME & e) {
+      description = std::string("");
+    }
+    
+    std::string statusLevel;
+    try {
+      statusLevel = regIO->GetRegParameterValue(registerName, "Status");
+    } catch (BUException::BAD_REG_NAME & e) {
+      statusLevel = std::string("");
+    }
+    
+    std::string rule;
+    try {
+      rule = regIO->GetRegParameterValue(registerName, "Show");
+    } catch (BUException::BAD_REG_NAME & e) {
+      rule = std::string("");
+    }
+    
+    std::string format;
+    try {
+      format = regIO->GetRegParameterValue(registerName, "Format");
+    } catch (BUException::BAD_REG_NAME & e) {
+      format = STATUS_DISPLAY_DEFAULT_FORMAT;
+    }
 
     boost::to_upper(rule);
 
     // Determine if this register is "enabled" to be shown
     bool enabled=true;
-    if(parameters.find("Enabled") != parameters.end()){
-      enabled = parameters.find("Enabled")->second.compare("0"); // True if string isn't equal to "0"
+    try {
+      // True if string isn't equal to "0"
+      enabled=regIO->GetRegParameterValue("Enabled").compare("0");
+    } catch (BUException::BAD_REG_NAME & e) {
+      enabled=true;
     }
  
     StatusDisplayCell * ptrCell;
@@ -175,13 +204,8 @@ namespace BUTool{
       try {
         value = regIO->ReadRegister(registerName);
       }
-      #ifdef USE_UIO_UHAL
-      catch(uhal::exception::UIOBusError & e) {
+      catch(BUException::BUS_ERROR & e) {
         continue;
-      }
-      #endif
-      catch(std::exception & e) {
-        throw e;
       }
       ptrCell->Fill(value,bitShift);
     }
@@ -192,107 +216,6 @@ namespace BUTool{
     uint32_t valueMask = regIO->GetRegMask(registerName); 
     ptrCell->SetMask(valueMask);
 
-  }
-
-  void StatusDisplayMatrix::Add(std::string registerName,uint32_t value,uint32_t value_mask, uMap const & parameters)
-  {
-    uMap::const_iterator itTable= parameters.find("Table");
-    if(itTable == parameters.end()){
-      BUException::BAD_VALUE e;
-      char tmp[256];
-      snprintf(tmp, 255, "Missing Table value for %s \n",registerName.c_str());
-      e.Append( tmp);
-      throw e;
-    }
-    CheckName(NameBuilder(itTable->second,registerName));
-    
-    //Determine registerName
-    // boost::to_upper(registerName);
-
-    //Check if the rows/columns are the same
-    //Determine row and column
-    std::string row = ParseRow(parameters,registerName);
-    std::string col = ParseCol(parameters,registerName);    
-    int bitShift = 0;
-    
-    //Check if registerName contains a "_HI" or a "_LO"    
-    if((registerName.find("_LO") == (registerName.size()-3)) ||
-       (registerName.find("_HI") == (registerName.size()-3))){
-      //Search for an existing base register name
-      std::string baseRegisterName;
-      if(registerName.find("_LO") == (registerName.size()-3)){
-	baseRegisterName = registerName.substr(0,registerName.find("_LO"));
-	bitShift = 0;
-      }
-      if(registerName.find("_HI") == (registerName.size()-3)){
-	baseRegisterName = registerName.substr(0,registerName.find("_HI"));
-	bitShift = 32;
-	std::string LO_address(baseRegisterName);
-	LO_address.append("_LO");
-	//Check if the LO word has already been placed
-	if (cell.find(LO_address) != cell.end()) {
-	  uint32_t mask = cell.at(LO_address)->GetMask();
-	  while ( (mask & 0x1) == 0) {
-	    mask >>= 1;
-	  }
-	  int count = 0;
-	  while ( (mask & 0x1) == 1) {
-	    count++;
-	    mask >>= 1;
-	  }
-	  bitShift = count; //Set bitShift t be the number of bits in the LO word
-	}
-	//If LO word hasn't been placed into the table yet, assume 32
-      }
-      std::map<std::string,StatusDisplayCell*>::iterator itCell;
-      if(((itCell = cell.find(baseRegisterName)) != cell.end()) ||  //Base address exists alread
-	 ((itCell = cell.find(baseRegisterName+std::string("_HI"))) != cell.end()) || //Hi address exists alread
-	 ((itCell = cell.find(baseRegisterName+std::string("_LO"))) != cell.end())){ //Low address exists alread
-	if(iequals(itCell->second->GetRow(),row) && 
-	   iequals(itCell->second->GetCol(),col)){
-	  //We want to combine these entries so we need to rename the old one
-	  StatusDisplayCell * ptrCell = itCell->second;
-	  cell.erase(ptrCell->GetAddress());
-	  cell[baseRegisterName] = ptrCell;
-	  ptrCell->SetAddress(baseRegisterName);	  
-	  registerName=baseRegisterName;
-
-	}
-      }
-    }
- 
-    
-    //Get description,format,rule, and statuslevel    
-    std::string description = (parameters.find("Description") != parameters.end()) ? parameters.find("Description")->second : std::string("");
-    std::string statusLevel = (parameters.find("Status") != parameters.end())      ? parameters.find("Status")->second      : std::string("");
-    std::string rule        = (parameters.find("Show") != parameters.end())        ? parameters.find("Show")->second        : std::string(""); 
-    std::string format      = (parameters.find("Format") != parameters.end())      ? parameters.find("Format")->second      : STATUS_DISPLAY_DEFAULT_FORMAT; 
-
-    boost::to_upper(rule);
-
-    bool enabled=true;
-    if(parameters.find("Enabled") != parameters.end()){
-      enabled = parameters.find("Enabled")->second.compare("0"); //True if string isn't equal to "0"
-    }
-
-    StatusDisplayCell * ptrCell;
-    //Add or append this entry
-    if(cell.find(registerName) == cell.end()){
-      ptrCell = new StatusDisplayCell;
-      cell[registerName] = ptrCell;
-    }else{
-      ptrCell = cell[registerName];
-    }
-    ptrCell->Setup(registerName,description,row,col,format,rule,statusLevel,enabled);
-    //Read the value if it is as non-zero status level
-    //A status level of zero is for write only registers
-    if(ptrCell->DisplayLevel() > 0){
-      ptrCell->Fill(value,bitShift);
-    }
-    //Setup should have thrown if something bad happened, so we are safe to update the search maps
-    rowColMap[row][col] = ptrCell;
-    colRowMap[col][row] = ptrCell;    
-    ptrCell->SetMask(value_mask);
   }
 
   void StatusDisplayMatrix::CheckName(std::string const & newTableName)
@@ -433,47 +356,29 @@ namespace BUTool{
     return ret;
   }
 
-  std::string StatusDisplayMatrix::ParseRow(uMap const & parameters,
-					    std::string const & addressBase) const
+  std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
+              std::string const & addressBase,
+              std::string const & parameterName) const
   {
-    uMap::const_iterator rowName = parameters.find("Row");
-    std::string newRow;
-    //Row
-    if(rowName != parameters.end()){
-      //Grab the row name and store it
-      newRow = rowName->second;
-      boost::to_upper(newRow);
-      newRow = NameBuilder(newRow,addressBase);
-    }else{
-      //Missing row
+    // Get row or column name, as specified by the parameterName argument
+    std::string newName;
+    try {
+      newName = regIO->GetRegParameterValue(addressBase, parameterName);
+    } catch (BUException::BAD_REG_NAME & e) {
+      // Missing row or column
       BUException::BAD_VALUE e;
-      std::string error("Missing row for ");
+      std::string error("Missing ");
+      error += parameterName;
+      error += " for ";
       error += addressBase;
       e.Append(error.c_str());
-      throw e;
+      throw e; 
     }
-    return newRow;
-  }
-  std::string StatusDisplayMatrix::ParseCol(uMap const & parameters,
-					 std::string const & addressBase) const
-  {    
-    uMap::const_iterator colName = parameters.find("Column");
 
-    std::string newCol;
-    //Col
-    if(colName != parameters.end()){
-      newCol = colName->second;
-      boost::to_upper(newCol);
-      newCol = NameBuilder(newCol,addressBase);
-    }else{
-      //Missing col
-      BUException::BAD_VALUE e;
-      std::string error("Missing col for ");
-      error += addressBase;
-      e.Append(error.c_str());
-      throw e;
-    }
-    return newCol;
+    boost::to_upper(newName);
+    newName = NameBuilder(newName, addressBase);
+
+    return newName;
   }
 
   // render one table

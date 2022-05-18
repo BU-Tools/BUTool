@@ -38,8 +38,7 @@ namespace BUTool{
   public:
     StatusDisplayMatrix(){Clear();};
     ~StatusDisplayMatrix(){Clear();};
-    void Add(std::string registerName, RegisterHelperIO* regIO, uMap const & parameters);
-    void Add(std::string  address,uint32_t value, uint32_t value_mask, uMap const & parameters);
+    void Add(std::string registerName, RegisterHelperIO* regIO);
     void Render(std::ostream & stream,int status,StatusMode statusMode = TEXT) const;
     std::vector<std::string> GetTableRows() const;
     std::vector<std::string> GetTableColumns() const;
@@ -50,10 +49,9 @@ namespace BUTool{
     std::string NameBuilder(std::string const & markup,
 			    std::string const & name) const;
     void CheckName(std::string const & newName);
-    std::string ParseRow(uMap const & parameters,
-			 std::string const & addressBase) const;
-    std::string ParseCol(uMap const & parameters,
-			 std::string const & addressBase) const;
+    std::string ParseRowOrCol(RegisterHelperIO* regIO,
+			 std::string const & addressBase,
+       std::string const & parameterName) const;
 
     std::vector<StatusDisplayCell*> row(std::string const &);
     std::vector<StatusDisplayCell*> col(std::string const &);
