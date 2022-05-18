@@ -148,13 +148,8 @@ namespace BUTool{
       }
     }
 
-    // Get description,format,rule, and statuslevel
-    std::string description;
-    try {
-      description = regIO->GetRegParameterValue(registerName, "Description");
-    } catch (BUException::BAD_REG_NAME & e) {
-      description = std::string("");
-    }
+    // Get description, format, rule, and status level
+    std::string description = regIO->GetRegDescription(registerName);
     
     std::string statusLevel;
     try {
