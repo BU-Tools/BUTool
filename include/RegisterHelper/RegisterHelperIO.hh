@@ -76,6 +76,7 @@ namespace BUTool{
     double      ConvertIntegerToDouble(std::string const & reg, std::string const & format);
     std::string ConvertEnumToString(std::string const & reg, std::string const & format);
     std::string ConvertIPAddressToString(std::string const & reg);
+    std::string ConvertHexNumberToString(std::string const & reg);
 
   private:
     RegisterNameCase regCase;

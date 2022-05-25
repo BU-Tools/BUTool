@@ -176,7 +176,7 @@ namespace BUTool{
 
         // Hex formatting for format='x' or format='X'
         if (iequals(format, std::string("x"))) {
-          uint64_t val = uint64_t(value);
+          uint32_t val = regIO->ReadRegister(address);
           if (val >= 10) {
             fmtString.assign("0x%");
             if (width >= 0) {

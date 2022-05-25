@@ -190,7 +190,7 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string 
   }
   // Hex numbers in string
   else if ((format[0] == 'X') || (format[0] == 'x')) {
-    val = ReadRegister(reg);
+    val = ConvertHexNumberToString(reg);
   }
   // Undefined format, throw error
   else {

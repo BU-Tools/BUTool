@@ -275,3 +275,20 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & re
 
   return std::string(buffer);
 }
+
+std::string BUTool::RegisterHelperIO::ConvertHexNumberToString(std::string const & reg){
+  // Helper function to convert uint32_t to string in hex format
+  
+  // Read 32-bit value from register
+  uint32_t regValue = ReadRegister(reg);
+
+  // Write the value into a buffer in hex-format,
+  // return it as a C++ string
+  const int bufferSize = 20;
+  char buffer[bufferSize+1];
+  buffer[bufferSize] = '\0';
+
+  snprintf(buffer, bufferSize, "0x%" PRIX64, regValue);
+
+  return std::string(buffer);
+}
