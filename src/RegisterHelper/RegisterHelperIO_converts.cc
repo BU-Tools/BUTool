@@ -9,6 +9,10 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+//For PRI macros
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 std::string BUTool::RegisterHelperIO::GetConvertFormat(std::string const & reg){
   // From a given node address, retrieve the "Format" parameter of the node
   auto parameter = GetRegParameters(reg);
@@ -244,15 +248,30 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & re
   // Now we have the enumeration map, read the integer value from the register
   // Then return the corresponding string
   uint32_t regValue = ReadRegister(reg);
+
+  // Store the result in this C-style buffer
+  // This function will return the content in this buffer
+  // after converting it into a C++ string 
+  const int bufferSize = 20;
+  char buffer[bufferSize+1];
+  memset(buffer,' ',20);
+  buffer[bufferSize] = '\0';
+
   if (enumMap.find(regValue) != enumMap.end()) {
     // If format starts with 't', just return the string value
     // Otherwise, return the value together with the number
     if (format[0] == 't') {
-      return enumMap[regValue].c_str();
+      snprintf(buffer,bufferSize,"%s",enumMap[regValue].c_str());
     }
-    return (enumMap[regValue] + " " + std::to_string(regValue)).c_str();
+    else {
+      snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[regValue].c_str(),regValue);
+    }
+  }
+  
+  // Could not find the value in enumeration map
+  else {
+    snprintf(buffer,bufferSize,"0x%" PRIX64 ")",regValue);
   }
 
-  // Cannot find it, TODO: better handle this possibility
-  return "NOT_FOUND";
+  return std::string(buffer);
 }
