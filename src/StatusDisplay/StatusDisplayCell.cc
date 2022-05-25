@@ -38,14 +38,15 @@ namespace BUTool{
     enabled = true;
     statusLevel = 0;
   }
-  void StatusDisplayCell::Setup(std::string const & _address,  //stripped of Hi/Lo
-		   std::string const & _description,
-		   std::string const & _row, //Stripped of Hi/Lo
-		   std::string const & _col, //Stripped of Hi/Lo
-		   std::string const & _format,
-		   std::string const & _rule,
-		   std::string const & _statusLevel,
-		   bool _enabled)
+  void StatusDisplayCell::Setup(RegisterHelperIO * _regIO,
+      std::string const & _address,  //stripped of Hi/Lo
+		  std::string const & _description,
+		  std::string const & _row, //Stripped of Hi/Lo
+		  std::string const & _col, //Stripped of Hi/Lo
+		  std::string const & _format,
+		  std::string const & _rule,
+		  std::string const & _statusLevel,
+		  bool _enabled)
   {
     //These must all be the same
     CheckAndThrow("Address",address,_address);
@@ -61,6 +62,7 @@ namespace BUTool{
     statusLevel = strtoul(_statusLevel.c_str(),
 		     NULL,0);
     enabled = _enabled;
+    regIO = _regIO;
   }
 
   void StatusDisplayCell::Fill(uint32_t value,
@@ -163,222 +165,101 @@ namespace BUTool{
 
     //Build the format string for snprintf
     std::string fmtString("%");
-    if((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))){
-      // t(T) is for enum
-      std::map<uint64_t,std::string> enumMap;
-      size_t iFormat = 1;
-      while(iFormat < format.size()){
-	if(format[iFormat] == '_'){
-	  //start parsing 
-	  uint64_t val = 0;
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      val = strtoul(format.substr(iFormat,jFormat-iFormat).c_str(),NULL,0);	      
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      enumMap[val] = format.substr(iFormat,jFormat-iFormat);
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	}else{
-	  iFormat++;
-	}
-      }
-      uint64_t regValue = ComputeValue();
-      if(enumMap.find(regValue) != enumMap.end()){
-	if('t' == format[0]){
-	  //Just format for 't'
-	  snprintf(buffer,bufferSize,"%s",enumMap[regValue].c_str());
-	}else{
-	  //format and number in hex for 'T'
-	  snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[regValue].c_str(),regValue);
-	}       
-      }else{
-	snprintf(buffer,bufferSize,"0x%" PRIX64 ")",regValue);
-      }
-    }else if((format.size() > 1) && (('m' == format[0]) || ('M' == format[0]))){      
-      //Convert from integer to floating point using
-      //y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
-      //      [0]   [1] [2]       [3]    [4] [5]
-      // sign == 0 is negative, all others mean positive
-      //Split the '_' separated values
-      std::vector<uint64_t> mathValues;
-      size_t iFormat = 1;
-      while(mathValues.size() != 6 && iFormat < format.size()){
-	if(format[iFormat] == '_'){
-	  //start parsing
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      uint64_t val = strtoull(format.substr(iFormat,jFormat-iFormat).c_str(),NULL,0);
-	      mathValues.push_back(val);
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	}else{
-	  iFormat++;
-	}
-      }
-      //check that there are 6 values
-      if(mathValues.size() != 6){
-	return std::string(buffer);	
-      }
-      //check that no demoniator is 0
-      if((mathValues[2] == 0) || (mathValues[5] == 0)){
-	return std::string(buffer);
-      }
 
-      //computer the value ((m * x) + b)      
-      double transformedValue = ComputeValue();
-      //multiply by absolute value of m
-      transformedValue *= double(mathValues[1]);
-      transformedValue /= double(mathValues[2]); 
-      if(mathValues[0] == 0){
-	//apply sign of m
-	transformedValue *= -1;
-      }
-      
-      double b = double(mathValues[4])/double(mathValues[5]);
-      if(mathValues[3] != 0){
-	transformedValue += b;
-      }else{
-	transformedValue -= b;
-      }
+    // Get the conversion type for this register, and read+write values to the buffer
+    RegisterHelperIO::ConvertType convertType = regIO->GetConvertType(address);
+    switch(convertType) {
+      case RegisterHelperIO::STRING:
+      {
+        std::string value;
+        regIO->ReadConvert(address, value);
 
-      //print it
-      snprintf(buffer,bufferSize,	       
-	       "%3.2f",transformedValue);
+        // Hex formatting for format='x' or format='X'
+        if (iequals(format, std::string("x"))) {
+          uint64_t val = uint64_t(value);
+          if (val >= 10) {
+            fmtString.assign("0x%");
+            if (width >= 0) {
+              width -= 2;
+            }
+          }
+          else {
+            fmtString.assign("%");
+          }
 
-    }else if(iequals(format,std::string("linear11"))){
-      //union/struct magic to automatically convert the 11 base  and
-      //5 bit mantissa into ints which are assigned via the raw value
-      //This is the nused to build the floating point value
-      union {
-	struct {
-	  int16_t integer  : 11;
-	  int16_t exponent :  5;
-	} linear11;
-	int16_t raw;} val;
-      val.raw = ComputeValue();
-      double floatingValue = double(val.linear11.integer) * pow(2,val.linear11.exponent);
-      snprintf(buffer,bufferSize,
-	       "%3.3f",floatingValue);
-    }else if(iequals(format,std::string("fp16"))){
-      //union/struct magic to automatically convert the 1 sign, 10 base  and
-      //5 bit mantissa into ints which are assigned via the raw value
-      //This is the nused to build the floating point value
-      union {
-	struct {
-	  uint16_t significand : 10;
-	  uint16_t exponent    :  5;
-	  uint16_t sign        :  1;
-	} fp16;
-	int16_t raw;} val;
-      val.raw = ComputeValue();
-      double floatingValue;
-      switch (val.fp16.exponent){
-      case 0:
-	if (val.fp16.significand == 0){
-	  floatingValue = 0.0;
-	  if(val.fp16.sign){
-	    floatingValue *= -1.0;
-	  }
-	}else{
-	  floatingValue = pow(2,-14)*(val.fp16.significand/1024.0);
-	  if(val.fp16.sign){
-	    floatingValue *= -1.0;
-	  }
-	}
-	break;
-      case 31:
-	if (val.fp16.significand == 0){
-	  floatingValue = INFINITY;
-	  if(val.fp16.sign){
-	    floatingValue *= -1;
-	  }
-	}else{
-	  floatingValue = NAN;
-	}
-	break;
+          if (width >= 0) {
+            fmtString.append("*");
+          }
+          fmtString.append(PRIX64);
+
+          if (width == -1) {
+            snprintf(buffer, bufferSize, fmtString.c_str(), val);
+          }
+          else {
+            snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
+          }
+        }
+        else {
+          snprintf(buffer,bufferSize,"%s",value);
+        }
+        break;
+      }
+      case RegisterHelperIO::FP:
+      {
+        double value;
+        regIO->ReadConvert(address, value);
+        if (iequals(format, std::string("fp16"))) {
+          // If the double value is very large or very small, use scientific notation
+          if ((fabs(value) > 10000) || (fabs(value) < 0.001)) {
+            snprintf(buffer,bufferSize,"%3.2e",value);
+          }
+        }
+        else if (iequals(format,std::string("linear11"))) {
+          snprintf(buffer,bufferSize,"%3.3f",value);  
+        }
+        else {
+          snprintf(buffer,bufferSize,"%3.2f",value);
+        }
+        break;
+      }
+      case RegisterHelperIO::INT:
+      {
+        int value;
+        regIO->ReadConvert(address, value);
+        // If we are specifying the width, add a *
+        if (width >= 0) {
+          fmtString.append("*");
+        }
+        fmtString.append(PRId64);
+
+        if (width == -1) {
+          snprintf(buffer, bufferSize, fmtString.c_str(), value);
+        }
+        else {
+          snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+        }
+        break;
+      }
+      case RegisterHelperIO::UINT:
+      case RegisterHelperIO::NONE:
       default:
-	floatingValue = pow(2,val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
-	if(val.fp16.sign){
-	  floatingValue *= -1.0;
-	}
-	break;
-      }
-      //only print e notation if very large or very small
-      if((fabs(floatingValue) < 10000) ||
-	 (fabs(floatingValue) > 0.001)
-	 ){
-	snprintf(buffer,bufferSize,
-		 "%3.2f",floatingValue);	
-      }else{
-	snprintf(buffer,bufferSize,
-		 "%3.2e",floatingValue);
-      }
-    }else if(iequals(format,std::string("IP"))){
-      struct in_addr addr;
-      addr.s_addr= in_addr_t(ComputeValue());
-      snprintf(buffer,bufferSize,
-	       "%s",inet_ntoa(addr));
-      
-    }else{
-      //Normal numbers
-
-      //hex formatting
-      if(iequals(format,std::string("x")) && ComputeValue() >= 10){
-	fmtString.assign("0x%");
-	if(width >= 0){
-	  width -= 2;
-	}
-      } else if (iequals(format,std::string("x")) && ComputeValue() < 10) {
-	// get rid of the leading zeros, looks better
-	fmtString.assign("%");
-      }
-      
-      //if we are specifying the width, add a *
-      if(width >= 0){
-	fmtString.append("*");
-      }
-
-      //add the PRI stuff for our uint64_t
-      if(iequals(format,std::string("x"))){
-	fmtString.append(PRIX64);
-      }else if(iequals(format,std::string("d"))){
-	fmtString.append(PRId64);
-      }else if(iequals(format,std::string("u"))){
-	fmtString.append(PRIu64);
-      }
- 
-
-      //Generatethe string
-      if(width == -1){      
-	snprintf(buffer,bufferSize,
-		 fmtString.c_str(),ComputeValue());
-      }else{
-	snprintf(buffer,bufferSize,	       
-		 fmtString.c_str(),width,ComputeValue());
+      {
+        unsigned int value;
+        regIO->ReadConvert(address, value);
+        // If we are specifying the width, add a *
+        if (width >= 0) {
+          fmtString.append("*");
+        }
+        fmtString.append(PRIu64);
+        if (width == -1) {
+          snprintf(buffer, bufferSize, fmtString.c_str(), value);
+        }
+        else {
+          snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+        }
+        break;
       }
     }
-    //return the string
     return std::string(buffer);
   }
 

@@ -92,7 +92,18 @@ namespace BUTool{
 
     int bitShift = 0;
 
-    // Check if registerName contains a "_HI" or a "_LO"    
+    // Check if registerName ends with a "_HI" or a "_LO"    
+    // Skip such registers for now because we can't handle them
+    if((registerName.find("_LO") == (registerName.size()-3)) ||
+       (registerName.find("_HI") == (registerName.size()-3))) {
+        BUException::BAD_REG_NAME e;
+        e.Append("Register name: ");
+        e.Append(registerName);
+        throw e;
+    }
+
+    // Check if registerName contains a "_HI" or a "_LO"
+    // TODO: Can possibly remove this block if we're not going to display such registers anyway
     if((registerName.find("_LO") == (registerName.size()-3)) ||
        (registerName.find("_HI") == (registerName.size()-3))) {
       // Search for an existing base register name
@@ -146,14 +157,14 @@ namespace BUTool{
     try {
       statusLevel = regIO->GetRegParameterValue(registerName, "Status");
     } catch (BUException::BAD_VALUE & e) {
-      statusLevel = std::string("");
+      statusLevel = std::string();
     }
     
     std::string rule;
     try {
       rule = regIO->GetRegParameterValue(registerName, "Show");
     } catch (BUException::BAD_VALUE & e) {
-      rule = std::string("");
+      rule = std::string();
     }
     
     std::string format;
@@ -183,7 +194,7 @@ namespace BUTool{
     else {
       ptrCell = cell[registerName];
     }
-    ptrCell->Setup(registerName,description,row,col,format,rule,statusLevel,enabled);
+    ptrCell->Setup(regIO,registerName,description,row,col,format,rule,statusLevel,enabled);
     // Read the value if it is as non-zero status level
     // A status level of zero is for write only registers
     if(ptrCell->DisplayLevel() > 0){
