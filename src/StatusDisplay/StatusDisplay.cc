@@ -217,32 +217,21 @@ namespace BUTool{
         itName != Names.end();
         itName++){
 
-      // Look for a "Status" parameter
-      // If there is no such parameter, skip the register
-      std::string status;
       try {
-        status = regIO->GetRegParameterValue(*itName, "Status");
-      } catch (BUException::BAD_REG_NAME & e) {
-        continue;
-      }
-      
-      // Check for a table name
-      std::string tableName;
-      try {
-        tableName = regIO->GetRegParameterValue(*itName, "Table");
-      } catch (BUException::BAD_REG_NAME & e) {
-        continue;
-      }
-      // Add this Address to our Tables if it matches our singleTable option, or we are looking at all tables
-      if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
-        // Add the register to the given table, with a pointer to a RegHelperIO
-        // class to read values later.
-        // If we encounter a BUS_ERROR since we cannot read the register, skip that register.
-        try {
+        // Look for parameters: "Status", "Table"
+        // If one or more of these parameters do not exist, skip this register
+        std::string status = regIO->GetRegParameterValue(*itName, "Status");
+        std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+        
+        // If this cell is in the table we're looking for, add it to the
+        // relevant StatusDisplayMatrix instance
+        if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
           tables[tableName].Add(*itName, regIO);
-        } catch (BUException::BUS_ERROR & e) {
-          continue;
         }
+      } catch(BUException::BUS_ERROR & e) {
+        continue;
+      } catch(BUException::BAD_VALUE & e) {
+        continue;
       }
     }
   }

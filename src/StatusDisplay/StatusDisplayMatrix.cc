@@ -82,16 +82,7 @@ namespace BUTool{
   // Add the register with registerName into a StatusDisplayMatrix table instance.
   {
     // Find the table name for this register. If we can't find one, throw an exception
-    std::string tableName;
-    try{
-      tableName = regIO->GetRegParameterValue(registerName, "Table");
-    }catch (BUException::BAD_REG_NAME & e){
-      BUException::BAD_VALUE e2;
-      char tmp[256];
-      snprintf(tmp, 255, "Missing Table value for %s \n",registerName.c_str());
-      e2.Append(tmp);
-      throw e2;
-    }
+    std::string tableName = regIO->GetRegParameterValue(registerName, "Table");
     
     CheckName(NameBuilder(tableName,registerName));
 
@@ -154,21 +145,21 @@ namespace BUTool{
     std::string statusLevel;
     try {
       statusLevel = regIO->GetRegParameterValue(registerName, "Status");
-    } catch (BUException::BAD_REG_NAME & e) {
+    } catch (BUException::BAD_VALUE & e) {
       statusLevel = std::string("");
     }
     
     std::string rule;
     try {
       rule = regIO->GetRegParameterValue(registerName, "Show");
-    } catch (BUException::BAD_REG_NAME & e) {
+    } catch (BUException::BAD_VALUE & e) {
       rule = std::string("");
     }
     
     std::string format;
     try {
       format = regIO->GetRegParameterValue(registerName, "Format");
-    } catch (BUException::BAD_REG_NAME & e) {
+    } catch (BUException::BAD_VALUE & e) {
       format = STATUS_DISPLAY_DEFAULT_FORMAT;
     }
 
@@ -179,7 +170,7 @@ namespace BUTool{
     try {
       // True if string isn't equal to "0"
       enabled=regIO->GetRegParameterValue(registerName, "Enabled").compare("0");
-    } catch (BUException::BAD_REG_NAME & e) {
+    } catch (BUException::BAD_VALUE & e) {
       enabled=true;
     }
  
@@ -355,7 +346,7 @@ namespace BUTool{
     std::string newName;
     try {
       newName = regIO->GetRegParameterValue(addressBase, parameterName);
-    } catch (BUException::BAD_REG_NAME & e) {
+    } catch (BUException::BAD_VALUE & e) {
       // Missing row or column
       BUException::BAD_VALUE e;
       std::string error("Missing ");
