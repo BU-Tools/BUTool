@@ -232,6 +232,8 @@ namespace BUTool{
         continue;
       } catch(BUException::BAD_VALUE & e) {
         continue;
+      } catch(BUException::BAD_REG_NAME & e) {
+        continue;
       }
     }
   }
