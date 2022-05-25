@@ -200,7 +200,7 @@ namespace BUTool{
           }
         }
         else {
-          snprintf(buffer,bufferSize,"%s",value);
+          snprintf(buffer,bufferSize,"%s",value.c_str());
         }
         break;
       }
