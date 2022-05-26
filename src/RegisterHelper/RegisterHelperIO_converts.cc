@@ -264,13 +264,13 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & re
       snprintf(buffer,bufferSize,"%s",enumMap[regValue].c_str());
     }
     else {
-      snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[regValue].c_str(),regValue);
+      snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[regValue].c_str(),uint64_t(regValue));
     }
   }
   
   // Could not find the value in enumeration map
   else {
-    snprintf(buffer,bufferSize,"0x%" PRIX64 ")",regValue);
+    snprintf(buffer,bufferSize,"0x%" PRIX64 ")",uint64_t(regValue));
   }
 
   return std::string(buffer);
@@ -288,7 +288,7 @@ std::string BUTool::RegisterHelperIO::ConvertHexNumberToString(std::string const
   char buffer[bufferSize+1];
   buffer[bufferSize] = '\0';
 
-  snprintf(buffer, bufferSize, "0x%" PRIX64, regValue);
+  snprintf(buffer, bufferSize, "0x%" PRIX64, uint64_t(regValue));
 
   return std::string(buffer);
 }
