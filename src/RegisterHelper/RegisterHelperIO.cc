@@ -135,7 +135,7 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, uint64_t & v
 }
 
 
-void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int & val){
+void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int64_t & val){
   // Read the value from the named register, and update the value in place
   int rawVal = ReadRegister(reg); //convert bits to int from uint32_t
   int mask   = GetRegMask(reg);

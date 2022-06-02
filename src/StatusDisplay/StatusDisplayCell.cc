@@ -224,7 +224,7 @@ namespace BUTool{
       }
       case RegisterHelperIO::INT:
       {
-        int value;
+        int64_t value;
         regIO->ReadConvert(address, value);
         // If we are specifying the width, add a *
         if (width >= 0) {

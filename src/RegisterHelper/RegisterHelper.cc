@@ -116,7 +116,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
       }
       case RegisterHelperIO::INT:
       {
-        int val;
+        int64_t val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
         TextIO->Print(Level::INFO, "%50s: %d\n",reg.c_str(),val);
