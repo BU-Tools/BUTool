@@ -128,7 +128,7 @@ void BUTool::RegisterHelperIO::ReCase(std::string & name){
 
 
 
-void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, unsigned int & val){
+void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, uint64_t & val){
   // Read the value from the named register, and update the value in place
   uint32_t rawVal = ReadRegister(reg);
   val = rawVal;

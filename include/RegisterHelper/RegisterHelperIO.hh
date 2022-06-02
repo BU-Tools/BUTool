@@ -36,7 +36,7 @@ namespace BUTool{
     ConvertType                   GetConvertType(std::string const & reg);
     std::string                   GetConvertFormat(std::string const & reg);
     // Named register read+conversion functions, overloaded depending on the conversion value type
-    void                          ReadConvert(std::string const & reg, unsigned int & val);
+    void                          ReadConvert(std::string const & reg, uint64_t & val);
     void                          ReadConvert(std::string const & reg, int & val);
     void                          ReadConvert(std::string const & reg, double & val);
     void                          ReadConvert(std::string const & reg, std::string & val);

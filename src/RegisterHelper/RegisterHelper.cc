@@ -125,7 +125,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
     case  RegisterHelperIO::UINT:
     default: 
       {
-        unsigned int val;
+        uint64_t val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
         TextIO->Print(Level::INFO, "%50s: 0x%08X\n",reg.c_str(),val);
