@@ -213,6 +213,9 @@ namespace BUTool{
           if ((fabs(value) > 10000) || (fabs(value) < 0.001)) {
             snprintf(buffer,bufferSize,"%3.2e",value);
           }
+          else {
+            snprintf(buffer,bufferSize,"%3.2f",value);
+          }
         }
         else if (iequals(format,std::string("linear11"))) {
           snprintf(buffer,bufferSize,"%3.3f",value);  
