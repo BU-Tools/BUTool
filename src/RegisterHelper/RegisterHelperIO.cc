@@ -139,13 +139,21 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int & val){
   // Read the value from the named register, and update the value in place
   int rawVal = ReadRegister(reg); //convert bits to int from uint32_t
   int mask   = GetRegMask(reg);
-  //mask is in the raw 32bit space, so not already alined to bit zero like rawVal.
-  //We need to shift it until we get a 1 in the 0th space
-  while(!(mask&0x1)){
-    mask = mask >> 1;
+
+  // Count number of bits in the mask
+  uint64_t b;
+  // Shift all the bits to right until we count all the bits in the mask
+  for (b=0; mask; mask >>= 1)
+  {
+    b += mask & 1;
   }
-  //Do the conversion (from stanford bit twiddling hacks)
-  val = (rawVal ^ mask) - mask; 
+
+  // Sign extend b-bit number to r
+  int x = rawVal;
+  int const m = 1U << (b - 1); 
+
+  x = x & ((1U << b) - 1);
+  val = (x ^ m) - m;
 }
 
 void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, double & val){
