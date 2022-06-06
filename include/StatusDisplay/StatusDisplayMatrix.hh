@@ -48,6 +48,10 @@ namespace BUTool{
     
     std::string NameBuilder(std::string const & markup,
 			    std::string const & name) const;
+    std::string BuildNameWithSingleUnderscore(std::string const & markup,
+          std::string const & name) const;
+    std::string BuildNameWithMultipleUnderscores(std::string const & markup,
+          std::string const & name) const;
     void CheckName(std::string const & newName);
     std::string ParseRowOrCol(RegisterHelperIO* regIO,
 			 std::string const & addressBase,

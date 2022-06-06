@@ -250,8 +250,63 @@ namespace BUTool{
     }
   }
 
+  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::string const & name) const{
+    // Build a row or column name, using a single underscore ('_') character as a special token
+    boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
+				boost::char_separator<char>("."));
+    std::vector<std::string> positionNames;
 
-  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & name) const{
+    // The name we're going to return
+    std::string result;
+    
+    for(size_t iChar = 0; iChar < markup.size(); iChar++){
+      // Spaces are not allowed
+      if (markup[iChar] == ' ') {
+        BUException::BAD_VALUE e;	    
+        std::string error("Spaces are not allowed in markup ");
+        error += markup;
+        e.Append(error.c_str());
+        throw e;
+      }
+      
+      // Check if this is a special parse character
+      // If it is, we'll check the number next to it to determine the position
+      if (markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) {
+        // We must have an integer right after the parse token, if not, raise an exception
+        const bool validMarkup = (iChar + 1 < markup.size()) && (isdigit(markup[iChar+1]));
+        if (!validMarkup) {
+          BUException::BAD_VALUE e;	    
+          std::string error("Bad markup name for ");
+          error += name + " with token " + std::to_string(pos) + " from markup " + markup;
+          e.Append(error.c_str());
+          throw e;
+        }
+
+        // Read the integer to determine the position
+        int position = std::stoi(markup[iChar+1]);
+        // Build the parsed vector of position names if we haven't
+        if(positionNames.size() == 0) {
+          positionNames.push_back(name); // for _0
+          for(auto itTok = tokenizedName.begin(); itTok!=tokenizedName.end(); itTok++) {
+            positionNames.push_back(*itTok); // for _n
+          }
+        }
+
+        // Add whitespace if we need it
+        if (result.size() > 0) {
+          result += " ";
+        }
+        result.append(positionNames[position]);
+      }
+      // Normal character, just add to the resulting name
+      else {
+        result.append(markup[iChar]);
+      }
+    }
+    return result;
+  }
+
+  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::string const & name) const {
     //use a boost tokenizer to split up the name
     //this won't actually split up the string until we call .begin() on it
     boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
@@ -262,91 +317,108 @@ namespace BUTool{
     size_t iChar = 0;
     for(;iChar < markup.size();iChar++){
       //look for the next special char (which is a run of two, a run of three is a reverse token)
-      if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	if(iChar+1 < markup.size()){
-	  if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	    //there was only one parse token special character, so this is just a normal _
-	    //but " " is not allowed
-	    if(markup[iChar] == ' '){
-	      BUException::BAD_VALUE e;	    
-	      std::string error("Spaces are not allowed in markup ");
-	      error += markup;
-	      e.Append(error.c_str());
-	      throw e;
-	    }
-	    ret.push_back(markup[iChar]);	    	    
-	    continue;
-	  }else{
-	    iChar++;
-	  }
-	}
+      if((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar+1 < markup.size())) {
+        // Is the next character a special token?
+        if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+          //there was only one parse token special character, so this is just a normal _
+          //but " " is not allowed
+          if(markup[iChar] == ' '){
+            BUException::BAD_VALUE e;	    
+            std::string error("Spaces are not allowed in markup ");
+            error += markup;
+            e.Append(error.c_str());
+            throw e;
+          }
+          // Just append to the return value and continue the for loop
+          // as there are no more special characters
+          ret.push_back(markup[iChar]);	    	    
+          continue;
+        }
+        // We have a second special character
+        else {
+          iChar++;
+        }
 
-	bool reverseToken = false;
-	//start parsing a special
-	iChar++;
-	if(iChar < markup.size()){
-	  //check for special character
-	  if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	    reverseToken = true;
-	    iChar++;
-	  }
-	  //find number
-	  std::string position;
-	  for(;iChar < markup.size();iChar++){
-	    if(!isdigit(markup[iChar])){
-	      iChar--;
-	      break;
-	    }else{
-	      position.push_back(markup[iChar]);
-	    }
-	  }
-	  if(position.size() > 0){
-	    int pos = std::stoi(position);
-	    //build the parsed vector of position names if we haven't
-	    if(positionNames.size() == 0){
-	      positionNames.push_back(name); // for _0
-	      auto itTok = tokenizedName.begin();
-	      for(;itTok!=tokenizedName.end();itTok++){
-		positionNames.push_back(*itTok); // for _n
-	      }
-	    }
-	    //Recompute the position if this is a reverse token.
-	    if(reverseToken){
-	      pos = positionNames.size() - pos;
-	    }
-	    if(pos > int(positionNames.size())){
-	      BUException::BAD_VALUE e;	    
-	      std::string error("Bad markup name for ");
-	      error += name + " with token " + std::to_string(pos) + " from markup " + markup;
-	      e.Append(error.c_str());
-	      throw e;
-	    }
-	    if(ret.size()){
-	      //add whitespace if we need it
-	      ret += " ";
-	    }
-	    ret.append(positionNames[pos]);
-	  }else{
-	    BUException::BAD_VALUE e;	    
-	    std::string error("Bad markup for ");
-	    error += name + " from markup " + markup;
-	    e.Append(error.c_str());
-	    throw e;
-	  }
-	}
-      }else{
-	//no special character, so just copy the string
-	if(markup[iChar] == ' '){
-	  BUException::BAD_VALUE e;	    
-	  std::string error("Spaces are not allowed in name ");
-	  error += "\""+markup+"\"";
-	  e.Append(error.c_str());
-	  throw e;
-	}
-	ret.push_back(markup[iChar]);
+        // This boolean specifies whether we want to count in reverse or not
+        // The value is True if three adjacent special characters ('_') are specified in markup
+        bool reverseToken = false;
+        // Start parsing a special
+        iChar++;
+        if(iChar < markup.size()){
+          // Check for third special character
+          if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+            // Three special characters in a row, set reverseToken = true
+            reverseToken = true;
+            iChar++;
+          }
+          // Find number
+          std::string position;
+          for(;iChar < markup.size();iChar++){
+            // A valid markup will have a digit after the special characters
+            // Check if this is the case, otherwise we'll raise an exception later
+            if(!isdigit(markup[iChar])){
+              iChar--;
+              break;
+            } 
+            else { position.push_back(markup[iChar]); }
+          }
+          // If we found a valid position, figure out the name from the register name
+          if(position.size() > 0){
+            int pos = std::stoi(position);
+            // Build the parsed vector of position names if we haven't
+            if(positionNames.size() == 0){
+              positionNames.push_back(name); // for _0
+              auto itTok = tokenizedName.begin();
+              for(;itTok!=tokenizedName.end();itTok++){
+                positionNames.push_back(*itTok); // for _n
+              }
+            }
+            // Recompute the position if this is a reverse token.
+            if(reverseToken){
+              pos = positionNames.size() - pos;
+            }
+            if(pos > int(positionNames.size())){
+              BUException::BAD_VALUE e;	    
+              std::string error("Bad markup name for ");
+              error += name + " with token " + std::to_string(pos) + " from markup " + markup;
+              e.Append(error.c_str());
+              throw e;
+            }
+            if(ret.size()){
+              // Add whitespace if we need it
+              ret += " ";
+            }
+            ret.append(positionNames[pos]);
+          }else{
+            BUException::BAD_VALUE e;	    
+            std::string error("Bad markup for ");
+            error += name + " from markup " + markup;
+            e.Append(error.c_str());
+            throw e;
+          }
+        }
+      }
+      else {
+        // No special character, so just copy the string
+        if(markup[iChar] == ' '){
+          BUException::BAD_VALUE e;	    
+          std::string error("Spaces are not allowed in name ");
+          error += "\""+markup+"\"";
+          e.Append(error.c_str());
+          throw e;
+        }
+        ret.push_back(markup[iChar]);
       }
     }
     return ret;
+  }
+
+  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & name) const{
+    #ifdef BUILD_UPDATED_ROW_COL_NAMES
+    return BuildNameWithMultipleUnderscores(markup, name);
+    #endif
+
+    return BuildNameWithSingleUnderscore(markup, name);
   }
 
   std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
