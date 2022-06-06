@@ -271,19 +271,22 @@ namespace BUTool{
       
       // Check if this is a special parse character
       // If it is, we'll check the number next to it to determine the position
-      if (markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) {
+      if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar == 0)) {
         // We must have an integer right after the parse token, if not, raise an exception
         const bool validMarkup = (iChar + 1 < markup.size()) && (isdigit(markup[iChar+1]));
         if (!validMarkup) {
           BUException::BAD_VALUE e;	    
           std::string error("Bad markup name for ");
-          error += name + " with token " + std::to_string(pos) + " from markup " + markup;
+          error += name; 
           e.Append(error.c_str());
           throw e;
         }
 
         // Read the integer to determine the position
-        int position = std::stoi(markup[iChar+1]);
+        std::string positionStr;
+        positionStr.push_back(markup[iChar+1]);
+        
+        int position = std::stoi(positionStr);
         // Build the parsed vector of position names if we haven't
         if(positionNames.size() == 0) {
           positionNames.push_back(name); // for _0
@@ -297,10 +300,12 @@ namespace BUTool{
           result += " ";
         }
         result.append(positionNames[position]);
+        // Do not process the next character again
+        iChar++;
       }
       // Normal character, just add to the resulting name
       else {
-        result.append(markup[iChar]);
+        result.push_back(markup[iChar]);
       }
     }
     return result;
