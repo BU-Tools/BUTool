@@ -250,11 +250,8 @@ namespace BUTool{
     }
   }
 
-  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::string const & name) const{
+  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
     // Build a row or column name, using a single underscore ('_') character as a special token
-    boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
-				boost::char_separator<char>("."));
-    std::vector<std::string> positionNames;
 
     // The name we're going to return
     std::string result;
@@ -277,7 +274,7 @@ namespace BUTool{
         if (!validMarkup) {
           BUException::BAD_VALUE e;	    
           std::string error("Bad markup name for ");
-          error += name; 
+          error += parsedName[0]; 
           e.Append(error.c_str());
           throw e;
         }
@@ -287,19 +284,11 @@ namespace BUTool{
         positionStr.push_back(markup[iChar+1]);
         
         int position = std::stoi(positionStr);
-        // Build the parsed vector of position names if we haven't
-        if(positionNames.size() == 0) {
-          positionNames.push_back(name); // for _0
-          for(auto itTok = tokenizedName.begin(); itTok!=tokenizedName.end(); itTok++) {
-            positionNames.push_back(*itTok); // for _n
-          }
-        }
-
         // Add whitespace if we need it
         if (result.size() > 0) {
           result += " ";
         }
-        result.append(positionNames[position]);
+        result.append(parsedName[position]);
         // Do not process the next character again
         iChar++;
       }
@@ -311,12 +300,7 @@ namespace BUTool{
     return result;
   }
 
-  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::string const & name) const {
-    //use a boost tokenizer to split up the name
-    //this won't actually split up the string until we call .begin() on it
-    boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
-				boost::char_separator<char>("."));
-    std::vector<std::string> positionNames;
+  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::vector<std::string> const & parsedName) const {
 
     std::string ret;
     size_t iChar = 0;
@@ -370,22 +354,14 @@ namespace BUTool{
           // If we found a valid position, figure out the name from the register name
           if(position.size() > 0){
             int pos = std::stoi(position);
-            // Build the parsed vector of position names if we haven't
-            if(positionNames.size() == 0){
-              positionNames.push_back(name); // for _0
-              auto itTok = tokenizedName.begin();
-              for(;itTok!=tokenizedName.end();itTok++){
-                positionNames.push_back(*itTok); // for _n
-              }
-            }
             // Recompute the position if this is a reverse token.
             if(reverseToken){
-              pos = positionNames.size() - pos;
+              pos = parsedName.size() - pos;
             }
-            if(pos > int(positionNames.size())){
+            if(pos > int(parsedName.size())){
               BUException::BAD_VALUE e;	    
               std::string error("Bad markup name for ");
-              error += name + " with token " + std::to_string(pos) + " from markup " + markup;
+              error += parsedName[0] + " with token " + std::to_string(pos) + " from markup " + markup;
               e.Append(error.c_str());
               throw e;
             }
@@ -393,11 +369,11 @@ namespace BUTool{
               // Add whitespace if we need it
               ret += " ";
             }
-            ret.append(positionNames[pos]);
+            ret.append(parsedName[pos]);
           }else{
             BUException::BAD_VALUE e;	    
             std::string error("Bad markup for ");
-            error += name + " from markup " + markup;
+            error += parsedName[0] + " from markup " + markup;
             e.Append(error.c_str());
             throw e;
           }
@@ -418,12 +394,24 @@ namespace BUTool{
     return ret;
   }
 
-  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & name) const{
+  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & registerName) const{
+    // Create a tokenized register name, that is, the register name split by '.' character
+    boost::tokenizer<boost::char_separator<char> > tokenizedName(registerName,
+				boost::char_separator<char>("."));
+    
+    // parsedName vector will hold the full register name at index 0
+    // and the ith component of the tokenized name at index i
+    std::vector<std::string> parsedName;
+    parsedName.push_back(registerName); // for _0
+    for(auto itTok = tokenizedName.begin(); itTok!=tokenizedName.end(); itTok++) {
+      parsedName.push_back(*itTok); // for _N
+    }
+    
     #ifdef BUILD_UPDATED_ROW_COL_NAMES
-    return BuildNameWithMultipleUnderscores(markup, name);
+    return BuildNameWithMultipleUnderscores(markup, parsedName);
     #endif
 
-    return BuildNameWithSingleUnderscore(markup, name);
+    return BuildNameWithSingleUnderscore(markup, parsedName);
   }
 
   std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
