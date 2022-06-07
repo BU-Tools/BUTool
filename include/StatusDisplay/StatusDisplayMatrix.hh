@@ -52,6 +52,8 @@ namespace BUTool{
           std::vector<std::string> const & parsedName) const;
     std::string BuildNameWithMultipleUnderscores(std::string const & markup,
           std::vector<std::string> const & parsedName) const;
+    void CheckForInvalidCharacter(std::string const & name
+          std::string const & invalidChar) const;
     void CheckName(std::string const & newName);
     std::string ParseRowOrCol(RegisterHelperIO* regIO,
 			 std::string const & addressBase,

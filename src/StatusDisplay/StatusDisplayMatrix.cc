@@ -250,22 +250,35 @@ namespace BUTool{
     }
   }
 
-  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
-    // Build a row or column name, using a single underscore ('_') character as a special token
-
-    // The name we're going to return
-    std::string result;
-    
-    for(size_t iChar = 0; iChar < markup.size(); iChar++){
-      // Spaces are not allowed
-      if (markup[iChar] == ' ') {
+  void StatusDisplayMatrix::CheckForInvalidCharacter(std::string const & name, std::string const & invalidChar) const{
+    /*
+    Function to check if there is an invalid character in the given string
+    Throws a BUException if there is one.
+    */
+    for (size_t iChar = 0; iChar < name.size(); iChar++) {
+      if (markup[iChar] == invalidChar) {
         BUException::BAD_VALUE e;	    
         std::string error("Spaces are not allowed in markup ");
         error += markup;
         e.Append(error.c_str());
         throw e;
-      }
-      
+      } 
+    }
+  }
+
+  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
+    /* 
+    Build a row or column name, using a single underscore ('_') character as a special token
+    Currently supports the following format: markup="_N", where N is an integer between 0 and 9 (inclusive)
+    */
+
+    // The name we're going to return
+    std::string result;
+
+    // Spaces in markup are not allowed
+    CheckForInvalidCharacter(markup, ' ');
+    
+    for(size_t iChar = 0; iChar < markup.size(); iChar++){
       // Check if this is a special parse character
       // If it is, we'll check the number next to it to determine the position
       if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar == 0)) {
@@ -301,23 +314,25 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::vector<std::string> const & parsedName) const {
-
+    /* 
+    Build a row or column name, using multiple underscore ('_') characters as a special token
+    Determines the row and column name according to the following:
+    
+    - Single underscore: Treated as a literal underscore
+    - Double underscore ("__N"): Get the Nth portion of the register name (count from LEFT)
+    - Triple underscore ("___N"): Get the Nth portion of the register name (count from RIGHT)
+    */
     std::string ret;
+    
+    // Spaces are not allowed
+    CheckForInvalidCharacter(markup, ' ');
+    
     size_t iChar = 0;
     for(;iChar < markup.size();iChar++){
       //look for the next special char (which is a run of two, a run of three is a reverse token)
       if((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar+1 < markup.size())) {
         // Is the next character a special token?
         if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-          //there was only one parse token special character, so this is just a normal _
-          //but " " is not allowed
-          if(markup[iChar] == ' '){
-            BUException::BAD_VALUE e;	    
-            std::string error("Spaces are not allowed in markup ");
-            error += markup;
-            e.Append(error.c_str());
-            throw e;
-          }
           // Just append to the return value and continue the for loop
           // as there are no more special characters
           ret.push_back(markup[iChar]);	    	    
@@ -381,13 +396,6 @@ namespace BUTool{
       }
       else {
         // No special character, so just copy the string
-        if(markup[iChar] == ' '){
-          BUException::BAD_VALUE e;	    
-          std::string error("Spaces are not allowed in name ");
-          error += "\""+markup+"\"";
-          e.Append(error.c_str());
-          throw e;
-        }
         ret.push_back(markup[iChar]);
       }
     }
