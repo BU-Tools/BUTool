@@ -250,16 +250,16 @@ namespace BUTool{
     }
   }
 
-  void StatusDisplayMatrix::CheckForInvalidCharacter(std::string const & name, std::string const & invalidChar) const{
+  void StatusDisplayMatrix::CheckForInvalidCharacter(std::string const & name, char const & invalidChar) const{
     /*
     Function to check if there is an invalid character in the given string
     Throws a BUException if there is one.
     */
     for (size_t iChar = 0; iChar < name.size(); iChar++) {
-      if (markup[iChar] == invalidChar) {
+      if (name[iChar] == invalidChar) {
         BUException::BAD_VALUE e;	    
         std::string error("Spaces are not allowed in markup ");
-        error += markup;
+        error += name;
         e.Append(error.c_str());
         throw e;
       } 
