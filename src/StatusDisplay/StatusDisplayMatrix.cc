@@ -415,7 +415,7 @@ namespace BUTool{
       parsedName.push_back(*itTok); // for _N
     }
     
-    #ifdef BUILD_UPDATED_ROW_COL_NAMES
+    #ifdef SD_USE_NEW_PARSER
     return BuildNameWithMultipleUnderscores(markup, parsedName);
     #endif
 

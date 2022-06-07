@@ -73,8 +73,9 @@ ifdef MAP_TYPE
 CXX_FLAGS += ${MAP_TYPE}
 endif
 
-ifeq (${BUTOOL_SD_NEW}, true)
-CXX_FLAGS += -DBUILD_UPDATED_ROW_COL_NAMES
+# Compile-time flag to specify to use the new StatusDisplay name parser for row and column names
+ifeq (${BUTOOL_SD_USE_NEW_PARSER}, true)
+CXX_FLAGS += -DSD_USE_NEW_PARSER
 endif
 
 LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
