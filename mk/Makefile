@@ -73,6 +73,10 @@ ifdef MAP_TYPE
 CXX_FLAGS += ${MAP_TYPE}
 endif
 
+ifeq (${BUTOOL_SD_NEW}, true)
+CXX_FLAGS += -DBUILD_UPDATED_ROW_COL_NAMES
+endif
+
 LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
