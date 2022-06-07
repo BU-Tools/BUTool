@@ -268,8 +268,12 @@ namespace BUTool{
 
   std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
     /* 
-    Build a row or column name, using a single underscore ('_') character as a special token
+    Build a row or column name, using a single underscore ('_') character in the beginning as a special token
     Currently supports the following format: markup="_N", where N is an integer between 0 and 9 (inclusive)
+
+    Example: If we had a register with the name A.B.C.D, the following would be true:
+    - If "Row=_3" is set, the row name would be "C"
+    - If "Row=ROW_1" is set, the row name would be "ROW_1"
     */
 
     // The name we're going to return
@@ -302,7 +306,8 @@ namespace BUTool{
           result += " ";
         }
         result.append(parsedName[position]);
-        // Do not process the next character again
+        
+        // Do not process the next integer again
         iChar++;
       }
       // Normal character, just add to the resulting name
@@ -403,6 +408,15 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & registerName) const{
+    /*
+    Main name builder function to determine row and column names for StatusDisplayMatrix tables.
+    Row and column names are inferred from the "Row" and "Column" parameters in the address table.
+
+    If SD_USE_NEW_PARSER is defined via a compile-time flag, this function will call the more recent
+    version of the name parser. Otherwise, it will call the older version of the name parser, where only
+    a single underscore ('_') in the beginning is treated as a special character.
+    */
+
     // Create a tokenized register name, that is, the register name split by '.' character
     boost::tokenizer<boost::char_separator<char> > tokenizedName(registerName,
 				boost::char_separator<char>("."));
@@ -423,26 +437,30 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
-              std::string const & addressBase,
+              std::string const & registerName,
               std::string const & parameterName) const
   {
-    // Get row or column name, as specified by the parameterName argument
-    std::string newName;
+    /*
+    Function that returns the row (parameterName="row") or column name
+    (parameterName="column") for a given named register.
+    */
+    std::string markup;
     try {
-      newName = regIO->GetRegParameterValue(addressBase, parameterName);
+      markup = regIO->GetRegParameterValue(registerName, parameterName);
     } catch (BUException::BAD_VALUE & e) {
       // Missing row or column
       BUException::BAD_VALUE e;
       std::string error("Missing ");
       error += parameterName;
       error += " for ";
-      error += addressBase;
+      error += registerName;
       e.Append(error.c_str());
       throw e; 
     }
 
-    boost::to_upper(newName);
-    newName = NameBuilder(newName, addressBase);
+    boost::to_upper(markup);
+    // Determine the row or column name from the markup and the register name
+    std::string newName = NameBuilder(markup, registerName);
 
     return newName;
   }

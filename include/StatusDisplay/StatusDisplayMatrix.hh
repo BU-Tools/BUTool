@@ -56,7 +56,7 @@ namespace BUTool{
           char const & invalidChar) const;
     void CheckName(std::string const & newName);
     std::string ParseRowOrCol(RegisterHelperIO* regIO,
-			 std::string const & addressBase,
+			 std::string const & registerName,
        std::string const & parameterName) const;
 
     std::vector<StatusDisplayCell*> row(std::string const &);
