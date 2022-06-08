@@ -41,7 +41,7 @@ namespace BUTool{
   void StatusDisplayCell::Setup(RegisterHelperIO * _regIO,
       std::string const & _address,  // Stripped of Hi/Lo
 		  std::string const & _row, // Stripped of Hi/Lo
-		  std::string const & _col, // Stripped of Hi/Lo
+		  std::string const & _col  // Stripped of Hi/Lo
       )
   {
     /*

@@ -38,7 +38,7 @@ namespace BUTool{
     void Setup(RegisterHelperIO * _regIO, // RegisterHelperIO instance to do reads 
         std::string const & _address,  /// address table name stripped of Hi/Lo
 	      std::string const & _row,	 /// display row
-	      std::string const & _col,	 /// display column
+	      std::string const & _col 	 /// display column
 	      );
     ///! store a value plus a shift for a multi-word value
     void Fill(uint32_t value,
