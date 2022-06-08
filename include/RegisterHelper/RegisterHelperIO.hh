@@ -63,6 +63,8 @@ namespace BUTool{
     virtual std::string GetRegHelp(std::string const & reg);
     virtual std::unordered_map<std::string,std::string> const & GetRegParameters(std::string const & reg);
     virtual std::string GetRegParameterValue(std::string const & reg, std::string const & name);
+    virtual std::string GetRegParameterValueWithDefault(std::string const & reg, std::string const & name,
+                                                        std::string const & defaultValue);
 
     //Handle address table name case (default is upper case)
     RegisterNameCase GetCase(){return regCase;};

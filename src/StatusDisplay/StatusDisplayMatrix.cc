@@ -150,41 +150,6 @@ namespace BUTool{
       }
     }
 
-    // Get description, format, rule, and status level
-    std::string description = regIO->GetRegDescription(registerName);
-    
-    std::string statusLevel;
-    try {
-      statusLevel = regIO->GetRegParameterValue(registerName, "Status");
-    } catch (BUException::BAD_VALUE & e) {
-      statusLevel = std::string();
-    }
-    
-    std::string rule;
-    try {
-      rule = regIO->GetRegParameterValue(registerName, "Show");
-    } catch (BUException::BAD_VALUE & e) {
-      rule = std::string();
-    }
-    
-    std::string format;
-    try {
-      format = regIO->GetRegParameterValue(registerName, "Format");
-    } catch (BUException::BAD_VALUE & e) {
-      format = STATUS_DISPLAY_DEFAULT_FORMAT;
-    }
-
-    boost::to_upper(rule);
-
-    // Determine if this register is "enabled" to be shown
-    bool enabled=true;
-    try {
-      // True if string isn't equal to "0"
-      enabled=regIO->GetRegParameterValue(registerName, "Enabled").compare("0");
-    } catch (BUException::BAD_VALUE & e) {
-      enabled=true;
-    }
- 
     StatusDisplayCell * ptrCell;
     // Add or append this entry
     if(cell.find(registerName) == cell.end()) {
@@ -194,7 +159,9 @@ namespace BUTool{
     else {
       ptrCell = cell[registerName];
     }
-    ptrCell->Setup(regIO,registerName,description,row,col,format,rule,statusLevel,enabled);
+    // Setup the StatusDisplayCell instance for this register
+    ptrCell->Setup(regIO,registerName,row,col);
+
     // Read the value if it is as non-zero status level
     // A status level of zero is for write only registers
     if(ptrCell->DisplayLevel() > 0){

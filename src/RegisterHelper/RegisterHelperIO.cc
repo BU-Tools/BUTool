@@ -225,3 +225,11 @@ std::string BUTool::RegisterHelperIO::GetRegParameterValue(std::string const & /
   throw e;
   return std::string("");
 }
+
+std::string BUTool::RegisterHelperIO::GetRegParameterValueWithDefault(std::string const & /*reg*/, std::string const & /*name*/,
+                                                        std::string const & /*defaultValue*/){
+  BUException::FUNCTION_NOT_IMPLEMENTED e;
+  e.Append("GetRegParameterValueWithDefault wasn't overloaded, but called\n");
+  throw e;
+  return std::string("");
+}

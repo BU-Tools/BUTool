@@ -39,16 +39,41 @@ namespace BUTool{
     statusLevel = 0;
   }
   void StatusDisplayCell::Setup(RegisterHelperIO * _regIO,
-      std::string const & _address,  //stripped of Hi/Lo
-		  std::string const & _description,
-		  std::string const & _row, //Stripped of Hi/Lo
-		  std::string const & _col, //Stripped of Hi/Lo
-		  std::string const & _format,
-		  std::string const & _rule,
-		  std::string const & _statusLevel,
-		  bool _enabled)
+      std::string const & _address,  // Stripped of Hi/Lo
+		  std::string const & _row, // Stripped of Hi/Lo
+		  std::string const & _col, // Stripped of Hi/Lo
+      )
   {
-    //These must all be the same
+    /*
+    Set up a single StatusDisplayCell.
+
+    This function does the reads with the given RegisterHelperIO pointer it is provided,
+    and stores the register parameters as class member data.
+    */
+
+    // Store RegisterHelperIO pointer as a class member
+    regIO = _regIO;
+
+    // Using the RegisterHelperIO pointer, retrieve data about this register
+    std::string _description = regIO->GetRegDescription(_address);
+    std::string _format      = regIO->GetRegParameterValueWithDefault(_address, "Format", STATUS_DISPLAY_DEFAULT_FORMAT);
+    std::string _statusLevel = regIO->GetRegParameterValueWithDefault(_address, "Status", std::string());
+    std::string _rule        = regIO->GetRegParameterValueWithDefault(_address, "Show",   std::string());
+    boost::to_upper(_rule);
+
+    convertType = regIO->GetConvertType(_address);
+
+    // Determine if this register is "enabled" to be shown
+    bool _enabled=true;
+    try {
+      // True if string isn't equal to "0"
+      _enabled=regIO->GetRegParameterValue(_address, "Enabled").compare("0");
+    } catch (BUException::BAD_VALUE & e) {
+      _enabled=true;
+    }
+
+    // Store all this information as class member variables
+    // These must all be the same
     CheckAndThrow("Address",address,_address);
     CheckAndThrow(address + " row",row,_row);
     CheckAndThrow(address + " col",col,_col);
@@ -62,7 +87,6 @@ namespace BUTool{
     statusLevel = strtoul(_statusLevel.c_str(),
 		     NULL,0);
     enabled = _enabled;
-    regIO = _regIO;
   }
 
   void StatusDisplayCell::Fill(uint32_t value,
@@ -166,8 +190,7 @@ namespace BUTool{
     //Build the format string for snprintf
     std::string fmtString("%");
 
-    // Get the conversion type for this register, and read+write values to the buffer
-    RegisterHelperIO::ConvertType convertType = regIO->GetConvertType(address);
+    // Read+write values to the buffer based on the convert type for this register
     switch(convertType) {
       case RegisterHelperIO::STRING:
       {

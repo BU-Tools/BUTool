@@ -19,6 +19,8 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 
 #include "RegisterHelper/RegisterHelperIO.hh"
 
+#define STATUS_DISPLAY_DEFAULT_FORMAT "X"
+
 namespace BUTool{
 
   /*! \brief One cell in a status display.
@@ -35,13 +37,9 @@ namespace BUTool{
     ///! Fill in values for a cell
     void Setup(RegisterHelperIO * _regIO, // RegisterHelperIO instance to do reads 
         std::string const & _address,  /// address table name stripped of Hi/Lo
-	      std::string const & _description, /// long description
 	      std::string const & _row,	 /// display row
 	      std::string const & _col,	 /// display column
-	      std::string const & _format,	 /// display format
-	      std::string const & _rule,	 /// nz, z, nzr etc
-	      std::string const & _statusLevel, /// status level to display
-	      bool enabled = true);             /// enabled status
+	      );
     ///! store a value plus a shift for a multi-word value
     void Fill(uint32_t value,
 	      size_t bitShift = 0);
@@ -84,6 +82,7 @@ namespace BUTool{
     std::vector<int> wordShift;
     std::string format;
     std::string displayRule;   
+    RegisterHelperIO::ConvertType convertType;
     int statusLevel;
   };
 
