@@ -70,6 +70,10 @@ namespace BUTool{
 		       std::string const & thing2) const;
     uint64_t ComputeValue() const;
 
+    std::string GetRegParameterValueWithDefault(std::string const & reg, 
+                      std::string const & name,
+                      std::string const & defaultValue);
+
     std::string address;
     std::string description;
     std::string row;
