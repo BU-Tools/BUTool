@@ -56,9 +56,20 @@ namespace BUTool{
 
     // Using the RegisterHelperIO pointer, retrieve data about this register
     std::string _description = regIO->GetRegDescription(_address);
-    std::string _format      = GetRegParameterValueWithDefault(_address, "Format", STATUS_DISPLAY_DEFAULT_FORMAT);
-    std::string _statusLevel = GetRegParameterValueWithDefault(_address, "Status", std::string());
-    std::string _rule        = GetRegParameterValueWithDefault(_address, "Show",   std::string());
+    std::string _format;
+    try {
+      _format = regIO->GetRegParameterValue(_address, "Format");
+    } catch (BUException::BAD_VALUE & e) { _format = STATUS_DISPLAY_DEFAULT_FORMAT; }
+
+    std::string _statusLevel;
+    try {
+      _statusLevel = regIO->GetRegParameterValue(_address, "Status");
+    } catch (BUException::BAD_VALUE & e) { _statusLevel = std::string(); }
+
+    std::string _rule;
+    try {
+      _rule = regIO->GetRegParameterValue(_address, "Show");
+    } catch (BUException::BAD_VALUE & e) { _rule = std::string(); }
     boost::to_upper(_rule);
 
     convertType = regIO->GetConvertType(_address);
@@ -94,22 +105,6 @@ namespace BUTool{
   {
     word.push_back(value);
     wordShift.push_back(bitShift);
-  }
-
-  std::string GetRegParameterValueWithDefault(std::string const & reg, std::string const & name,
-                                                std::string const & defaultValue){
-    /*
-    Try to read the parameter (specified by "name") of the register (specified by "reg").
-    If the function cannot find such a parameter specified in the address table,
-    it will return the default value instead.
-    */
-    std::string result;
-    try {
-      result = regIO->GetRegParameterValue(reg, name);
-    } catch (BUException::BAD_VALUE & e) {
-      result = defaultValue;
-    }
-    return result;
   }
 
   int StatusDisplayCell::DisplayLevel() const {return statusLevel;}
