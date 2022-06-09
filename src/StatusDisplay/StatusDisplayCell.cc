@@ -191,7 +191,7 @@ namespace BUTool{
     return val;
   }
 
-  void StatusDisplayCell::FormatHexString(char * buffer, int bufferSize, int width = -1) const {
+  void StatusDisplayCell::FormatHexString(char * buffer, int bufferSize, int width) const {
     /*
     Wrapper function to format a hex string for a register, and write it
     to the given buffer. The buffer will be modified in place.
