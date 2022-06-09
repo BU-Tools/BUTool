@@ -277,7 +277,7 @@ namespace BUTool{
     }
   }
 
-  void StatusDisplayCell::ReadAndFormatInt(char * buffer, int bufferSize, int width) const {
+  void StatusDisplayCell::ReadAndFormatUInt(char * buffer, int bufferSize, int width) const {
     /*
     Wrapper function to read and format an unsigned integer value.
     The formatted unsigned integer value will be written to the buffer in-place.
