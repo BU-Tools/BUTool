@@ -290,6 +290,9 @@ namespace BUTool{
     regIO->ReadConvert(address, value);
 
     // Do the formatting and write to the buffer
+    // Build the format string for snprintf
+    std::string fmtString("%");
+
     // If we are specifying the width, add a *
     if (width >= 0) {
       fmtString.append("*");
@@ -309,9 +312,6 @@ namespace BUTool{
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
     memset(buffer,' ',20);
     buffer[bufferSize] = '\0';
-
-    //Build the format string for snprintf
-    std::string fmtString("%");
 
     // Read+write values to the buffer based on the convert type for this register
     switch(convertType) {
