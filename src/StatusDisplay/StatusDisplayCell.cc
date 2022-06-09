@@ -241,7 +241,7 @@ namespace BUTool{
 
         // Special hex formatting for format='x' or format='X'
         if (iequals(format, std::string("x"))) { 
-          FormatHexString(width, buffer); 
+          FormatHexString(buffer, width); 
         }
         
         // For other types, just write the value as a C-string to the buffer
