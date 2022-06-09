@@ -56,7 +56,9 @@ namespace BUTool{
     std::string const & GetAddress() const;
 
     void ReadAndFormatHexString(char * buffer, int bufferSize, int width = -1) const;
-    void ReadAndFormatDouble(char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatDouble   (char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatInt      (char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatUInt     (char * buffer, int bufferSize, int width = -1) const;
 
     void SetAddress(std::string const & _address);
     uint32_t const & GetMask() const;

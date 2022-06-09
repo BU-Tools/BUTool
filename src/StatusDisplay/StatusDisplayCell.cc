@@ -250,6 +250,59 @@ namespace BUTool{
     }
   }
 
+  void StatusDisplayCell::ReadAndFormatInt(char * buffer, int bufferSize, int width) const {
+    /*
+    Wrapper function to read and format an integer value.
+    The formatted integer value will be written to the buffer in-place.
+    
+    Please note that we're explicitly using 64-bit integers to avoid confusion.
+    */
+    
+    // Retrieve the value
+    int64_t value;
+    regIO->ReadConvert(address, value);
+    
+    // Do the formatting and write to the buffer
+    // If we are specifying the width, add a *
+    if (width >= 0) {
+      fmtString.append("*");
+    }
+    fmtString.append(PRId64);
+
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), value);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+    }
+  }
+
+  void StatusDisplayCell::ReadAndFormatInt(char * buffer, int bufferSize, int width) const {
+    /*
+    Wrapper function to read and format an unsigned integer value.
+    The formatted unsigned integer value will be written to the buffer in-place.
+
+    Please note that we're explicitly using 64-bit unsigned integers to avoid confusion.
+    */
+
+    // Retrieve the value
+    uint64_t value;
+    regIO->ReadConvert(address, value);
+
+    // Do the formatting and write to the buffer
+    // If we are specifying the width, add a *
+    if (width >= 0) {
+      fmtString.append("*");
+    }
+    fmtString.append(PRIu64);
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), value);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+    }
+  }
+
   std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
   { 
     const int bufferSize = 20;
@@ -284,39 +337,14 @@ namespace BUTool{
       }
       case RegisterHelperIO::INT:
       {
-        int64_t value;
-        regIO->ReadConvert(address, value);
-        // If we are specifying the width, add a *
-        if (width >= 0) {
-          fmtString.append("*");
-        }
-        fmtString.append(PRId64);
-
-        if (width == -1) {
-          snprintf(buffer, bufferSize, fmtString.c_str(), value);
-        }
-        else {
-          snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
-        }
+        ReadAndFormatInt(buffer, bufferSize, width);
         break;
       }
       case RegisterHelperIO::UINT:
       case RegisterHelperIO::NONE:
       default:
       {
-        uint64_t value;
-        regIO->ReadConvert(address, value);
-        // If we are specifying the width, add a *
-        if (width >= 0) {
-          fmtString.append("*");
-        }
-        fmtString.append(PRIu64);
-        if (width == -1) {
-          snprintf(buffer, bufferSize, fmtString.c_str(), value);
-        }
-        else {
-          snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
-        }
+        ReadAndFormatUInt(buffer, bufferSize, width);
         break;
       }
     }
