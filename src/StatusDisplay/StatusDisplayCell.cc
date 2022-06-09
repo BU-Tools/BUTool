@@ -191,7 +191,7 @@ namespace BUTool{
     return val;
   }
 
-  void StatusDisplayCell::FormatHexString(char * buffer, int bufferSize, int width) const {
+  void StatusDisplayCell::ReadAndFormatHexString(char * buffer, int bufferSize, int width) const {
     /*
     Wrapper function to format a hex string for a register, and write it
     to the given buffer. The buffer will be modified in place.
@@ -222,6 +222,34 @@ namespace BUTool{
     }
   }
 
+  void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int width) {
+    /*
+    Wrapper function to read and properly format a double value from the register.
+    The formatted double value will be written to the buffer in-place.
+    */
+
+    // Retrieve the double value
+    double value;
+    regIO->ReadConvert(address, value);
+
+    // Do the formatting and write to the buffer
+    if (iequals(format, std::string("fp16"))) {
+      // If the double value is very large or very small, use scientific notation
+      if ((fabs(value) > 10000) || (fabs(value) < 0.001)) {
+        snprintf(buffer,bufferSize,"%3.2e",value);
+      }
+      else {
+        snprintf(buffer,bufferSize,"%3.2f",value);
+      }
+    }
+    else if (iequals(format,std::string("linear11"))) {
+      snprintf(buffer,bufferSize,"%3.3f",value);  
+    }
+    else {
+      snprintf(buffer,bufferSize,"%3.2f",value);
+    }
+  }
+
   std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
   { 
     const int bufferSize = 20;
@@ -241,7 +269,7 @@ namespace BUTool{
 
         // Special hex formatting for format='x' or format='X'
         if (iequals(format, std::string("x"))) { 
-          FormatHexString(buffer, bufferSize, width); 
+          ReadAndFormatHexString(buffer, bufferSize, width); 
         }
         
         // For other types, just write the value as a C-string to the buffer
@@ -251,23 +279,7 @@ namespace BUTool{
       }
       case RegisterHelperIO::FP:
       {
-        double value;
-        regIO->ReadConvert(address, value);
-        if (iequals(format, std::string("fp16"))) {
-          // If the double value is very large or very small, use scientific notation
-          if ((fabs(value) > 10000) || (fabs(value) < 0.001)) {
-            snprintf(buffer,bufferSize,"%3.2e",value);
-          }
-          else {
-            snprintf(buffer,bufferSize,"%3.2f",value);
-          }
-        }
-        else if (iequals(format,std::string("linear11"))) {
-          snprintf(buffer,bufferSize,"%3.3f",value);  
-        }
-        else {
-          snprintf(buffer,bufferSize,"%3.2f",value);
-        }
+        ReadAndFormatDouble(buffer, bufferSize, width);
         break;
       }
       case RegisterHelperIO::INT:
