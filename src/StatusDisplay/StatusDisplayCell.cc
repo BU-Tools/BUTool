@@ -191,6 +191,37 @@ namespace BUTool{
     return val;
   }
 
+  void StatusDisplayCell::FormatHexString(char const & buffer, int width = -1) const {
+    /*
+    Wrapper function to format a hex string for a register, and write it
+    to the given buffer. The buffer will be modified in place.
+    */
+    
+    // Read the 32-bit value from the register
+    uint32_t val = regIO->ReadRegister(address);
+
+    // Now, do the formatting
+    std::string fmtString = "%";
+    if (val >= 10) {
+      fmtString.assign("0x%");
+      if (width >= 0) {
+        width -= 2;
+      }
+    }
+    if (width >= 0) {
+      fmtString.append("*");
+    }
+    
+    fmtString.append(PRIX64);
+    
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), val);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
+    }
+  }
+
   std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
   { 
     const int bufferSize = 20;
@@ -208,34 +239,14 @@ namespace BUTool{
         std::string value;
         regIO->ReadConvert(address, value);
 
-        // Hex formatting for format='x' or format='X'
-        if (iequals(format, std::string("x"))) {
-          uint32_t val = regIO->ReadRegister(address);
-          if (val >= 10) {
-            fmtString.assign("0x%");
-            if (width >= 0) {
-              width -= 2;
-            }
-          }
-          else {
-            fmtString.assign("%");
-          }
-
-          if (width >= 0) {
-            fmtString.append("*");
-          }
-          fmtString.append(PRIX64);
-
-          if (width == -1) {
-            snprintf(buffer, bufferSize, fmtString.c_str(), val);
-          }
-          else {
-            snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
-          }
+        // Special hex formatting for format='x' or format='X'
+        if (iequals(format, std::string("x"))) { 
+          FormatHexString(width, buffer); 
         }
-        else {
-          snprintf(buffer,bufferSize,"%s",value.c_str());
-        }
+        
+        // For other types, just write the value as a C-string to the buffer
+        else { snprintf(buffer,bufferSize,"%s",value.c_str()); }
+
         break;
       }
       case RegisterHelperIO::FP:
