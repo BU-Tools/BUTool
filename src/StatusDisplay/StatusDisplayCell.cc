@@ -222,7 +222,7 @@ namespace BUTool{
     }
   }
 
-  void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int width) {
+  void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int width) const {
     /*
     Wrapper function to read and properly format a double value from the register.
     The formatted double value will be written to the buffer in-place.
