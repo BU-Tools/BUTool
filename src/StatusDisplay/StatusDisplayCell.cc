@@ -263,6 +263,9 @@ namespace BUTool{
     regIO->ReadConvert(address, value);
     
     // Do the formatting and write to the buffer
+    // Build the format string for snprintf
+    std::string fmtString("%");
+    
     // If we are specifying the width, add a *
     if (width >= 0) {
       fmtString.append("*");
