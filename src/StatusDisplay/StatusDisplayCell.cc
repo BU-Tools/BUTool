@@ -191,7 +191,7 @@ namespace BUTool{
     return val;
   }
 
-  void StatusDisplayCell::FormatHexString(char const & buffer, int width = -1) const {
+  void StatusDisplayCell::FormatHexString(char const & buffer, int bufferSize, int width = -1) const {
     /*
     Wrapper function to format a hex string for a register, and write it
     to the given buffer. The buffer will be modified in place.
@@ -241,7 +241,7 @@ namespace BUTool{
 
         // Special hex formatting for format='x' or format='X'
         if (iequals(format, std::string("x"))) { 
-          FormatHexString(buffer, width); 
+          FormatHexString(buffer, bufferSize, width); 
         }
         
         // For other types, just write the value as a C-string to the buffer
