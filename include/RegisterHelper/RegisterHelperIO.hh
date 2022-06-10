@@ -31,6 +31,8 @@ namespace BUTool{
     virtual std::vector<uint32_t> BlockReadRegister(std::string const & reg,size_t count);
     virtual std::string           ReadString       (std::string const & reg);
 
+    uint64_t                      ComputeValueFromRegister(std::string const & reg);
+
     //convert functions
     enum ConvertType {NONE=0, UINT=1, INT=2, FP=4, STRING=8};
     ConvertType                   GetConvertType(std::string const & reg);
@@ -71,12 +73,12 @@ namespace BUTool{
     void ReCase(std::string & name);
   protected:
     // Helper functions for converting
-    double      ConvertFloatingPoint16ToDouble(std::string const & reg);
-    double      ConvertLinear11ToDouble(std::string const & reg);
-    double      ConvertIntegerToDouble(std::string const & reg, std::string const & format);
-    std::string ConvertEnumToString(std::string const & reg, std::string const & format);
-    std::string ConvertIPAddressToString(std::string const & reg);
-    std::string ConvertHexNumberToString(std::string const & reg);
+    double      ConvertFloatingPoint16ToDouble(uint64_t rawValue);
+    double      ConvertLinear11ToDouble(uint64_t rawValue);
+    double      ConvertIntegerToDouble(uint64_t rawValue, std::string const & format);
+    std::string ConvertEnumToString(uint64_t rawValue, std::string const & format);
+    std::string ConvertIPAddressToString(uint64_t rawValue);
+    std::string ConvertHexNumberToString(uint64_t rawValue);
 
   private:
     RegisterNameCase regCase;

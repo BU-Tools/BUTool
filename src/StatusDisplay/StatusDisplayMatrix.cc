@@ -103,7 +103,6 @@ namespace BUTool{
     }
 
     // Check if registerName contains a "_HI" or a "_LO"
-    // TODO: Can possibly remove this block if we're not going to display such registers anyway
     if((registerName.find("_LO") == (registerName.size()-3)) ||
        (registerName.find("_HI") == (registerName.size()-3))) {
       // Search for an existing base register name
