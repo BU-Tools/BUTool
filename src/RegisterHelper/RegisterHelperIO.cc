@@ -134,13 +134,31 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
   merging of the 32-bit values and return the merged value.
   */
   uint32_t rawValue = ReadRegister(reg);
+  uint32_t regMask = GetRegMask(reg);
 
   // 64-bit unsigned integer we're going to return
   uint64_t result;
   
-  // TODO: Check the bit shifting logic here
-  int numBitShifts = 32;
+  // No values to merge, convert 32-bit value to 64-bit and return
+  if ( !((reg.find("_LO") == reg.size()-3) || (reg.find("_HI") == reg.size()-3)) ) {
+    result = uint64_t(rawValue);
+    return result;
+  }
 
+  // Below this line, merging of different values is handled
+
+  // Figure out the number of bit shifts from the size of the word
+  // 32 bits is the default, but it will be less for smaller values
+  int numBitShifts = 32;
+  
+  while ( (mask & 0x1) == 0 ) { mask >>= 1; }
+  int count = 0;
+  while ( (mask & 0x1) == 1 ) {
+    count++;
+    mask >>= 1;
+  }
+  numBitShifts = count;
+  
   // Check if this register contains a "_LO", so it is going to be merged with a "_HI"
   if ( reg.find("_LO") == reg.size()-3 ) {
     std::string baseRegisterName = reg.substr(0,reg.find("_LO"));
@@ -169,11 +187,6 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
 
     // Construct the result value
     result = ( uint64_t(rawValue) << numBitShifts ) + uint64_t(lowValue);
-  }
-
-  // No merging necessary, just transform into 64-bit uint and return
-  else {
-    result = uint64_t(rawValue);
   }
 
   return result;

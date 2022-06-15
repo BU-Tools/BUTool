@@ -90,74 +90,16 @@ namespace BUTool{
     std::string row = ParseRowOrCol(regIO,registerName,"Row");
     std::string col = ParseRowOrCol(regIO,registerName,"Column");
 
-    int bitShift = 0;
-
-    // Check if registerName ends with a "_HI" or a "_LO"    
-    // Skip such registers for now because we can't handle them
-    if((registerName.find("_LO") == (registerName.size()-3)) ||
-       (registerName.find("_HI") == (registerName.size()-3))) {
-        BUException::BAD_REG_NAME e;
-        e.Append("Register name: ");
-        e.Append(registerName);
-        throw e;
+    // Ignore registers with "_HI", as the RegisterHelperIO class handles
+    // the merging of _LO and _HI registers into a single value.
+    if (registerName.find("_HI") == (registerName.size()-3)) {
+      return;
     }
 
-    // Check if registerName contains a "_HI" or a "_LO"
-    if((registerName.find("_LO") == (registerName.size()-3)) ||
-       (registerName.find("_HI") == (registerName.size()-3))) {
-      // Search for an existing base register name
-      std::string baseRegisterName;
-      if(registerName.find("_LO") == (registerName.size()-3)) {
-        baseRegisterName = registerName.substr(0,registerName.find("_LO"));
-        bitShift = 0;
-      }
-      if(registerName.find("_HI") == (registerName.size()-3)) {
-        baseRegisterName = registerName.substr(0,registerName.find("_HI"));
-        bitShift = 32;
-        std::string LO_address(baseRegisterName);
-        LO_address.append("_LO");
-        // Check if the LO word has already been placed
-        if (cell.find(LO_address) != cell.end()) {
-          uint32_t mask = cell.at(LO_address)->GetMask();
-          while ( (mask & 0x1) == 0) {
-            mask >>= 1;
-          }
-          int count = 0;
-          while ( (mask & 0x1) == 1) {
-            count++;
-            mask >>= 1;
-          }
-          bitShift = count; //Set bitShift to be the number of bits in the LO word
-        }
-      // If LO word hasn't been placed into the table yet, assume 32
-      }
-      std::map<std::string,StatusDisplayCell*>::iterator itCell;
-      if(((itCell = cell.find(baseRegisterName)) != cell.end()) ||  //Base address exists already
-        ((itCell = cell.find(baseRegisterName+std::string("_HI"))) != cell.end()) || //Hi address exists already
-        ((itCell = cell.find(baseRegisterName+std::string("_LO"))) != cell.end())) { //Low address exists already
-        
-        if(iequals(itCell->second->GetRow(),row) && 
-          iequals(itCell->second->GetCol(),col)) {
-          // We want to combine these entries so we need to rename the old one
-          StatusDisplayCell * ptrCell = itCell->second;
-          cell.erase(ptrCell->GetAddress());
-          cell[baseRegisterName] = ptrCell;
-          ptrCell->SetAddress(baseRegisterName);	  
-          registerName=baseRegisterName;
+    // Create a new StatusDisplayCell instance for this entry and add it to the table
+    StatusDisplayCell * ptrCell = new StatusDisplayCell;
+    cell[registerName] = ptrCell;
 
-        }
-      }
-    }
-
-    StatusDisplayCell * ptrCell;
-    // Add or append this entry
-    if(cell.find(registerName) == cell.end()) {
-      ptrCell = new StatusDisplayCell;
-      cell[registerName] = ptrCell;
-    }
-    else {
-      ptrCell = cell[registerName];
-    }
     // Setup the StatusDisplayCell instance for this register
     ptrCell->Setup(regIO,registerName,row,col);
 

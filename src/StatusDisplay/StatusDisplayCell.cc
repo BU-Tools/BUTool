@@ -112,7 +112,7 @@ namespace BUTool{
   bool StatusDisplayCell::SuppressRow( bool force) const
   {
     // Compute the full value for this entry
-    uint64_t val = ComputeValue();
+    uint64_t val = regIO->ComputeValueFromRegister(address);
     bool suppressRow = (iequals( displayRule, "nzr") && (val == 0)) && !force;
     return suppressRow;
   }
@@ -130,7 +130,7 @@ namespace BUTool{
   bool StatusDisplayCell::Display(int level,bool force) const
   {
     // Compute the full value for this entry
-    uint64_t val = ComputeValue();
+    uint64_t val = regIO->ComputeValueFromRegister(address);
 
     // Decide if we should display this cell
     bool display = (level >= statusLevel) && (statusLevel != 0);
