@@ -175,7 +175,8 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
   }
 
   // Check if this register contains a "_HI", so it is going to be merged with a "_LO"
-  else if ( reg.find("_HI") == reg.size()-3 ) {
+  // (the only possibility at this point)
+  else {
     std::string baseRegisterName = reg.substr(0,reg.find("_HI"));
 
     // Name of the corresponding "_LO" register
