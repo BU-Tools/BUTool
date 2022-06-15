@@ -134,7 +134,6 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
   merging of the 32-bit values and return the merged value.
   */
   uint32_t rawValue = ReadRegister(reg);
-  uint32_t regMask = GetRegMask(reg);
 
   // 64-bit unsigned integer we're going to return
   uint64_t result;
@@ -146,16 +145,17 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
   }
 
   // Below this line, merging of different values is handled
+  uint32_t regMask = GetRegMask(reg);
 
   // Figure out the number of bit shifts from the size of the word
   // 32 bits is the default, but it will be less for smaller values
   int numBitShifts = 32;
   
-  while ( (mask & 0x1) == 0 ) { mask >>= 1; }
+  while ( (regMask & 0x1) == 0 ) { regMask >>= 1; }
   int count = 0;
-  while ( (mask & 0x1) == 1 ) {
+  while ( (regMask & 0x1) == 1 ) {
     count++;
-    mask >>= 1;
+    regMask >>= 1;
   }
   numBitShifts = count;
   
