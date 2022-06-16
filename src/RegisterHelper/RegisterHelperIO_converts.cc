@@ -181,9 +181,7 @@ double BUTool::RegisterHelperIO::ConvertLinear11ToDouble(uint64_t rawValue){
 std::string BUTool::RegisterHelperIO::ConvertIPAddressToString(uint64_t rawValue){
   // Helper function to convert IP addresses to string
   struct in_addr addr;
-  int16_t val = rawValue; 
-  addr.s_addr = in_addr_t(val);
-
+  addr.s_addr = in_addr_t(rawValue);
   return inet_ntoa(addr);
 }
 
