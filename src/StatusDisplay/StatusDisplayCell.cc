@@ -235,7 +235,7 @@ namespace BUTool{
     // Do the formatting and write to the buffer
     if (iequals(format, std::string("fp16"))) {
       // If the double value is very large or very small, use scientific notation
-      if ((fabs(value) > 10000) || (fabs(value) < 0.001)) {
+      if ( ((fabs(value) > 10000) || (fabs(value) < 0.001)) && (value != 0) ) {
         snprintf(buffer,bufferSize,"%3.2e",value);
       }
       else {
@@ -344,11 +344,15 @@ namespace BUTool{
         break;
       }
       case RegisterHelperIO::UINT:
-      case RegisterHelperIO::NONE:
-      default:
       {
         ReadAndFormatUInt(buffer, bufferSize, width);
         break;
+      }
+      // Default is HEX format for StatusDisplay 
+      case RegisterHelperIO::NONE:
+      default:
+      {
+        ReadAndFormatHexString(buffer, bufferSize, width); 
       }
     }
     return std::string(buffer);
