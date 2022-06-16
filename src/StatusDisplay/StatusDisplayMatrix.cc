@@ -346,13 +346,13 @@ namespace BUTool{
       markup = regIO->GetRegParameterValue(registerName, parameterName);
     } catch (BUException::BAD_VALUE & e) {
       // Missing row or column
-      BUException::BAD_VALUE e;
+      BUException::BAD_VALUE e2;
       std::string error("Missing ");
       error += parameterName;
       error += " for ";
       error += registerName;
-      e.Append(error.c_str());
-      throw e; 
+      e2.Append(error.c_str());
+      throw e2; 
     }
 
     boost::to_upper(markup);
