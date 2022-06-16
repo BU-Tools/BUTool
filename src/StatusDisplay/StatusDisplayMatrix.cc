@@ -103,20 +103,9 @@ namespace BUTool{
     // Setup the StatusDisplayCell instance for this register
     ptrCell->Setup(regIO,registerName,row,col);
 
-    // Read the value if it is as non-zero status level
-    // A status level of zero is for write only registers
-    // if(ptrCell->DisplayLevel() > 0){
-    //   uint32_t value;
-    //   value = regIO->ReadRegister(registerName);
-    //   ptrCell->Fill(value,bitShift);
-    // }
-    //Setup should have thrown if something bad happened, so we are safe to update the search maps
+    // Setup should have thrown if something bad happened, so we are safe to update the search maps
     rowColMap[row][col] = ptrCell;
     colRowMap[col][row] = ptrCell;
-
-    uint32_t valueMask = regIO->GetRegMask(registerName); 
-    ptrCell->SetMask(valueMask);
-
   }
 
   void StatusDisplayMatrix::CheckName(std::string const & newTableName)

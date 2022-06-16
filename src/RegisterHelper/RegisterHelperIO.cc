@@ -130,7 +130,7 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
   Reads the raw 32-bit unsigned integer value from the register, and returns a 64-bit
   unsigned integer.
 
-  If the register name ("reg") contains a "_LOW" or "_HI", this function will handle the
+  If the register name ("reg") contains a "_LO" or "_HI", this function will handle the
   merging of the 32-bit values and return the merged value.
   */
   uint32_t rawValue = ReadRegister(reg);
@@ -214,7 +214,8 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int64_t & va
     b += mask & 1;
   }
 
-  // Sign extend b-bit number to r
+  // Sign extend b-bit number, override the value in x
+  // See here: https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
   int64_t x = rawVal;
   int64_t const m = 1U << (b - 1); 
 

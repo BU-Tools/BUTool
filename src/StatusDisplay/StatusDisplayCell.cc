@@ -31,8 +31,6 @@ namespace BUTool{
     description.clear();
     row.clear();
     col.clear();
-    word.clear();
-    wordShift.clear();
     format.clear();
     displayRule.clear();
     enabled = true;
@@ -72,8 +70,6 @@ namespace BUTool{
     } catch (BUException::BAD_VALUE & e) { _rule = std::string(); }
     boost::to_upper(_rule);
 
-    convertType = regIO->GetConvertType(_address);
-
     // Determine if this register is "enabled" to be shown
     bool _enabled=true;
     try {
@@ -82,6 +78,10 @@ namespace BUTool{
     } catch (BUException::BAD_VALUE & e) {
       _enabled=true;
     }
+
+    // Store additional data for this register
+    convertType = regIO->GetConvertType(_address);
+    mask = regIO->GetRegMask(_address);
 
     // Store all this information as class member variables
     // These must all be the same
@@ -98,13 +98,6 @@ namespace BUTool{
     statusLevel = strtoul(_statusLevel.c_str(),
 		     NULL,0);
     enabled = _enabled;
-  }
-
-  void StatusDisplayCell::Fill(uint32_t value,
-		  size_t bitShift)
-  {
-    word.push_back(value);
-    wordShift.push_back(bitShift);
   }
 
   int StatusDisplayCell::DisplayLevel() const {return statusLevel;}
@@ -142,53 +135,12 @@ namespace BUTool{
       display = display & (val == 0); //Show when zero
     }
 
-    //Apply "channel"-like enable mask
+    // Apply "channel"-like enable mask
     display = display && enabled;
 
-    //Force display if we want
+    // Force display if we want
     display = display || force;
     return display;
-  }
-  uint64_t StatusDisplayCell::ComputeValue() const
-  {
-    //Compute full value
-    uint64_t val = 0;
-    for(size_t i = 0; i < word.size();i++){
-      if(word.size() > 1){//If we have multiple values to merge
-	val += (uint64_t(word[i]) << wordShift[i]);
-      }else{//If we have just one value
-	val += uint64_t(word[i]);
-      }
-    }
-    
-    //We do not support signed integers that have more than 32 bits
-    if((iequals(format,std::string("d")) ||     //signed integer
-	iequals(format,std::string("linear"))   // linear11 or linear16
-	) &&
-       word.size() == 1){
-      //This is goign to be printed with "d", so we need to sign extend the number we just comptued
-      uint64_t temp_mask = GetMask();
-
-      //Count bits in mask 
-      uint64_t b; // c accumulates the total bits set in v
-
-      for (b = 0; temp_mask; temp_mask >>= 1)
-	{
-	  b += temp_mask & 1;
-	}
-
-
-      // sign extend magic from https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
-      int64_t x = val;      // sign extend this b-bit number to r
-      int64_t r;      // resulting sign-extended number
-      int64_t const m = 1U << (b - 1); // mask can be pre-computed if b is fixed
-
-      x = x & ((1U << b) - 1);  // (Skip this if bits in x above position b are already zero.)
-      r = (x ^ m) - m;
-      val = (uint64_t) r;
-    }
-
-    return val;
   }
 
   void StatusDisplayCell::ReadAndFormatHexString(char * buffer, int bufferSize, int width) const {
@@ -327,10 +279,8 @@ namespace BUTool{
         if (iequals(format, std::string("x"))) { 
           ReadAndFormatHexString(buffer, bufferSize, width); 
         }
-        
-        // For other types, just write the value as a C-string to the buffer
+        // For other types, just write the resulting value as a C-string to the buffer
         else { snprintf(buffer,bufferSize,"%s",value.c_str()); }
-
         break;
       }
       case RegisterHelperIO::FP:
@@ -348,7 +298,7 @@ namespace BUTool{
         ReadAndFormatUInt(buffer, bufferSize, width);
         break;
       }
-      // Default is HEX format for StatusDisplay 
+      // Default is hex format for StatusDisplay 
       case RegisterHelperIO::NONE:
       default:
       {

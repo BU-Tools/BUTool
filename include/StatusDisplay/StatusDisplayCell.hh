@@ -40,9 +40,6 @@ namespace BUTool{
 	      std::string const & _row,	 /// display row
 	      std::string const & _col 	 /// display column
 	      );
-    ///! store a value plus a shift for a multi-word value
-    void Fill(uint32_t value,
-	      size_t bitShift = 0);
 
     ///! Determine if this cell should be displayed based on rule, statusLevel
     bool Display(int level,bool force = false) const;
@@ -73,7 +70,6 @@ namespace BUTool{
     void CheckAndThrow(std::string const & name,
 		       std::string & thing1,
 		       std::string const & thing2) const;
-    uint64_t ComputeValue() const;
 
     std::string address;
     std::string description;
@@ -83,8 +79,6 @@ namespace BUTool{
 
     uint32_t mask;
     
-    std::vector<uint32_t > word;
-    std::vector<int> wordShift;
     std::string format;
     std::string displayRule;   
     RegisterHelperIO::ConvertType convertType;
