@@ -119,7 +119,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         int64_t val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, "%50s: " PRId64 "\n",reg.c_str(),val);
+        TextIO->Print(Level::INFO, "%50s: %" PRId64 "\n",reg.c_str(),val);
         break;
       }
     case  RegisterHelperIO::UINT:
@@ -128,7 +128,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadConvert(std::vector<std::strin
         uint64_t val;
         regIO->ReadConvert(reg, val);
         // Display the value to the screen
-        TextIO->Print(Level::INFO, "%50s: 0x" PRIx64 "\n",reg.c_str(),val);
+        TextIO->Print(Level::INFO, "%50s: 0x%" PRIX64 "\n",reg.c_str(),val);
         break;
       }
     }
