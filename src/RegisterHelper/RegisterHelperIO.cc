@@ -125,27 +125,102 @@ void BUTool::RegisterHelperIO::ReCase(std::string & name){
 }
 
 
+uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & reg){
+  /*
+  Reads the raw 32-bit unsigned integer value from the register, and returns a 64-bit
+  unsigned integer.
 
+  If the register name ("reg") contains a "_LO" or "_HI", this function will handle the
+  merging of the 32-bit values and return the merged value.
+  */
+  uint32_t rawValue = ReadRegister(reg);
 
+  // 64-bit unsigned integer we're going to return
+  uint64_t result;
+  
+  // No values to merge, convert 32-bit value to 64-bit and return
+  if ( !((reg.find("_LO") == reg.size()-3) || (reg.find("_HI") == reg.size()-3)) ) {
+    result = uint64_t(rawValue);
+    return result;
+  }
 
-void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, unsigned int & val){
-  // Read the value from the named register, and update the value in place
-  uint32_t rawVal = ReadRegister(reg);
-  val = rawVal;
+  // Below this line, merging of different values is handled
+  uint32_t regMask = GetRegMask(reg);
+
+  // Figure out the number of bit shifts from the size of the word
+  // 32 bits is the default, but it will be less for smaller values
+  int numBitShifts = 32;
+  
+  while ( (regMask & 0x1) == 0 ) { regMask >>= 1; }
+  int count = 0;
+  while ( (regMask & 0x1) == 1 ) {
+    count++;
+    regMask >>= 1;
+  }
+  numBitShifts = count;
+  
+  // Check if this register contains a "_LO", so it is going to be merged with a "_HI"
+  if ( reg.find("_LO") == reg.size()-3 ) {
+    std::string baseRegisterName = reg.substr(0,reg.find("_LO"));
+
+    // Name of the corresponding "_HI" register
+    std::string highRegisterName = baseRegisterName;
+    highRegisterName.append("_HI");
+
+    // Read the 32-bit value from the "_HI" register
+    uint32_t highValue = ReadRegister(highRegisterName);
+
+    // Construct the result value
+    result = uint64_t(rawValue) + ( uint64_t(highValue) << numBitShifts );
+  }
+
+  // Check if this register contains a "_HI", so it is going to be merged with a "_LO"
+  // (the only possibility at this point)
+  else {
+    std::string baseRegisterName = reg.substr(0,reg.find("_HI"));
+
+    // Name of the corresponding "_LO" register
+    std::string lowRegisterName = baseRegisterName;
+    lowRegisterName.append("_LO");
+
+    // Read the 32-bit value from the "_HI" register
+    uint32_t lowValue = ReadRegister(lowRegisterName);
+
+    // Construct the result value
+    result = ( uint64_t(rawValue) << numBitShifts ) + uint64_t(lowValue);
+  }
+
+  return result;
+
 }
 
 
-void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int & val){
+void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, uint64_t & val){
   // Read the value from the named register, and update the value in place
-  int rawVal = ReadRegister(reg); //convert bits to int from uint32_t
-  int mask   = GetRegMask(reg);
-  //mask is in the raw 32bit space, so not already alined to bit zero like rawVal.
-  //We need to shift it until we get a 1 in the 0th space
-  while(!(mask&0x1)){
-    mask = mask >> 1;
+  val = ComputeValueFromRegister(reg);
+}
+
+
+void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int64_t & val){
+  // Read the value from the named register, and update the value in place
+  int64_t rawVal = ComputeValueFromRegister(reg); 
+  uint64_t mask  = GetRegMask(reg);
+
+  // Count number of bits in the mask
+  uint64_t b;
+  // Shift all the bits to right until we count all the bits in the mask
+  for (b=0; mask; mask >>= 1)
+  {
+    b += mask & 1;
   }
-  //Do the conversion (from stanford bit twiddling hacks)
-  val = (rawVal ^ mask) - mask; 
+
+  // Sign extend b-bit number, override the value in x
+  // See here: https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
+  int64_t x = rawVal;
+  int64_t const m = 1U << (b - 1); 
+
+  x = x & ((1U << b) - 1);
+  val = (x ^ m) - m;
 }
 
 void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, double & val){
@@ -154,18 +229,20 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, double & val
   // Is it a "fp16", or will we do some transformations? (i.e."m_...")
   
   std::string format = GetConvertFormat(reg);
+  uint64_t rawValue = ComputeValueFromRegister(reg);
+
   // 16-bit floating point to double transformation
   if (boost::algorithm::iequals(format, "fp16")) {
-    val = ConvertFloatingPoint16ToDouble(reg);
+    val = ConvertFloatingPoint16ToDouble(rawValue);
   }
   
   // Need to do some arithmetic to transform
   else if ((format[0] == 'M') | (format[0] == 'm')) {
-    val = ConvertIntegerToDouble(reg, format);
+    val = ConvertIntegerToDouble(rawValue, format);
   }
 
   else if (boost::algorithm::iequals(format, "linear11")) {
-    val = ConvertLinear11ToDouble(reg);
+    val = ConvertLinear11ToDouble(rawValue);
   }
 
   // Undefined format, throw error
@@ -180,17 +257,18 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, double & val
 void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string & val){
   // Read the value from the named register, and update the value in place
   std::string format = GetConvertFormat(reg);
+  uint64_t rawValue = ComputeValueFromRegister(reg);
   
   if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
-    val = ConvertEnumToString(reg, format);
+    val = ConvertEnumToString(rawValue, format);
   }
   // IP addresses
   else if (boost::algorithm::iequals(format, std::string("IP"))) {
-    val = ConvertIPAddressToString(reg);
+    val = ConvertIPAddressToString(rawValue);
   }
   // Hex numbers in string
   else if ((format[0] == 'X') || (format[0] == 'x')) {
-    val = ReadRegister(reg);
+    val = ConvertHexNumberToString(rawValue);
   }
   // Undefined format, throw error
   else {

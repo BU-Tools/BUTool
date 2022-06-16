@@ -104,11 +104,11 @@ namespace BUTool{
 
   void StatusDisplay::ReportBody(size_t level, std::ostream & stream, std::string const & singleTable)
   {
-    //Clear any entries
+    // Clear any entries
     tables.clear();
     
-    //Call the function that processes the derived class address table
-    this->Process(singleTable);
+    // Call the function that processes a single table
+    Process(singleTable);
     printf("Process done\n");
     // Now output the content, looping over the tables
     // Eventually calls one of PrintLaTeX(), PrintHTML() or Print() for each table
@@ -117,7 +117,7 @@ namespace BUTool{
 	itTable++){
       itTable->second.Render(stream,level,statusMode);
     }
-    //Clean up tables for next time
+    // Clean up tables for next time
     tables.clear();
   }
 
@@ -208,6 +208,33 @@ namespace BUTool{
 //  const StatusDisplayCell* StatusDisplay::GetStatusDisplayCell(const std::string& table, const std::string& row, const std::string& col) const {
 //    return GetTable(table)->GetStatusDisplayCell(row,col);
 //  }
+
+  void StatusDisplay::Process(std::string const & singleTable) {
+    // Build tables
+    std::vector<std::string> Names = regIO->GetRegsRegex("*");
+    // Process all the nodes and build table structure
+    for(std::vector<std::string>::iterator itName = Names.begin();
+        itName != Names.end();
+        itName++){
+
+      try {
+        // Look for parameters: "Status", "Table"
+        // If one or more of these parameters do not exist, skip this register
+        std::string status = regIO->GetRegParameterValue(*itName, "Status");
+        std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+        
+        // If this cell is in the table we're looking for, add it to the
+        // relevant StatusDisplayMatrix instance
+        if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
+          tables[tableName].Add(*itName, regIO);
+        }
+      } catch(BUException::BUS_ERROR & e) {
+        continue;
+      } catch(BUException::BAD_VALUE & e) {
+        continue;
+      }
+    }
+  }
 
   void StatusDisplay::SetOutputMode(StatusMode mode) { statusMode = mode;}
   /*! Get output mode */

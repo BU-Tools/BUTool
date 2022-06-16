@@ -78,105 +78,34 @@ namespace BUTool{
     return rowColMap.at(row).at(col);
   }
 
-  void StatusDisplayMatrix::Add(std::string address,uint32_t value,uint32_t value_mask, uMap const & parameters)
+  void StatusDisplayMatrix::Add(std::string registerName, RegisterHelperIO* regIO)
+  // Add the register with registerName into a StatusDisplayMatrix table instance.
   {
-    uMap::const_iterator itTable= parameters.find("Table");
-    if(itTable == parameters.end()){
-      BUException::BAD_VALUE e;
-      char tmp[256];
-      snprintf(tmp, 255, "Missing Table value for %s \n",address.c_str());
-      e.Append( tmp);
-      throw e;
-    }
-    CheckName(NameBuilder(itTable->second,address));
+    // Find the table name for this register. If we can't find one, throw an exception
+    std::string tableName = regIO->GetRegParameterValue(registerName, "Table");
     
-    //Determine address
-    boost::to_upper(address);
+    CheckName(NameBuilder(tableName,registerName));
 
-    //Check if the rows/columns are the same
-    //Determine row and column
-    std::string row = ParseRow(parameters,address);
-    std::string col = ParseCol(parameters,address);    
-    int bitShift = 0;
-    
-    //Check if address contains a "_HI" or a "_LO"    
-    if((address.find("_LO") == (address.size()-3)) ||
-       (address.find("_HI") == (address.size()-3))){
-      //Search for an existing base address
-      std::string baseAddress;
-      if(address.find("_LO") == (address.size()-3)){
-	baseAddress = address.substr(0,address.find("_LO"));
-	bitShift = 0;
-      }
-      if(address.find("_HI") == (address.size()-3)){
-	baseAddress = address.substr(0,address.find("_HI"));
-	bitShift = 32;
-	std::string LO_address(baseAddress);
-	LO_address.append("_LO");
-	//Check if the LO word has already been placed
-	if (cell.find(LO_address) != cell.end()) {
-	  uint32_t mask = cell.at(LO_address)->GetMask();
-	  while ( (mask & 0x1) == 0) {
-	    mask >>= 1;
-	  }
-	  int count = 0;
-	  while ( (mask & 0x1) == 1) {
-	    count++;
-	    mask >>= 1;
-	  }
-	  bitShift = count; //Set bitShift t be the number of bits in the LO word
-	}
-	//If LO word hasn't been placed into the table yet, assume 32
-      }
-      std::map<std::string,StatusDisplayCell*>::iterator itCell;
-      if(((itCell = cell.find(baseAddress)) != cell.end()) ||  //Base address exists alread
-	 ((itCell = cell.find(baseAddress+std::string("_HI"))) != cell.end()) || //Hi address exists alread
-	 ((itCell = cell.find(baseAddress+std::string("_LO"))) != cell.end())){ //Low address exists alread
-	if(iequals(itCell->second->GetRow(),row) && 
-	   iequals(itCell->second->GetCol(),col)){
-	  //We want to combine these entries so we need to rename the old one
-	  StatusDisplayCell * ptrCell = itCell->second;
-	  cell.erase(ptrCell->GetAddress());
-	  cell[baseAddress] = ptrCell;
-	  ptrCell->SetAddress(baseAddress);	  
-	  address=baseAddress;
+    // Determine row and column
+    std::string row = ParseRowOrCol(regIO,registerName,"Row");
+    std::string col = ParseRowOrCol(regIO,registerName,"Column");
 
-	}
-      }
-    }
- 
-    
-    //Get description,format,rule, and statuslevel    
-    std::string description = (parameters.find("Description") != parameters.end()) ? parameters.find("Description")->second : std::string("");
-    std::string statusLevel = (parameters.find("Status") != parameters.end())      ? parameters.find("Status")->second      : std::string("");
-    std::string rule        = (parameters.find("Show") != parameters.end())        ? parameters.find("Show")->second        : std::string(""); 
-    std::string format      = (parameters.find("Format") != parameters.end())      ? parameters.find("Format")->second      : STATUS_DISPLAY_DEFAULT_FORMAT; 
-
-    boost::to_upper(rule);
-
-    bool enabled=true;
-    if(parameters.find("Enabled") != parameters.end()){
-      enabled = parameters.find("Enabled")->second.compare("0"); //True if string isn't equal to "0"
+    // Ignore registers with "_HI", as the RegisterHelperIO class handles
+    // the merging of _LO and _HI registers into a single value.
+    if (registerName.find("_HI") == (registerName.size()-3)) {
+      return;
     }
 
-    StatusDisplayCell * ptrCell;
-    //Add or append this entry
-    if(cell.find(address) == cell.end()){
-      ptrCell = new StatusDisplayCell;
-      cell[address] = ptrCell;
-    }else{
-      ptrCell = cell[address];
-    }
-    ptrCell->Setup(address,description,row,col,format,rule,statusLevel,enabled);
-    //Read the value if it is as non-zero status level
-    //A status level of zero is for write only registers
-    if(ptrCell->DisplayLevel() > 0){
-      ptrCell->Fill(value,bitShift);
-    }
-    //Setup should have thrown if something bad happened, so we are safe to update the search maps
+    // Create a new StatusDisplayCell instance for this entry and add it to the table
+    StatusDisplayCell * ptrCell = new StatusDisplayCell;
+    cell[registerName] = ptrCell;
+
+    // Setup the StatusDisplayCell instance for this register
+    ptrCell->Setup(regIO,registerName,row,col);
+
+    // Setup should have thrown if something bad happened, so we are safe to update the search maps
     rowColMap[row][col] = ptrCell;
-    colRowMap[col][row] = ptrCell;    
-    ptrCell->SetMask(value_mask);
+    colRowMap[col][row] = ptrCell;
   }
 
   void StatusDisplayMatrix::CheckName(std::string const & newTableName)
@@ -218,146 +147,219 @@ namespace BUTool{
     }
   }
 
+  void StatusDisplayMatrix::CheckForInvalidCharacter(std::string const & name, char const & invalidChar) const{
+    /*
+    Function to check if there is an invalid character in the given string
+    Throws a BUException if there is one.
+    */
+    for (size_t iChar = 0; iChar < name.size(); iChar++) {
+      if (name[iChar] == invalidChar) {
+        BUException::BAD_VALUE e;	    
+        std::string error("Spaces are not allowed in markup ");
+        error += name;
+        e.Append(error.c_str());
+        throw e;
+      } 
+    }
+  }
 
-  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & name) const{
-    //use a boost tokenizer to split up the name
-    //this won't actually split up the string until we call .begin() on it
-    boost::tokenizer<boost::char_separator<char> > tokenizedName(name,
-				boost::char_separator<char>("."));
-    std::vector<std::string> positionNames;
+  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
+    /* 
+    Build a row or column name, using a single underscore ('_') character in the beginning as a special token
+    Currently supports the following format: markup="_N", where N is an integer between 0 and 9 (inclusive)
 
+    Example: If we had a register with the name A.B.C.D, the following would be true:
+    - If "Row=_3" is set, the row name would be "C"
+    - If "Row=ROW_1" is set, the row name would be "ROW_1"
+    */
+
+    // The name we're going to return
+    std::string result;
+
+    // Spaces in markup are not allowed
+    CheckForInvalidCharacter(markup, ' ');
+    
+    for(size_t iChar = 0; iChar < markup.size(); iChar++){
+      // Check if this is a special parse character
+      // If it is, we'll check the number next to it to determine the position
+      if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar == 0)) {
+        // We must have an integer right after the parse token, if not, raise an exception
+        const bool validMarkup = (iChar + 1 < markup.size()) && (isdigit(markup[iChar+1]));
+        if (!validMarkup) {
+          BUException::BAD_VALUE e;	    
+          std::string error("Bad markup name for ");
+          error += parsedName[0]; 
+          e.Append(error.c_str());
+          throw e;
+        }
+
+        // Read the integer to determine the position
+        std::string positionStr;
+        positionStr.push_back(markup[iChar+1]);
+        
+        int position = std::stoi(positionStr);
+        // Add whitespace if we need it
+        if (result.size() > 0) {
+          result += " ";
+        }
+        result.append(parsedName[position]);
+        
+        // Do not process the next integer again
+        iChar++;
+      }
+      // Normal character, just add to the resulting name
+      else {
+        result.push_back(markup[iChar]);
+      }
+    }
+    return result;
+  }
+
+  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::vector<std::string> const & parsedName) const {
+    /* 
+    Build a row or column name, using multiple underscore ('_') characters as a special token
+    Determines the row and column name according to the following:
+    
+    - Single underscore: Treated as a literal underscore
+    - Double underscore ("__N"): Get the Nth portion of the register name (count from LEFT)
+    - Triple underscore ("___N"): Get the Nth portion of the register name (count from RIGHT)
+    */
     std::string ret;
+    
+    // Spaces are not allowed
+    CheckForInvalidCharacter(markup, ' ');
+    
     size_t iChar = 0;
     for(;iChar < markup.size();iChar++){
       //look for the next special char (which is a run of two, a run of three is a reverse token)
-      if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	if(iChar+1 < markup.size()){
-	  if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	    //there was only one parse token special character, so this is just a normal _
-	    //but " " is not allowed
-	    if(markup[iChar] == ' '){
-	      BUException::BAD_VALUE e;	    
-	      std::string error("Spaces are not allowed in markup ");
-	      error += markup;
-	      e.Append(error.c_str());
-	      throw e;
-	    }
-	    ret.push_back(markup[iChar]);	    	    
-	    continue;
-	  }else{
-	    iChar++;
-	  }
-	}
+      if((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar+1 < markup.size())) {
+        // Is the next character a special token?
+        if(markup[iChar+1] != STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+          // Just append to the return value and continue the for loop
+          // as there are no more special characters
+          ret.push_back(markup[iChar]);	    	    
+          continue;
+        }
+        // We have a second special character
+        else {
+          iChar++;
+        }
 
-	bool reverseToken = false;
-	//start parsing a special
-	iChar++;
-	if(iChar < markup.size()){
-	  //check for special character
-	  if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
-	    reverseToken = true;
-	    iChar++;
-	  }
-	  //find number
-	  std::string position;
-	  for(;iChar < markup.size();iChar++){
-	    if(!isdigit(markup[iChar])){
-	      iChar--;
-	      break;
-	    }else{
-	      position.push_back(markup[iChar]);
-	    }
-	  }
-	  if(position.size() > 0){
-	    int pos = std::stoi(position);
-	    //build the parsed vector of position names if we haven't
-	    if(positionNames.size() == 0){
-	      positionNames.push_back(name); // for _0
-	      auto itTok = tokenizedName.begin();
-	      for(;itTok!=tokenizedName.end();itTok++){
-		positionNames.push_back(*itTok); // for _n
-	      }
-	    }
-	    //Recompute the position if this is a reverse token.
-	    if(reverseToken){
-	      pos = positionNames.size() - pos;
-	    }
-	    if(pos > int(positionNames.size())){
-	      BUException::BAD_VALUE e;	    
-	      std::string error("Bad markup name for ");
-	      error += name + " with token " + std::to_string(pos) + " from markup " + markup;
-	      e.Append(error.c_str());
-	      throw e;
-	    }
-	    if(ret.size()){
-	      //add whitespace if we need it
-	      ret += " ";
-	    }
-	    ret.append(positionNames[pos]);
-	  }else{
-	    BUException::BAD_VALUE e;	    
-	    std::string error("Bad markup for ");
-	    error += name + " from markup " + markup;
-	    e.Append(error.c_str());
-	    throw e;
-	  }
-	}
-      }else{
-	//no special character, so just copy the string
-	if(markup[iChar] == ' '){
-	  BUException::BAD_VALUE e;	    
-	  std::string error("Spaces are not allowed in name ");
-	  error += "\""+markup+"\"";
-	  e.Append(error.c_str());
-	  throw e;
-	}
-	ret.push_back(markup[iChar]);
+        // This boolean specifies whether we want to count in reverse or not
+        // The value is True if three adjacent special characters ('_') are specified in markup
+        bool reverseToken = false;
+        // Start parsing a special
+        iChar++;
+        if(iChar < markup.size()){
+          // Check for third special character
+          if(markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN){
+            // Three special characters in a row, set reverseToken = true
+            reverseToken = true;
+            iChar++;
+          }
+          // Find number
+          std::string position;
+          for(;iChar < markup.size();iChar++){
+            // A valid markup will have a digit after the special characters
+            // Check if this is the case, otherwise we'll raise an exception later
+            if(!isdigit(markup[iChar])){
+              iChar--;
+              break;
+            } 
+            else { position.push_back(markup[iChar]); }
+          }
+          // If we found a valid position, figure out the name from the register name
+          if(position.size() > 0){
+            int pos = std::stoi(position);
+            // Recompute the position if this is a reverse token.
+            if(reverseToken){
+              pos = parsedName.size() - pos;
+            }
+            if(pos > int(parsedName.size())){
+              BUException::BAD_VALUE e;	    
+              std::string error("Bad markup name for ");
+              error += parsedName[0] + " with token " + std::to_string(pos) + " from markup " + markup;
+              e.Append(error.c_str());
+              throw e;
+            }
+            if(ret.size()){
+              // Add whitespace if we need it
+              ret += " ";
+            }
+            ret.append(parsedName[pos]);
+          }else{
+            BUException::BAD_VALUE e;	    
+            std::string error("Bad markup for ");
+            error += parsedName[0] + " from markup " + markup;
+            e.Append(error.c_str());
+            throw e;
+          }
+        }
+      }
+      else {
+        // No special character, so just copy the string
+        ret.push_back(markup[iChar]);
       }
     }
     return ret;
   }
 
-  std::string StatusDisplayMatrix::ParseRow(uMap const & parameters,
-					    std::string const & addressBase) const
-  {
-    uMap::const_iterator rowName = parameters.find("Row");
-    std::string newRow;
-    //Row
-    if(rowName != parameters.end()){
-      //Grab the row name and store it
-      newRow = rowName->second;
-      boost::to_upper(newRow);
-      newRow = NameBuilder(newRow,addressBase);
-    }else{
-      //Missing row
-      BUException::BAD_VALUE e;
-      std::string error("Missing row for ");
-      error += addressBase;
-      e.Append(error.c_str());
-      throw e;
-    }
-    return newRow;
-  }
-  std::string StatusDisplayMatrix::ParseCol(uMap const & parameters,
-					 std::string const & addressBase) const
-  {    
-    uMap::const_iterator colName = parameters.find("Column");
+  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & registerName) const{
+    /*
+    Main name builder function to determine row and column names for StatusDisplayMatrix tables.
+    Row and column names are inferred from the "Row" and "Column" parameters in the address table.
 
-    std::string newCol;
-    //Col
-    if(colName != parameters.end()){
-      newCol = colName->second;
-      boost::to_upper(newCol);
-      newCol = NameBuilder(newCol,addressBase);
-    }else{
-      //Missing col
-      BUException::BAD_VALUE e;
-      std::string error("Missing col for ");
-      error += addressBase;
-      e.Append(error.c_str());
-      throw e;
+    If SD_USE_NEW_PARSER is defined via a compile-time flag, this function will call the more recent
+    version of the name parser. Otherwise, it will call the older version of the name parser, where only
+    a single underscore ('_') in the beginning is treated as a special character.
+    */
+
+    // Create a tokenized register name, that is, the register name split by '.' character
+    boost::tokenizer<boost::char_separator<char> > tokenizedName(registerName,
+				boost::char_separator<char>("."));
+    
+    // parsedName vector will hold the full register name at index 0
+    // and the ith component of the tokenized name at index i
+    std::vector<std::string> parsedName;
+    parsedName.push_back(registerName); // for _0
+    for(auto itTok = tokenizedName.begin(); itTok!=tokenizedName.end(); itTok++) {
+      parsedName.push_back(*itTok); // for _N
     }
-    return newCol;
+    
+    #ifdef SD_USE_NEW_PARSER
+    return BuildNameWithMultipleUnderscores(markup, parsedName);
+    #endif
+
+    return BuildNameWithSingleUnderscore(markup, parsedName);
+  }
+
+  std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
+              std::string const & registerName,
+              std::string const & parameterName) const
+  {
+    /*
+    Function that returns the row (parameterName="row") or column name
+    (parameterName="column") for a given named register.
+    */
+    std::string markup;
+    try {
+      markup = regIO->GetRegParameterValue(registerName, parameterName);
+    } catch (BUException::BAD_VALUE & e) {
+      // Missing row or column
+      BUException::BAD_VALUE e;
+      std::string error("Missing ");
+      error += parameterName;
+      error += " for ";
+      error += registerName;
+      e.Append(error.c_str());
+      throw e; 
+    }
+
+    boost::to_upper(markup);
+    // Determine the row or column name from the markup and the register name
+    std::string newName = NameBuilder(markup, registerName);
+
+    return newName;
   }
 
   // render one table

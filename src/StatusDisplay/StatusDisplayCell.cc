@@ -31,23 +31,60 @@ namespace BUTool{
     description.clear();
     row.clear();
     col.clear();
-    word.clear();
-    wordShift.clear();
     format.clear();
     displayRule.clear();
     enabled = true;
     statusLevel = 0;
   }
-  void StatusDisplayCell::Setup(std::string const & _address,  //stripped of Hi/Lo
-		   std::string const & _description,
-		   std::string const & _row, //Stripped of Hi/Lo
-		   std::string const & _col, //Stripped of Hi/Lo
-		   std::string const & _format,
-		   std::string const & _rule,
-		   std::string const & _statusLevel,
-		   bool _enabled)
+  void StatusDisplayCell::Setup(RegisterHelperIO * _regIO,
+      std::string const & _address,  // Stripped of Hi/Lo
+		  std::string const & _row, // Stripped of Hi/Lo
+		  std::string const & _col  // Stripped of Hi/Lo
+      )
   {
-    //These must all be the same
+    /*
+    Set up a single StatusDisplayCell.
+
+    This function does the reads with the given RegisterHelperIO pointer it is provided,
+    and stores the register parameters as class member data.
+    */
+
+    // Store RegisterHelperIO pointer as a class member
+    regIO = _regIO;
+
+    // Using the RegisterHelperIO pointer, retrieve data about this register
+    std::string _description = regIO->GetRegDescription(_address);
+    std::string _format;
+    try {
+      _format = regIO->GetRegParameterValue(_address, "Format");
+    } catch (BUException::BAD_VALUE & e) { _format = STATUS_DISPLAY_DEFAULT_FORMAT; }
+
+    std::string _statusLevel;
+    try {
+      _statusLevel = regIO->GetRegParameterValue(_address, "Status");
+    } catch (BUException::BAD_VALUE & e) { _statusLevel = std::string(); }
+
+    std::string _rule;
+    try {
+      _rule = regIO->GetRegParameterValue(_address, "Show");
+    } catch (BUException::BAD_VALUE & e) { _rule = std::string(); }
+    boost::to_upper(_rule);
+
+    // Determine if this register is "enabled" to be shown
+    bool _enabled=true;
+    try {
+      // True if string isn't equal to "0"
+      _enabled=regIO->GetRegParameterValue(_address, "Enabled").compare("0");
+    } catch (BUException::BAD_VALUE & e) {
+      _enabled=true;
+    }
+
+    // Store additional data for this register
+    convertType = regIO->GetConvertType(_address);
+    mask = regIO->GetRegMask(_address);
+
+    // Store all this information as class member variables
+    // These must all be the same
     CheckAndThrow("Address",address,_address);
     CheckAndThrow(address + " row",row,_row);
     CheckAndThrow(address + " col",col,_col);
@@ -63,19 +100,12 @@ namespace BUTool{
     enabled = _enabled;
   }
 
-  void StatusDisplayCell::Fill(uint32_t value,
-		  size_t bitShift)
-  {
-    word.push_back(value);
-    wordShift.push_back(bitShift);
-  }
-
   int StatusDisplayCell::DisplayLevel() const {return statusLevel;}
 
   bool StatusDisplayCell::SuppressRow( bool force) const
   {
     // Compute the full value for this entry
-    uint64_t val = ComputeValue();
+    uint64_t val = regIO->ComputeValueFromRegister(address);
     bool suppressRow = (iequals( displayRule, "nzr") && (val == 0)) && !force;
     return suppressRow;
   }
@@ -93,7 +123,7 @@ namespace BUTool{
   bool StatusDisplayCell::Display(int level,bool force) const
   {
     // Compute the full value for this entry
-    uint64_t val = ComputeValue();
+    uint64_t val = regIO->ComputeValueFromRegister(address);
 
     // Decide if we should display this cell
     bool display = (level >= statusLevel) && (statusLevel != 0);
@@ -105,53 +135,130 @@ namespace BUTool{
       display = display & (val == 0); //Show when zero
     }
 
-    //Apply "channel"-like enable mask
+    // Apply "channel"-like enable mask
     display = display && enabled;
 
-    //Force display if we want
+    // Force display if we want
     display = display || force;
     return display;
   }
-  uint64_t StatusDisplayCell::ComputeValue() const
-  {
-    //Compute full value
-    uint64_t val = 0;
-    for(size_t i = 0; i < word.size();i++){
-      if(word.size() > 1){//If we have multiple values to merge
-	val += (uint64_t(word[i]) << wordShift[i]);
-      }else{//If we have just one value
-	val += uint64_t(word[i]);
+
+  void StatusDisplayCell::ReadAndFormatHexString(char * buffer, int bufferSize, int width) const {
+    /*
+    Wrapper function to format a hex string for a register, and write it
+    to the given buffer. The buffer will be modified in place.
+    */
+    
+    // Read the 32-bit value from the register
+    uint32_t val = regIO->ReadRegister(address);
+
+    // Now, do the formatting
+    std::string fmtString = "%";
+    if (val >= 10) {
+      fmtString.assign("0x%");
+      if (width >= 0) {
+        width -= 2;
       }
     }
-    
-    //We do not support signed integers that have more than 32 bits
-    if((iequals(format,std::string("d")) ||     //signed integer
-	iequals(format,std::string("linear"))   // linear11 or linear16
-	) &&
-       word.size() == 1){
-      //This is goign to be printed with "d", so we need to sign extend the number we just comptued
-      uint64_t temp_mask = GetMask();
-
-      //Count bits in mask 
-      uint64_t b; // c accumulates the total bits set in v
-
-      for (b = 0; temp_mask; temp_mask >>= 1)
-	{
-	  b += temp_mask & 1;
-	}
-
-
-      // sign extend magic from https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
-      int64_t x = val;      // sign extend this b-bit number to r
-      int64_t r;      // resulting sign-extended number
-      int64_t const m = 1U << (b - 1); // mask can be pre-computed if b is fixed
-
-      x = x & ((1U << b) - 1);  // (Skip this if bits in x above position b are already zero.)
-      r = (x ^ m) - m;
-      val = (uint64_t) r;
+    if (width >= 0) {
+      fmtString.append("*");
     }
+    
+    fmtString.append(PRIX64);
+    
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), val);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
+    }
+  }
 
-    return val;
+  void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int /* width */) const {
+    /*
+    Wrapper function to read and properly format a double value from the register.
+    The formatted double value will be written to the buffer in-place.
+    */
+
+    // Retrieve the double value
+    double value;
+    regIO->ReadConvert(address, value);
+
+    // Do the formatting and write to the buffer
+    if (iequals(format, std::string("fp16"))) {
+      // If the double value is very large or very small, use scientific notation
+      if ( ((fabs(value) > 10000) || (fabs(value) < 0.001)) && (value != 0) ) {
+        snprintf(buffer,bufferSize,"%3.2e",value);
+      }
+      else {
+        snprintf(buffer,bufferSize,"%3.2f",value);
+      }
+    }
+    else if (iequals(format,std::string("linear11"))) {
+      snprintf(buffer,bufferSize,"%3.3f",value);  
+    }
+    else {
+      snprintf(buffer,bufferSize,"%3.2f",value);
+    }
+  }
+
+  void StatusDisplayCell::ReadAndFormatInt(char * buffer, int bufferSize, int width) const {
+    /*
+    Wrapper function to read and format an integer value.
+    The formatted integer value will be written to the buffer in-place.
+    
+    Please note that we're explicitly using 64-bit integers to avoid confusion.
+    */
+    
+    // Retrieve the value
+    int64_t value;
+    regIO->ReadConvert(address, value);
+    
+    // Do the formatting and write to the buffer
+    // Build the format string for snprintf
+    std::string fmtString("%");
+    
+    // If we are specifying the width, add a *
+    if (width >= 0) {
+      fmtString.append("*");
+    }
+    fmtString.append(PRId64);
+
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), value);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+    }
+  }
+
+  void StatusDisplayCell::ReadAndFormatUInt(char * buffer, int bufferSize, int width) const {
+    /*
+    Wrapper function to read and format an unsigned integer value.
+    The formatted unsigned integer value will be written to the buffer in-place.
+
+    Please note that we're explicitly using 64-bit unsigned integers to avoid confusion.
+    */
+
+    // Retrieve the value
+    uint64_t value;
+    regIO->ReadConvert(address, value);
+
+    // Do the formatting and write to the buffer
+    // Build the format string for snprintf
+    std::string fmtString("%");
+
+    // If we are specifying the width, add a *
+    if (width >= 0) {
+      fmtString.append("*");
+    }
+    fmtString.append(PRIu64);
+    if (width == -1) {
+      snprintf(buffer, bufferSize, fmtString.c_str(), value);
+    }
+    else {
+      snprintf(buffer, bufferSize, fmtString.c_str(), width, value);
+    }
   }
 
   std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
@@ -161,224 +268,43 @@ namespace BUTool{
     memset(buffer,' ',20);
     buffer[bufferSize] = '\0';
 
-    //Build the format string for snprintf
-    std::string fmtString("%");
-    if((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))){
-      // t(T) is for enum
-      std::map<uint64_t,std::string> enumMap;
-      size_t iFormat = 1;
-      while(iFormat < format.size()){
-	if(format[iFormat] == '_'){
-	  //start parsing 
-	  uint64_t val = 0;
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      val = strtoul(format.substr(iFormat,jFormat-iFormat).c_str(),NULL,0);	      
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      enumMap[val] = format.substr(iFormat,jFormat-iFormat);
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	}else{
-	  iFormat++;
-	}
-      }
-      uint64_t regValue = ComputeValue();
-      if(enumMap.find(regValue) != enumMap.end()){
-	if('t' == format[0]){
-	  //Just format for 't'
-	  snprintf(buffer,bufferSize,"%s",enumMap[regValue].c_str());
-	}else{
-	  //format and number in hex for 'T'
-	  snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[regValue].c_str(),regValue);
-	}       
-      }else{
-	snprintf(buffer,bufferSize,"0x%" PRIX64 ")",regValue);
-      }
-    }else if((format.size() > 1) && (('m' == format[0]) || ('M' == format[0]))){      
-      //Convert from integer to floating point using
-      //y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
-      //      [0]   [1] [2]       [3]    [4] [5]
-      // sign == 0 is negative, all others mean positive
-      //Split the '_' separated values
-      std::vector<uint64_t> mathValues;
-      size_t iFormat = 1;
-      while(mathValues.size() != 6 && iFormat < format.size()){
-	if(format[iFormat] == '_'){
-	  //start parsing
-	  for(size_t jFormat=++iFormat;jFormat <format.size();jFormat++){
-	    if((format[jFormat] == '_') || (jFormat == (format.size()-1))){
-	      //convert value to number
-	      if(jFormat == (format.size()-1)){
-		jFormat++;
-	      }
-	      uint64_t val = strtoull(format.substr(iFormat,jFormat-iFormat).c_str(),NULL,0);
-	      mathValues.push_back(val);
-	      iFormat = jFormat;
-	      break;
-	    }
-	  }
-	}else{
-	  iFormat++;
-	}
-      }
-      //check that there are 6 values
-      if(mathValues.size() != 6){
-	return std::string(buffer);	
-      }
-      //check that no demoniator is 0
-      if((mathValues[2] == 0) || (mathValues[5] == 0)){
-	return std::string(buffer);
-      }
+    // Read+write values to the buffer based on the convert type for this register
+    switch(convertType) {
+      case RegisterHelperIO::STRING:
+      {
+        std::string value;
+        regIO->ReadConvert(address, value);
 
-      //computer the value ((m * x) + b)      
-      double transformedValue = ComputeValue();
-      //multiply by absolute value of m
-      transformedValue *= double(mathValues[1]);
-      transformedValue /= double(mathValues[2]); 
-      if(mathValues[0] == 0){
-	//apply sign of m
-	transformedValue *= -1;
+        // Special hex formatting for format='x' or format='X'
+        if (iequals(format, std::string("x"))) { 
+          ReadAndFormatHexString(buffer, bufferSize, width); 
+        }
+        // For other types, just write the resulting value as a C-string to the buffer
+        else { snprintf(buffer,bufferSize,"%s",value.c_str()); }
+        break;
       }
-      
-      double b = double(mathValues[4])/double(mathValues[5]);
-      if(mathValues[3] != 0){
-	transformedValue += b;
-      }else{
-	transformedValue -= b;
+      case RegisterHelperIO::FP:
+      {
+        ReadAndFormatDouble(buffer, bufferSize, width);
+        break;
       }
-
-      //print it
-      snprintf(buffer,bufferSize,	       
-	       "%3.2f",transformedValue);
-
-    }else if(iequals(format,std::string("linear11"))){
-      //union/struct magic to automatically convert the 11 base  and
-      //5 bit mantissa into ints which are assigned via the raw value
-      //This is the nused to build the floating point value
-      union {
-	struct {
-	  int16_t integer  : 11;
-	  int16_t exponent :  5;
-	} linear11;
-	int16_t raw;} val;
-      val.raw = ComputeValue();
-      double floatingValue = double(val.linear11.integer) * pow(2,val.linear11.exponent);
-      snprintf(buffer,bufferSize,
-	       "%3.3f",floatingValue);
-    }else if(iequals(format,std::string("fp16"))){
-      //union/struct magic to automatically convert the 1 sign, 10 base  and
-      //5 bit mantissa into ints which are assigned via the raw value
-      //This is the nused to build the floating point value
-      union {
-	struct {
-	  uint16_t significand : 10;
-	  uint16_t exponent    :  5;
-	  uint16_t sign        :  1;
-	} fp16;
-	int16_t raw;} val;
-      val.raw = ComputeValue();
-      double floatingValue;
-      switch (val.fp16.exponent){
-      case 0:
-	if (val.fp16.significand == 0){
-	  floatingValue = 0.0;
-	  if(val.fp16.sign){
-	    floatingValue *= -1.0;
-	  }
-	}else{
-	  floatingValue = pow(2,-14)*(val.fp16.significand/1024.0);
-	  if(val.fp16.sign){
-	    floatingValue *= -1.0;
-	  }
-	}
-	break;
-      case 31:
-	if (val.fp16.significand == 0){
-	  floatingValue = INFINITY;
-	  if(val.fp16.sign){
-	    floatingValue *= -1;
-	  }
-	}else{
-	  floatingValue = NAN;
-	}
-	break;
+      case RegisterHelperIO::INT:
+      {
+        ReadAndFormatInt(buffer, bufferSize, width);
+        break;
+      }
+      case RegisterHelperIO::UINT:
+      {
+        ReadAndFormatUInt(buffer, bufferSize, width);
+        break;
+      }
+      // Default is hex format for StatusDisplay 
+      case RegisterHelperIO::NONE:
       default:
-	floatingValue = pow(2,val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
-	if(val.fp16.sign){
-	  floatingValue *= -1.0;
-	}
-	break;
-      }
-      //only print e notation if very large or very small
-      if((fabs(floatingValue) < 10000) ||
-	 (fabs(floatingValue) > 0.001)
-	 ){
-	snprintf(buffer,bufferSize,
-		 "%3.2f",floatingValue);	
-      }else{
-	snprintf(buffer,bufferSize,
-		 "%3.2e",floatingValue);
-      }
-    }else if(iequals(format,std::string("IP"))){
-      struct in_addr addr;
-      addr.s_addr= in_addr_t(ComputeValue());
-      snprintf(buffer,bufferSize,
-	       "%s",inet_ntoa(addr));
-      
-    }else{
-      //Normal numbers
-
-      //hex formatting
-      if(iequals(format,std::string("x")) && ComputeValue() >= 10){
-	fmtString.assign("0x%");
-	if(width >= 0){
-	  width -= 2;
-	}
-      } else if (iequals(format,std::string("x")) && ComputeValue() < 10) {
-	// get rid of the leading zeros, looks better
-	fmtString.assign("%");
-      }
-      
-      //if we are specifying the width, add a *
-      if(width >= 0){
-	fmtString.append("*");
-      }
-
-      //add the PRI stuff for our uint64_t
-      if(iequals(format,std::string("x"))){
-	fmtString.append(PRIX64);
-      }else if(iequals(format,std::string("d"))){
-	fmtString.append(PRId64);
-      }else if(iequals(format,std::string("u"))){
-	fmtString.append(PRIu64);
-      }
- 
-
-      //Generatethe string
-      if(width == -1){      
-	snprintf(buffer,bufferSize,
-		 fmtString.c_str(),ComputeValue());
-      }else{
-	snprintf(buffer,bufferSize,	       
-		 fmtString.c_str(),width,ComputeValue());
+      {
+        ReadAndFormatHexString(buffer, bufferSize, width); 
       }
     }
-    //return the string
     return std::string(buffer);
   }
 

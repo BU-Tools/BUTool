@@ -17,6 +17,10 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 #include <boost/tokenizer.hpp> //for tokenizer
 #include <cmath> // for pow
 
+#include "RegisterHelper/RegisterHelperIO.hh"
+
+#define STATUS_DISPLAY_DEFAULT_FORMAT "X"
+
 namespace BUTool{
 
   /*! \brief One cell in a status display.
@@ -31,17 +35,11 @@ namespace BUTool{
     StatusDisplayCell(){Clear();};
     ~StatusDisplayCell(){Clear();};
     ///! Fill in values for a cell
-    void Setup(std::string const & _address,  /// address table name stripped of Hi/Lo
-	       std::string const & _description, /// long description
-	       std::string const & _row,	 /// display row
-	       std::string const & _col,	 /// display column
-	       std::string const & _format,	 /// display format
-	       std::string const & _rule,	 /// nz, z, nzr etc
-	       std::string const & _statusLevel, /// status level to display
-	       bool enabled = true);             /// enabled status
-    ///! store a value plus a shift for a multi-word value
-    void Fill(uint32_t value,
-	      size_t bitShift = 0);
+    void Setup(RegisterHelperIO * _regIO, // RegisterHelperIO instance to do reads 
+        std::string const & _address,  /// address table name stripped of Hi/Lo
+	      std::string const & _row,	 /// display row
+	      std::string const & _col 	 /// display column
+	      );
 
     ///! Determine if this cell should be displayed based on rule, statusLevel
     bool Display(int level,bool force = false) const;
@@ -54,6 +52,11 @@ namespace BUTool{
     std::string const & GetDesc() const;
     std::string const & GetAddress() const;
 
+    void ReadAndFormatHexString(char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatDouble   (char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatInt      (char * buffer, int bufferSize, int width = -1) const;
+    void ReadAndFormatUInt     (char * buffer, int bufferSize, int width = -1) const;
+
     void SetAddress(std::string const & _address);
     uint32_t const & GetMask() const;
     void SetMask(uint32_t const & _mask);
@@ -61,12 +64,12 @@ namespace BUTool{
     void SetEnabled(bool d){enabled = d;}
     bool GetEnabled(){return enabled;}
 
-  private:    
+  private:
+    RegisterHelperIO * regIO;    
     void Clear();
     void CheckAndThrow(std::string const & name,
 		       std::string & thing1,
 		       std::string const & thing2) const;
-    uint64_t ComputeValue() const;
 
     std::string address;
     std::string description;
@@ -76,10 +79,9 @@ namespace BUTool{
 
     uint32_t mask;
     
-    std::vector<uint32_t > word;
-    std::vector<int> wordShift;
     std::string format;
     std::string displayRule;   
+    RegisterHelperIO::ConvertType convertType;
     int statusLevel;
   };
 
