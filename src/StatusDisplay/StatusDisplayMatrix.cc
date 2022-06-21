@@ -345,8 +345,7 @@ namespace BUTool{
     try {
       markup = regIO->GetRegParameterValue(registerName, parameterName);
     } catch (BUException::BAD_VALUE & e) {
-      // Missing row or column
-      BUException::BAD_VALUE e;
+      // Missing row or column, append information to the error message
       std::string error("Missing ");
       error += parameterName;
       error += " for ";
