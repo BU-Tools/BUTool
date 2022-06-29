@@ -77,6 +77,7 @@ namespace BUTool{
     std::string col;
     bool enabled;
 
+    uint32_t word;
     uint32_t mask;
     
     std::string format;

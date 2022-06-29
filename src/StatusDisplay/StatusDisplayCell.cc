@@ -52,6 +52,13 @@ namespace BUTool{
     // Store RegisterHelperIO pointer as a class member
     regIO = _regIO;
 
+    /* Read the 32-bit word from this register and store it as member data
+     * This data will be used for determining whether the cell should be displayed or not,
+     * without the need for calling regIO methods again.
+     * If a BUS_ERROR happens here, the function calling Setup will catch it and skip this register. 
+     */
+    word = regIO->ReadRegister(_address);
+
     // Using the RegisterHelperIO pointer, retrieve data about this register
     std::string _description = regIO->GetRegDescription(_address);
     std::string _format;
@@ -104,9 +111,7 @@ namespace BUTool{
 
   bool StatusDisplayCell::SuppressRow( bool force) const
   {
-    // Compute the full value for this entry
-    uint64_t val = regIO->ComputeValueFromRegister(address);
-    bool suppressRow = (iequals( displayRule, "nzr") && (val == 0)) && !force;
+    bool suppressRow = (iequals( displayRule, "nzr") && (word == 0)) && !force;
     return suppressRow;
   }
 
@@ -122,17 +127,14 @@ namespace BUTool{
 
   bool StatusDisplayCell::Display(int level,bool force) const
   {
-    // Compute the full value for this entry
-    uint64_t val = regIO->ComputeValueFromRegister(address);
-
     // Decide if we should display this cell
     bool display = (level >= statusLevel) && (statusLevel != 0);
 
     // Check against the print rules
     if(iequals(displayRule,"nz")){
-      display = display & (val != 0); //Show when non-zero
+      display = display & (word != 0); //Show when non-zero
     } else if(iequals(displayRule,"z")){
-      display = display & (val == 0); //Show when zero
+      display = display & (word == 0); //Show when zero
     }
 
     // Apply "channel"-like enable mask
