@@ -3,6 +3,7 @@
 #include <BUTool/ToolException.hh>
 
 #include <boost/algorithm/string/predicate.hpp> //for iequals
+#include <iostream>
 
 std::string BUTool::RegisterHelperIO::ReadString(std::string const & /*reg*/){
   //=============================================================================
@@ -217,9 +218,10 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, int64_t & va
   // Sign extend b-bit number, override the value in x
   // See here: https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
   int64_t x = rawVal;
-  int64_t const m = 1U << (b - 1); 
+  uint64_t tmp = 1;
+  int64_t const m = tmp << (b - 1); 
 
-  x = x & ((1U << b) - 1);
+  x = x & ((tmp << b) - 1);
   val = (x ^ m) - m;
 }
 
