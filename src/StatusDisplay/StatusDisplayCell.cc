@@ -153,7 +153,7 @@ namespace BUTool{
     
     // Read the 32-bit value from the register and convert to 64-bit value
     // so that it's ready for printing
-    uint64_t val = regIO->ReadRegister(address);
+    uint64_t val = regIO->ComputeValueFromRegister(address);
 
     // Now, do the formatting
     std::string fmtString = "%";
