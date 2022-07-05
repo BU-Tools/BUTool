@@ -39,7 +39,8 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
     std::string format = formatVal->second;
     if(format.size() > 0) {
       // String data type
-      if (( iequals(format, "T")) ||
+      if (( format[0] == 't') ||
+          ( format[0] == 'T') ||
           ( iequals(format, "IP") )) 
       {
         ret = STRING;
