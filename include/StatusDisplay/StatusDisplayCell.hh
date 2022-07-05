@@ -52,7 +52,7 @@ namespace BUTool{
     std::string const & GetDesc() const;
     std::string const & GetAddress() const;
 
-    void ReadAndFormatHexString(char * buffer, int bufferSize, int width = -1) const;
+    // Helper formatting functions for printing values
     void ReadAndFormatDouble   (char * buffer, int bufferSize, int width = -1) const;
     void ReadAndFormatInt      (char * buffer, int bufferSize, int width = -1) const;
     void ReadAndFormatUInt     (char * buffer, int bufferSize, int width = -1) const;

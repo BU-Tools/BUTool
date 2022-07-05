@@ -13,10 +13,14 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+using boost::algorithm::iequals;
+
+#define DEFAULT_FORMAT "X"
+
 std::string BUTool::RegisterHelperIO::GetConvertFormat(std::string const & reg){
   // From a given node address, retrieve the "Format" parameter of the node
   auto parameter = GetRegParameters(reg);
-  std::string format("none");
+  std::string format(DEFAULT_FORMAT);
   auto formatVal = parameter.find("Format");
   if(formatVal != parameter.end()){
     format = formatVal->second;
@@ -33,25 +37,28 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
   //Search for Format
   if(formatVal != parameter.end()){
     std::string format = formatVal->second;
-    if(format.size() > 0){
-      if (( format[0] == 'T') ||
-	  ( format[0] == 't') ||
-	  ( boost::algorithm::iequals(format, std::string("IP")) ) ||
-	  ( boost::algorithm::iequals(format, "X")) ) {
-	ret = STRING;
+    if(format.size() > 0) {
+      // String data type
+      if (( iequals(format, "T")) ||
+          ( iequals(format, "IP") )) 
+      {
+        ret = STRING;
       }
-      if ((format[0] == 'M') |
-	  (format[0] == 'm') |
-	  (format == "fp16")) {
-	ret = FP;
+      // Floating point values
+      else if ((format[0] == 'M') ||
+          (format[0] == 'm') ||
+          (format == "fp16")) {
+        ret = FP;
       }
-      if ((format.size() == 1) &&
-	  (format[0] == 'd')) {
-	ret = INT;
+      // Signed integer data type
+      else if ((format.size() == 1) &&
+          (format[0] == 'd')) {
+        ret = INT;
       }
-      if ((format.size() == 1) &&
-	  (format[0] == 'u')) {
-	ret = UINT;
+      // Unsigned integer, can be in hex format as well if format='X' is specified
+      else if ((format.size() == 1) &&
+          ( (format[0] == 'u') || (iequals(format, "X")) ) ) {
+        ret = UINT;
       }
     }
   }

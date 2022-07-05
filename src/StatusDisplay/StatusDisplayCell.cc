@@ -145,46 +145,6 @@ namespace BUTool{
     return display;
   }
 
-  void StatusDisplayCell::ReadAndFormatHexString(char * buffer, int bufferSize, int width) const {
-    /*
-    Wrapper function to format a hex string for a register, and write it
-    to the given buffer. The buffer will be modified in place.
-    */
-    
-    // Read the 32-bit value from the register and convert to 64-bit value
-    // so that it's ready for printing
-    uint64_t val = regIO->ComputeValueFromRegister(address);
-
-    // Now, do the formatting
-    std::string fmtString = "%";
-    if (val >= 10) {
-      fmtString.assign("0x%");
-      if (width >= 0) {
-        width -= 2;
-      }
-    }
-
-    // Zero padding or space padding, depending on the format
-    if (width >= 0) {
-      if (iequals(format, "x")) {
-        fmtString.append("0*");
-      }
-      else {
-        fmtString.append("*");
-      }
-    }
-
-    // PRI macro to print 64-bit hex value    
-    fmtString.append(PRIX64);
-
-    if (width == -1) {
-      snprintf(buffer, bufferSize, fmtString.c_str(), val);
-    }
-    else {
-      snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
-    }
-  }
-
   void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int /* width */) const {
     /*
     Wrapper function to read and properly format a double value from the register.
@@ -249,6 +209,8 @@ namespace BUTool{
     The formatted unsigned integer value will be written to the buffer in-place.
 
     Please note that we're explicitly using 64-bit unsigned integers to avoid confusion.
+
+    If 'x' or 'X' is specified as format, the unsigned integer value will be printed as hex. 
     */
 
     // Retrieve the value
@@ -259,11 +221,26 @@ namespace BUTool{
     // Build the format string for snprintf
     std::string fmtString("%");
 
-    // If we are specifying the width, add a *
-    if (width >= 0) {
-      fmtString.append("*");
+    // Update the format string for hex-displays
+    if ((val >= 10) && (iequals(format, "X"))) {
+      fmtString.assign("0x%");
+      if (width >= 0) {
+        width -= 2;
+      }
     }
-    fmtString.append(PRIu64);
+
+    // Zero padding or space padding, depending on the format
+    if (width >= 0) {
+      if (iequals(format, "x")) {
+        fmtString.append("0*");
+        fmtString.append(PRIX64);
+      }
+      else {
+        fmtString.append("*");
+        fmtString.append(PRIu64);
+      }
+    }
+
     if (width == -1) {
       snprintf(buffer, bufferSize, fmtString.c_str(), value);
     }
@@ -285,13 +262,7 @@ namespace BUTool{
       {
         std::string value;
         regIO->ReadConvert(address, value);
-
-        // Special hex formatting for format='x' or format='X'
-        if (iequals(format, std::string("x"))) { 
-          ReadAndFormatHexString(buffer, bufferSize, width); 
-        }
-        // For other types, just write the resulting value as a C-string to the buffer
-        else { snprintf(buffer,bufferSize,"%s",value.c_str()); }
+        snprintf(buffer,bufferSize,"%s",value.c_str());
         break;
       }
       case RegisterHelperIO::FP:
@@ -305,15 +276,10 @@ namespace BUTool{
         break;
       }
       case RegisterHelperIO::UINT:
-      {
-        ReadAndFormatUInt(buffer, bufferSize, width);
-        break;
-      }
-      // Default is hex format for StatusDisplay 
       case RegisterHelperIO::NONE:
       default:
       {
-        ReadAndFormatHexString(buffer, bufferSize, width); 
+        ReadAndFormatUInt(buffer, bufferSize, width);
       }
     }
     return std::string(buffer);
