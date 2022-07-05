@@ -163,12 +163,20 @@ namespace BUTool{
         width -= 2;
       }
     }
+
+    // Zero padding or space padding, depending on the format
     if (width >= 0) {
-      fmtString.append("*");
+      if (iequals(format, "x")) {
+        fmtString.append("0*");
+      }
+      else {
+        fmtString.append("*");
+      }
     }
-    
+
+    // PRI macro to print 64-bit hex value    
     fmtString.append(PRIX64);
-    
+
     if (width == -1) {
       snprintf(buffer, bufferSize, fmtString.c_str(), val);
     }
