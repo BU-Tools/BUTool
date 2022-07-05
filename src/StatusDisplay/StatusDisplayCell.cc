@@ -231,7 +231,7 @@ namespace BUTool{
 
     // Zero padding or space padding, depending on the format
     if (width >= 0) {
-      if (iequals(format, "x")) {
+      if (iequals(format, "x") && (value >= 10)) {
         fmtString.append("0*");
       }
       else {
