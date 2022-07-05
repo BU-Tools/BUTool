@@ -222,7 +222,7 @@ namespace BUTool{
     std::string fmtString("%");
 
     // Update the format string for hex-displays
-    if ((val >= 10) && (iequals(format, "X"))) {
+    if ((value >= 10) && (iequals(format, "X"))) {
       fmtString.assign("0x%");
       if (width >= 0) {
         width -= 2;
@@ -233,12 +233,18 @@ namespace BUTool{
     if (width >= 0) {
       if (iequals(format, "x")) {
         fmtString.append("0*");
-        fmtString.append(PRIX64);
       }
       else {
         fmtString.append("*");
-        fmtString.append(PRIu64);
       }
+    }
+   
+    // PRI macros for hex or unsigned int formatting 
+    if (iequals(format, "x")) {
+      fmtString.append(PRIX64);
+    }
+    else {
+      fmtString.append(PRIu64);
     }
 
     if (width == -1) {
