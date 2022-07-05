@@ -358,6 +358,14 @@ namespace BUTool{
     // Determine the row or column name from the markup and the register name
     std::string newName = NameBuilder(markup, registerName);
 
+    // If there is a "_LO" or "_HI" in the row/column name, drop it
+    if (newName.find("_LO") == newName.size()-3) {
+      newName = newName.substr(0, newName.find("_LO"));
+    }
+    else if (newName.find("_HI") == newName.size()-3) {
+      newName = newName.substr(0, newName.find("_HI"));
+    }
+
     return newName;
   }
 
