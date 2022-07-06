@@ -431,7 +431,7 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
     Level::level printLevel = Level::INFO;
     // A print-level argument has been given.
     if (iArg.size() > 2){
-      uint64_t printLevelInt = intArg[2];
+      uint64_t printLevelInt = iArg[2];
       switch(printLevelInt) {
         case 0:
           printLevel = Level::INFO;
