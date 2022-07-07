@@ -52,6 +52,13 @@ namespace BUTool{
     // Store RegisterHelperIO pointer as a class member
     regIO = _regIO;
 
+    /* Read the 32-bit word from this register and store it as member data
+     * This data will be used for determining whether the cell should be displayed or not,
+     * without the need for calling regIO methods again.
+     * If a BUS_ERROR happens here, the function calling Setup will catch it and skip this register. 
+     */
+    word = regIO->ReadRegister(_address);
+
     // Using the RegisterHelperIO pointer, retrieve data about this register
     std::string _description = regIO->GetRegDescription(_address);
     std::string _format;
@@ -104,9 +111,7 @@ namespace BUTool{
 
   bool StatusDisplayCell::SuppressRow( bool force) const
   {
-    // Compute the full value for this entry
-    uint64_t val = regIO->ComputeValueFromRegister(address);
-    bool suppressRow = (iequals( displayRule, "nzr") && (val == 0)) && !force;
+    bool suppressRow = (iequals( displayRule, "nzr") && (word == 0)) && !force;
     return suppressRow;
   }
 
@@ -122,17 +127,14 @@ namespace BUTool{
 
   bool StatusDisplayCell::Display(int level,bool force) const
   {
-    // Compute the full value for this entry
-    uint64_t val = regIO->ComputeValueFromRegister(address);
-
     // Decide if we should display this cell
     bool display = (level >= statusLevel) && (statusLevel != 0);
 
     // Check against the print rules
     if(iequals(displayRule,"nz")){
-      display = display & (val != 0); //Show when non-zero
+      display = display & (word != 0); //Show when non-zero
     } else if(iequals(displayRule,"z")){
-      display = display & (val == 0); //Show when zero
+      display = display & (word == 0); //Show when zero
     }
 
     // Apply "channel"-like enable mask
@@ -141,37 +143,6 @@ namespace BUTool{
     // Force display if we want
     display = display || force;
     return display;
-  }
-
-  void StatusDisplayCell::ReadAndFormatHexString(char * buffer, int bufferSize, int width) const {
-    /*
-    Wrapper function to format a hex string for a register, and write it
-    to the given buffer. The buffer will be modified in place.
-    */
-    
-    // Read the 32-bit value from the register
-    uint32_t val = regIO->ReadRegister(address);
-
-    // Now, do the formatting
-    std::string fmtString = "%";
-    if (val >= 10) {
-      fmtString.assign("0x%");
-      if (width >= 0) {
-        width -= 2;
-      }
-    }
-    if (width >= 0) {
-      fmtString.append("*");
-    }
-    
-    fmtString.append(PRIX64);
-    
-    if (width == -1) {
-      snprintf(buffer, bufferSize, fmtString.c_str(), val);
-    }
-    else {
-      snprintf(buffer, bufferSize, fmtString.c_str(), width, val);
-    }
   }
 
   void StatusDisplayCell::ReadAndFormatDouble(char * buffer, int bufferSize, int /* width */) const {
@@ -238,6 +209,8 @@ namespace BUTool{
     The formatted unsigned integer value will be written to the buffer in-place.
 
     Please note that we're explicitly using 64-bit unsigned integers to avoid confusion.
+
+    If 'x' or 'X' is specified as format, the unsigned integer value will be printed as hex. 
     */
 
     // Retrieve the value
@@ -248,11 +221,32 @@ namespace BUTool{
     // Build the format string for snprintf
     std::string fmtString("%");
 
-    // If we are specifying the width, add a *
-    if (width >= 0) {
-      fmtString.append("*");
+    // Update the format string for hex-displays
+    if ((value >= 10) && (iequals(format, "X"))) {
+      fmtString.assign("0x%");
+      if (width >= 0) {
+        width -= 2;
+      }
     }
-    fmtString.append(PRIu64);
+
+    // Zero padding or space padding, depending on the format
+    if (width >= 0) {
+      if (iequals(format, "x") && (value >= 10)) {
+        fmtString.append("0*");
+      }
+      else {
+        fmtString.append("*");
+      }
+    }
+   
+    // PRI macros for hex or unsigned int formatting 
+    if (iequals(format, "x")) {
+      fmtString.append(PRIX64);
+    }
+    else {
+      fmtString.append(PRIu64);
+    }
+
     if (width == -1) {
       snprintf(buffer, bufferSize, fmtString.c_str(), value);
     }
@@ -274,13 +268,7 @@ namespace BUTool{
       {
         std::string value;
         regIO->ReadConvert(address, value);
-
-        // Special hex formatting for format='x' or format='X'
-        if (iequals(format, std::string("x"))) { 
-          ReadAndFormatHexString(buffer, bufferSize, width); 
-        }
-        // For other types, just write the resulting value as a C-string to the buffer
-        else { snprintf(buffer,bufferSize,"%s",value.c_str()); }
+        snprintf(buffer,bufferSize,"%s",value.c_str());
         break;
       }
       case RegisterHelperIO::FP:
@@ -294,15 +282,10 @@ namespace BUTool{
         break;
       }
       case RegisterHelperIO::UINT:
-      {
-        ReadAndFormatUInt(buffer, bufferSize, width);
-        break;
-      }
-      // Default is hex format for StatusDisplay 
       case RegisterHelperIO::NONE:
       default:
       {
-        ReadAndFormatHexString(buffer, bufferSize, width); 
+        ReadAndFormatUInt(buffer, bufferSize, width);
       }
     }
     return std::string(buffer);
