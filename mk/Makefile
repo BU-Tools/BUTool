@@ -4,7 +4,7 @@ include mk/helpers.mk
 include mk/uhal.mk
 
 
-BUTOOL_PATH=${MAKE_PATH}
+BUTOOL_PATH=${PWD}
 CXX=g++
 RUNTIME_LDPATH?=${PWD}
 

@@ -1,0 +1,34 @@
+name: BUTool StatusDisplay CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Configure environment
+      run: |
+        echo "Starting job: $(date)"
+        ls -lah .
+        source env.sh
+    - name: Build BUTool
+      run: make
+    - name: Build GenericDSAT plugin
+      run: |
+        git clone --recursive https://gitlab.com/BU-EDF/GenericDSATDevice_plugin.git
+        cd GenericDSATDevice_plugin
+        BUTOOL_PATH=$(realpath ../BUTool)
+        source env.sh ${BUTOOL_PATH}
+        make
+    - name: Run StatusDisplay test
+      run: ./run_BUTool_test.sh
+    - name: Cleanup
+      run: |
+        make clean
+        cd ${BUTOOL_PATH}
+        make clean
+
+        
