@@ -203,7 +203,7 @@ namespace BUTool{
         if (isdigit(markup[iChar+1])) {
           std::string positionStr;
           positionStr.push_back(markup[iChar+1]);
-          int position = std::stoi(positionStr);
+          size_t position = std::stoi(positionStr);
          
           // Add whitespace if we need it
           if (result.size() > 0) {
@@ -224,7 +224,8 @@ namespace BUTool{
 
         // Check if the next character is another underscore
         else if (markup[iChar+1] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) {
-          result.append(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN);
+          std::string parseToken(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN);
+          result.append(parseToken.c_str());
         }
 
         // Any other possibility is a bad markup name
