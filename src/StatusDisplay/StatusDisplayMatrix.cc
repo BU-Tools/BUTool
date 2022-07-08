@@ -154,7 +154,7 @@ namespace BUTool{
     */
     for (size_t iChar = 0; iChar < name.size(); iChar++) {
       if (name[iChar] == invalidChar) {
-        BUException::BAD_VALUE e;	    
+        BUException::BAD_MARKUP_NAME e;	    
         std::string error("Spaces are not allowed in markup ");
         error += name;
         e.Append(error.c_str());
@@ -192,7 +192,7 @@ namespace BUTool{
       if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN)) {
         // Check the next character, make sure that it is within range
         if (!(iChar + 1 < markup.size())) {
-          BUException::BAD_VALUE e;	    
+          BUException::BAD_MARKUP_NAME e;	    
           std::string error("Bad markup name for ");
           error += parsedName[0]; 
           e.Append(error.c_str());
@@ -213,7 +213,7 @@ namespace BUTool{
           // Position out of bounds of the parsed name size
           // In a valid markup name, this should never happen, throw BAD_VALUE
           if (!(position < parsedName.size())) {
-            BUException::BAD_VALUE e;	    
+            BUException::BAD_MARKUP_NAME e;	    
             std::string error("Bad markup name for ");
             error += parsedName[0]; 
             e.Append(error.c_str());
@@ -230,7 +230,7 @@ namespace BUTool{
 
         // Any other possibility is a bad markup name
         else {
-          BUException::BAD_VALUE e;	    
+          BUException::BAD_MARKUP_NAME e;	    
           std::string error("Bad markup name for ");
           error += parsedName[0]; 
           e.Append(error.c_str());
@@ -309,7 +309,7 @@ namespace BUTool{
               pos = parsedName.size() - pos;
             }
             if(pos > int(parsedName.size())){
-              BUException::BAD_VALUE e;	    
+              BUException::BAD_MARKUP_NAME e;	    
               std::string error("Bad markup name for ");
               error += parsedName[0] + " with token " + std::to_string(pos) + " from markup " + markup;
               e.Append(error.c_str());
@@ -321,7 +321,7 @@ namespace BUTool{
             }
             ret.append(parsedName[pos]);
           }else{
-            BUException::BAD_VALUE e;	    
+            BUException::BAD_MARKUP_NAME e;	    
             std::string error("Bad markup for ");
             error += parsedName[0] + " from markup " + markup;
             e.Append(error.c_str());
