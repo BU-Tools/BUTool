@@ -37,7 +37,7 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
   //Search for Format
   if(formatVal != parameter.end()){
     std::string format = formatVal->second;
-    if(format.size() > 0) {
+    if(!format.empty()) {
       // String data type
       if (( format[0] == 't') ||
           ( format[0] == 'T') ||
@@ -88,7 +88,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(uint64_t rawValu
       doubleVal = 0.0;
     }
     else {
-      doubleVal = pow(2,-14)*(val.fp16.significand/1024.0);
+      doubleVal = pow(2,-14)*(val.fp16.significand/1024.0); //NOLINT
     }
 
     // Apply sign
@@ -97,7 +97,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(uint64_t rawValu
     }
     break;
   // Case where the exponent is maximum
-  case 31:
+  case 31: //NOLINT
     if (val.fp16.significand == 0) {
       doubleVal = INFINITY;
       if (val.fp16.sign) {
@@ -110,7 +110,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(uint64_t rawValu
     break;
   // Cases in between
   default:
-    doubleVal = pow(2, val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0));
+    doubleVal = pow(2, val.fp16.exponent-15)*(1.0+(val.fp16.significand/1024.0)); //NOLINT
     if (val.fp16.sign) {
       doubleVal *= -1.0;
     }
@@ -128,8 +128,9 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(uint64_t rawValue, std::
 
   std::vector<uint64_t> mathValues;
   size_t iFormat=1;
- 
-  while (mathValues.size() != 6 && iFormat < format.size()) {
+  const size_t requiredArgumentCount = 6;
+  while (mathValues.size() != requiredArgumentCount &&
+	 iFormat < format.size()) {
     if (format[iFormat] == '_') {
       // Start parsing the value after the '_' and add the corresponding value to mathValues array
       for (size_t jFormat=++iFormat; jFormat < format.size(); jFormat++) {
@@ -160,7 +161,7 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(uint64_t rawValue, std::
     transformedValue *= -1;
   }
   
-  double b = double(mathValues[4]) / double(mathValues[5]);
+  double b = double(mathValues[4]) / double(mathValues[5]); //NOLINT
   if (mathValues[3] == 0) {
     b *= -1;
   }
@@ -257,7 +258,7 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(uint64_t rawValue, std
   // after converting it into a C++ string 
   const int bufferSize = 20;
   char buffer[bufferSize+1];
-  memset(buffer,' ',20);
+  memset(buffer,' ',bufferSize);
   buffer[bufferSize] = '\0';
 
   if (enumMap.find(rawValue) != enumMap.end()) {

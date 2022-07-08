@@ -82,6 +82,11 @@ LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${L
 
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
+### LINTER checking ###
+LINTER=clang-tidy -extra-arg=-Wno-unknown-warning-option
+#second line sets warnings to errors except for certain things
+LINTER_DEFAULT_ARGS=-checks=readability-* --warnings-as-errors=readability-*,-readability-implicit-bool-conversion,-readability-else-after-return,-readability-function-cognitive-complexity,-readability-convert-member-functions-to-static,-clang-diagnostic-unknown-warning-option,-readability-make-member-function-const
+
 .PHONY: all _all clean _cleanall build _buildall self plugin init git_remote_to_ssh git_remote_to_https
 
 clean: _cleanall
@@ -116,6 +121,7 @@ ${LIBRARY_BUTEXTIO}: ${LIBRARY_BUTEXTIO_OBJECT_FILES}
 
 ${LIBRARY_BUTEXTIO_OBJECT_FILES}: obj/%.o : src/%.cc
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
@@ -127,6 +133,7 @@ ${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_BUEXCEPTION} ${EXECUTABLE_OBJECT_FI
 
 ${EXECUTABLE_OBJECT_FILES}: obj/%.o : src/%.cxx
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} -c ${CXX_FLAGS}  $< -o $@
 
 -include $(EXECUTABLE_OBJECT_FILES:.o=.d)
@@ -140,6 +147,7 @@ ${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_B
 
 ${LIBRARY_TOOL_OBJECT_FILES}: obj/%.o : src/%.cc 
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
@@ -151,6 +159,7 @@ ${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIB
 
 ${LIBRARY_HELPERS_OBJECT_FILES}: obj/%.o : src/%.cc 
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} ${UHAL_CXX_FLAGHS} -c $< -o $@
 
 -include $(LIBRARY_OBJECT_FILES:.o=.d)

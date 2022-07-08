@@ -81,7 +81,7 @@ namespace BUTool{
     bool _enabled=true;
     try {
       // True if string isn't equal to "0"
-      _enabled=regIO->GetRegParameterValue(_address, "Enabled").compare("0");
+      _enabled=regIO->GetRegParameterValue(_address, "Enabled").compare("0"); //NOLINT
     } catch (BUException::BAD_VALUE & e) {
       _enabled=true;
     }
@@ -158,7 +158,7 @@ namespace BUTool{
     // Do the formatting and write to the buffer
     if (iequals(format, std::string("fp16"))) {
       // If the double value is very large or very small, use scientific notation
-      if ( ((fabs(value) > 10000) || (fabs(value) < 0.001)) && (value != 0) ) {
+      if ( ((fabs(value) > 10000) || (fabs(value) < 0.001)) && (value != 0) ) { //NOLINT
         snprintf(buffer,bufferSize,"%3.2e",value);
       }
       else {
@@ -222,7 +222,7 @@ namespace BUTool{
     std::string fmtString("%");
 
     // Update the format string for hex-displays
-    if ((value >= 10) && (iequals(format, "X"))) {
+    if ((value >= 10) && (iequals(format, "X"))) { //NOLINT
       fmtString.assign("0x%");
       if (width >= 0) {
         width -= 2;
@@ -231,7 +231,7 @@ namespace BUTool{
 
     // Zero padding or space padding, depending on the format
     if (width >= 0) {
-      if (iequals(format, "x") && (value >= 10)) {
+      if (iequals(format, "x") && (value >= 10)) { //NOLINT
         fmtString.append("0*");
       }
       else {
@@ -259,7 +259,7 @@ namespace BUTool{
   { 
     const int bufferSize = 20;
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
-    memset(buffer,' ',20);
+    memset(buffer,' ',bufferSize);
     buffer[bufferSize] = '\0';
 
     // Read+write values to the buffer based on the convert type for this register
@@ -296,7 +296,7 @@ namespace BUTool{
 			   std::string const & thing2) const
   {
     //Checks
-    if(thing1.size() == 0){
+    if(thing1.empty()){
       thing1 = thing2;
     } else if(!iequals(thing1,thing2)) {
       BUException::BAD_VALUE e;

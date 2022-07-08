@@ -73,11 +73,11 @@ void Launcher::LoadCommandList()
 
 }
 
-CommandReturn::status Launcher::SetVerbosity(std::vector<std::string> strArg,std::vector<uint64_t> intArg){
-  (void) strArg; // makes compiler not complain about unused parameter
-  if(intArg.size() > 0){
-    if(intArg[0] > 9){
-      verbosity = 9;
+#define MAX_VERBOSITY 9
+CommandReturn::status Launcher::SetVerbosity(std::vector<std::string> /*strArg*/,std::vector<uint64_t> intArg){
+  if(!intArg.empty()){
+    if(intArg[0] > MAX_VERBOSITY){
+      verbosity = MAX_VERBOSITY;
     }else{
       verbosity = intArg[0];
     }
@@ -87,21 +87,20 @@ CommandReturn::status Launcher::SetVerbosity(std::vector<std::string> strArg,std
   return CommandReturn::OK;
 }
 
-CommandReturn::status Launcher::InvalidCommandInclude(std::vector<std::string>,std::vector<uint64_t>)
+CommandReturn::status Launcher::InvalidCommandInclude(std::vector<std::string> /*strArg*/ ,std::vector<uint64_t> /*intArg*/)
 {
   return CommandReturn::OK;
 }
   
-CommandReturn::status Launcher::Quit(std::vector<std::string>,
-		   std::vector<uint64_t>)
+CommandReturn::status Launcher::Quit(std::vector<std::string> /*strArg*/,
+				     std::vector<uint64_t> /*intArg*/)
 {
   //Quit CLI so return -1
   return CommandReturn::EXIT;
 }
   
 CommandReturn::status Launcher::Echo(std::vector<std::string> strArg,
-		   std::vector<uint64_t> intArg) {
-  (void) intArg; // makes compiler not complain about unused arg
+				     std::vector<uint64_t> /*intArg*/) {
   for(size_t iArg = 0; iArg < strArg.size();iArg++)
     {
       Print(Level::INFO,"%s ",strArg[iArg].c_str());
@@ -118,7 +117,7 @@ void Launcher::HelpPrinter(std::string const &commandName,
   std::string nameString(commandName);
 
   //Append the alias names if they exist
-  if(commandAliases.size()> 0){
+  if(!commandAliases.empty()){
     //We have sub commands
     nameString+='(';
     for(std::vector<std::string>::const_iterator it = commandAliases.begin();
@@ -169,8 +168,8 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
   }
 
   bool fullPrint = false;   
-  if(strArg.size() > 0){    
-    if(strArg[0].size() > 0){
+  if(!strArg.empty()){    
+    if(!strArg[0].empty()){
       if(strArg[0][0] == '*'){
 	//Check if we want a full print and skip to the end if we do
 	fullPrint = true;
@@ -183,7 +182,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	    it != commandList.end();
 	    it++){
 	  //check if this is the command
-	  if(0 == strArg[0].compare(it->first)) {
+	  if(strArg[0] == it->first) {
 	    // We found a matching Launcher command alias for the command: it->first
 	    std::string foundCommand = it->first;
 	    HelpPrinter(foundCommand,
@@ -196,7 +195,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	    for(std::vector<std::string>::iterator itAlias = it->second.begin();
 		itAlias != it->second.end();
 		itAlias++){
-	      if(0 == strArg[0].compare(*itAlias)) {
+	      if(strArg[0] == (*itAlias)) {
 		// We found a matching Launcher command alias for the command: it->first
 		std::string foundCommand = it->first;
 		HelpPrinter(foundCommand,
@@ -216,7 +215,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	    it++){
 
 	  //check if this is the command
-	  if(0 == strArg[0].compare(it->first)) {
+	  if(strArg[0] == (it->first)) {
 	    // We found a matching Launcher command alias for the command: it->first
 	    std::string foundCommand = it->first;
 	    HelpPrinter(foundCommand,
@@ -229,7 +228,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	    for(std::vector<std::string>::iterator itAlias = it->second.begin();
 		itAlias != it->second.end();
 		itAlias++){
-	      if(0 == strArg[0].compare(*itAlias)) {
+	      if(strArg[0] == (*itAlias)) {
 		// We found a matching device command alias for the command: it->first
 		std::string foundCommand = it->first;
 		HelpPrinter(foundCommand,
@@ -267,7 +266,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	itPrimary != commandList.end();
 	itPrimary++){
       //check if the device command matches a Launcher command
-      if(it->first.compare(itPrimary->first) == 0){
+      if(it->first == itPrimary->first){
 	printDeviceCommand= false;
 	break;
       }else{
@@ -275,7 +274,7 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 	for(std::vector<std::string>::iterator itAlias = itPrimary->second.begin();
 	    itAlias != itPrimary->second.end();
 	    itAlias++){
-	  if(it->first.compare(*itAlias) == 0){
+	  if(it->first == (*itAlias)){
 	    printDeviceCommand= false;
 	    itPrimary = commandList.end();
 	    break;	    
@@ -297,8 +296,8 @@ CommandReturn::status Launcher::Help(std::vector<std::string> strArg,std::vector
 
 std::string Launcher::autoComplete_Help(std::vector<std::string> const & line,std::string const & currentToken ,int state)
 {  
-  if(line.size() > 0){
-    if((line.size() > 1) && (currentToken.size() == 0)){
+  if(!line.empty()){
+    if((line.size() > 1) && (currentToken.empty())){
       return std::string("");
     }
    
@@ -357,24 +356,27 @@ std::string Launcher::autoComplete_Help(std::vector<std::string> const & line,st
   return std::string("");  
 }
 
+#define DELAY_TIME_SWITCH_VALUE 5.0
+#define USEC_IN_SEC 1e6
 CommandReturn::status Launcher::Sleep(std::vector<std::string> strArg,
-		    std::vector<uint64_t> intArg) {
-  if( strArg.size() < 1) {
+				      std::vector<uint64_t> intArg) {
+  if( strArg.empty()) {
     Print(Level::INFO,"Need a delay time in seconds\n");
   } else {
     double s_time = strtod( strArg[0].c_str(), NULL);
-    if( s_time > 5.0) {
+    if( s_time > DELAY_TIME_SWITCH_VALUE) {
       sleep( intArg[0]);
     } else {
-      usleep( (useconds_t)(s_time * 1e6) );
+      usleep( (useconds_t)(s_time * USEC_IN_SEC) );
     }
   }
   return CommandReturn::OK;
 }
 
 #define TYPE_PADDING 10
-CommandReturn::status Launcher::ListDevices(std::vector<std::string>,std::vector<uint64_t>){
-  if(device.size() > 0){
+CommandReturn::status Launcher::ListDevices(std::vector<std::string> /*strArg*/,
+					    std::vector<uint64_t> /*intArg*/){
+  if(!device.empty()){
     Print(Level::INFO,"Connected devices\n");
     for(size_t iDevice = 0;
 	iDevice < device.size();
@@ -394,8 +396,9 @@ CommandReturn::status Launcher::ListDevices(std::vector<std::string>,std::vector
   return CommandReturn::OK;
 }
 
-CommandReturn::status Launcher::SelectDevice(std::vector<std::string>,std::vector<uint64_t> iArg){
-  if(iArg.size() > 0){
+CommandReturn::status Launcher::SelectDevice(std::vector<std::string> /*strArg*/,
+					     std::vector<uint64_t> iArg){
+  if(!iArg.empty()){
     if(iArg[0] < device.size()){
       activeDevice = iArg[0];
     }else{
@@ -407,8 +410,9 @@ CommandReturn::status Launcher::SelectDevice(std::vector<std::string>,std::vecto
 }
 
 
-CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> strArg,std::vector<uint64_t> iArg){
-  if(iArg.size() >= 1){
+CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> strArg,
+						    std::vector<uint64_t> iArg){
+  if(!iArg.empty()){
     //create the file
     std::ofstream * newStream = new std::ofstream(strArg[0].c_str(),std::ofstream::trunc);
     //Check that the file is ok
@@ -464,7 +468,8 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
 
 
 
-CommandReturn::status Launcher::SetVariable(std::vector<std::string> args,std::vector<uint64_t> /*arg*/){
+CommandReturn::status Launcher::SetVariable(std::vector<std::string> args,
+					    std::vector<uint64_t> /*arg*/){
   CommandReturn::status ret = CommandReturn::OK;
   switch (args.size()){
   case 2:
@@ -479,7 +484,8 @@ CommandReturn::status Launcher::SetVariable(std::vector<std::string> args,std::v
   return ret;
 }
 
-CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,std::vector<uint64_t> /*arg*/){
+CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,
+					    std::vector<uint64_t> /*arg*/){
   CommandReturn::status ret = CommandReturn::OK;
   std::string val;
   switch (args.size()){
@@ -496,7 +502,8 @@ CommandReturn::status Launcher::GetVariable(std::vector<std::string> args,std::v
   return ret;
 }
 
-CommandReturn::status Launcher::ListVariables(std::vector<std::string> /*args*/,std::vector<uint64_t> /*asdf*/){
+CommandReturn::status Launcher::ListVariables(std::vector<std::string> /*args*/,
+					      std::vector<uint64_t> /*asdf*/){
   std::vector<std::string> vars =  ((CommandListBase *)this)->GetVariableNames();
   Print(Level::INFO,"BUTool Variables:\n");
   for(auto it = vars.begin();it!=vars.end();it++){

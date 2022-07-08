@@ -54,7 +54,7 @@ namespace BUTool{
           std::vector<std::string> const & parsedName) const;
     void CheckForInvalidCharacter(std::string const & name,
           char const & invalidChar) const;
-    void CheckName(std::string const & newName);
+    void CheckName(std::string const & );
     std::string ParseRowOrCol(RegisterHelperIO* regIO,
 			 std::string const & registerName,
        std::string const & parameterName) const;

@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	//Ask the CLI to process this command.
 	std::vector<std::string> command = cli.GetInput(&launcher);
 	//If the command was well formed, tell the launcher to launch it. 
-	if(command.size() > 0){
+	if(!command.empty()){
 	  //Launch command function (for add lib)
 	  launcher.EvaluateCommand(command);
 	  //Ignore the return value.  It either works or not.
@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 	//Ask the CLI to process this command.
 	std::vector<std::string> command = cli.GetInput(&launcher);
 	//If the command was well formed, tell the launcher to launch it. 
-	if(command.size() > 0){
+	if(!command.empty()){
 	  //Launch command function (for add lib)
 	  launcher.EvaluateCommand(command);
 	  //Ignore the return value.  It either works or not.
@@ -148,14 +148,8 @@ int main(int argc, char* argv[])
       std::string  CLI_description;  
       if(DevFac->CLIArgs(devices[iDevice],CLI_flag,CLI_full_flag,CLI_description)){
 	std::string tmpName = CLI_full_flag + "," + CLI_flag;
-	char *cName = new char[tmpName.size() + 1];
-	char *cDesc = new char[CLI_description.size() + 1];
-	strcpy(cName, tmpName.c_str());
-	strcpy(cDesc, CLI_description.c_str());
 	cli_options.add_options()
-	  (cName, po::value<std::string>()->multitoken()->implicit_value(""), cDesc);
-	delete[] cName;
-	delete[] cDesc;
+	  (tmpName.c_str(), po::value<std::string>()->multitoken()->implicit_value(""), CLI_description.c_str());
 	deviceNames.push_back(CLI_full_flag);
       }
     }
@@ -173,8 +167,8 @@ int main(int argc, char* argv[])
       //Store cli parsed options into allOptions
       for(size_t iCli = 0; iCli < cli_parsed.options.size(); iCli++) { //iterate through all parsed cli options
 	std::string name = cli_parsed.options[iCli].string_key; //get name "string_key" of option
-	std::string value = ""; //Set value empty to start
-	if(cli_parsed.options[iCli].value.size()) { //if value of option is not empty
+	std::string value; //Set value empty to start
+	if(! cli_parsed.options[iCli].value.empty()) { //if value of option is not empty
 	  for(size_t i = 0; i < cli_parsed.options[iCli].value.size(); i++) {//iterate through all values of this option, think vector
 	    value += " " + cli_parsed.options[iCli].value[i];
 	  } 
@@ -197,8 +191,8 @@ int main(int argc, char* argv[])
       for(size_t iCfg = 0; iCfg < cfg_parsed.options.size(); iCfg++) { //iterate through all parsed cfg options
 	if(cfg_parsed.options[iCfg].string_key != "lib") { //Ignore libraries, we ran those before declaring cli_options
 	  std::string name = cfg_parsed.options[iCfg].string_key; //get name "string_key" of option
-	  std::string value = ""; //Set value empty to start
-	  if(cfg_parsed.options[iCfg].value.size()) { //if value of option is not empty
+	  std::string value; //Set value empty to start
+	  if(! cfg_parsed.options[iCfg].value.empty()) { //if value of option is not empty
 	    for(size_t i = 0; i < cfg_parsed.options[iCfg].value.size(); i++) {//iterate through all values of this option, think vector
 	      value +=  cfg_parsed.options[iCfg].value[i];
 	    } 
@@ -240,7 +234,7 @@ int main(int argc, char* argv[])
       std::vector<std::string> device = allOptions[*iDevice]; //get arguments for device
       for (auto iDeviceArgs = device.begin(); iDeviceArgs != device.end(); iDeviceArgs++) {//iterate device arguments
 	std::string command = "add_device ";
-	if (*iDeviceArgs == "") {//argument is empty so use value mapped in default_map
+	if (iDeviceArgs->empty()) {//argument is empty so use value mapped in default_map
 	  command += *iDevice + " " + default_map[*iDevice];
 	} else {
 	  command += *iDevice + " " + *iDeviceArgs;
@@ -287,7 +281,7 @@ int main(int argc, char* argv[])
 	std::vector<std::string> command = cli.GetInput(&launcher);
 
 	//Check if this is just the user hitting return (do nothing if it is)
-	if(command.size() > 0){
+	if(!command.empty()){
 	  //Launch command function
 	  CommandReturn::status ret = launcher.EvaluateCommand(command);
 
@@ -312,23 +306,23 @@ int main(int argc, char* argv[])
        	std::cout << "\n\n\nCaught Tool exception: " << errorstr << std::endl;
 	
 	switch(verbose_level){
-	case 1:
-	  std::cout << LimitStringLines(e.Description(),5,5);
+	case 1: //NOLINT
+	  std::cout << LimitStringLines(e.Description(),5,5); //NOLINT
 	  break;
-	case 2:
-	  std::cout << LimitStringLines(e.Description(),10,10);
+	case 2: //NOLINT
+	  std::cout << LimitStringLines(e.Description(),10,10); //NOLINT
 	  break;
-	case 3:
-	  std::cout << LimitStringLines(e.Description(),20,20);
+	case 3: //NOLINT
+	  std::cout << LimitStringLines(e.Description(),20,20); //NOLINT
 	  break;
-	case 9:
-	  std::cout << LimitStringLines(e.Description(),0,1000);
+	case 9: //NOLINT
+	  std::cout << LimitStringLines(e.Description(),0,1000); //NOLINT
 	  break;
 	default:
 	  std::cout << LimitStringLines(e.Description());
 	  break;
 	}
-       	if(9 == verbose_level){
+       	if(9 == verbose_level){ //NOLINT
 	  std::cout << e.StackTrace();
 	}
 	if(cli.InScript()){ //Fail to command line if in script

@@ -24,7 +24,7 @@ BUTool::RegisterHelper::RegisterHelper(std::shared_ptr<RegisterHelperIO> _regIO,
 void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vector<uint32_t> const & data,bool printWord64 ,bool skipPrintZero){
   uint32_t addr_incr = printWord64 ? 2 : 1;
   uint32_t readNumber = 0;
-  uint32_t lineWordCount = printWord64 ? 4 : 8;
+  uint32_t lineWordCount = printWord64 ? 4 : 8; //NOLINT
   uint32_t readCount = data.size();
 
   //Use the RegBlockReadRegister
@@ -40,13 +40,13 @@ void BUTool::RegisterHelper::PrintRegAddressRange(uint32_t startAddress,std::vec
     readNumber++;
     if(printWord64){
       //Grab the upper bits if we are base 64
-      val |= (uint64_t(data[readNumber]) << 32);
+      val |= (uint64_t(data[readNumber]) << 32); //NOLINT
     }
     //Print the value if we are suppose to
     if(!skipPrintZero ||  (val != 0)){
-      TextIO->Print(Level::INFO, " 0x%0*" PRIX64, printWord64?16:8, val);
+      TextIO->Print(Level::INFO, " 0x%0*" PRIX64, printWord64?16:8, val); //NOLINT
     }else{
-      TextIO->Print(Level::INFO, "   %*s", printWord64?16:8," ");
+      TextIO->Print(Level::INFO, "   %*s", printWord64?16:8," "); //NOLINT
     }
     //End line
     if(readNumber % lineWordCount == 0){
@@ -156,7 +156,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadOffset(std::vector<std::string
 CommandReturn::status BUTool::RegisterHelper::ReadWithOffsetHelper(uint32_t offset,std::vector<std::string> strArg,std::vector<uint64_t> intArg){
   // sort out arguments
   size_t readCount = 1;
-  std::string flags("");
+  std::string flags;
   bool numericAddr = true;
 
   switch( strArg.size() ) {
@@ -293,7 +293,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadFIFO(std::vector<std::string> 
 
 CommandReturn::status BUTool::RegisterHelper::ReadString(std::vector<std::string> strArg,
 							 std::vector<uint64_t> /*intArg*/){
-  if (strArg.size() ==0){
+  if (strArg.empty()){
     return CommandReturn::BAD_ARGS;
   }
   TextIO->Print(Level::INFO, "%s: %s\n",strArg[0].c_str(),regIO->ReadString(strArg[0]).c_str());
@@ -302,7 +302,7 @@ CommandReturn::status BUTool::RegisterHelper::ReadString(std::vector<std::string
 
 CommandReturn::status BUTool::RegisterHelper::Write(std::vector<std::string> strArg,
 						    std::vector<uint64_t> intArg) {
-  if (strArg.size() ==0){
+  if (strArg.empty()){
     return CommandReturn::BAD_ARGS;
   }
   std::string saddr = strArg[0];
@@ -437,8 +437,9 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
   bool debug = false;
   bool describe = false;
   bool help = false;
-  std::string parameterName,parameterValue;
-  if( strArg.size() < 1) {
+  std::string parameterName;
+  std::string parameterValue;
+  if( strArg.empty() ) {
     TextIO->Print(Level::INFO, "Need regular expression after command\n");
     return CommandReturn::BAD_ARGS;
   }    
@@ -481,7 +482,7 @@ CommandReturn::status BUTool::RegisterHelper::ListRegs(std::vector<std::string> 
   
   //Get the list of registers associated with the search term
 
-  if(parameterName.size()){
+  if(!parameterName.empty()){
     regNames = regIO->FindRegistersWithParameter(parameterName, parameterValue);
   }else{
     regNames = regIO->GetRegsRegex(regex);

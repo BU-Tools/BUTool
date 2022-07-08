@@ -7,7 +7,7 @@ using namespace BUTool;
 
 CommandReturn::status Launcher::AddLib(std::vector<std::string> strArg,std::vector<uint64_t> intArg){  
   (void) intArg; // to make compiler not complain about unused arguments
-  if(strArg.size() > 0){
+  if(!strArg.empty()){
     void * lib_handle = NULL;
     lib_handle = dlopen(strArg[0].c_str(),RTLD_NOW);
     if(lib_handle == NULL){
@@ -28,7 +28,7 @@ CommandReturn::status Launcher::AddLib(std::vector<std::string> strArg,std::vect
 CommandReturn::status Launcher::AddDevice(std::vector<std::string> strArg,std::vector<uint64_t> intArg){  
   (void) intArg; // to make compiler not complain about unused arguments
 
-  if(strArg.size() > 0){
+  if(!strArg.empty()){
     CommandListBase * newDevice = NULL;
 
     //Generate the arguments to be sent to the device constructor
@@ -48,7 +48,7 @@ CommandReturn::status Launcher::AddDevice(std::vector<std::string> strArg,std::v
       //Check if the name is in the list
       if(BUTool::DeviceFactory::Instance()->Exists(strArg[0])){
 	//The name was on the list, but something still went wrong.
-	if(BUTool::DeviceFactory::Instance()->Help(strArg[0]).size() > 0){
+	if(! BUTool::DeviceFactory::Instance()->Help(strArg[0]).empty()){
 	  //Print the help if there is any
 	  printf("Usage: %s %s\n",strArg[0].c_str(),BUTool::DeviceFactory::Instance()->Help(strArg[0]).c_str());
 	}	
@@ -72,8 +72,8 @@ CommandReturn::status Launcher::AddDevice(std::vector<std::string> strArg,std::v
 
 std::string Launcher::autoComplete_AddDevice(std::vector<std::string> const & line,std::string const & currentToken ,int state)
 {  
-  if(line.size() > 0){
-    if((line.size() > 1) && (currentToken.size() == 0)){
+  if(!line.empty()){
+    if((line.size() > 1) && (!currentToken.empty())){
       return std::string("");
     }
 

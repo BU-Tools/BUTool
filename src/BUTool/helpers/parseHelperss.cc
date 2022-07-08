@@ -39,8 +39,8 @@ std::vector<std::pair<size_t,size_t> > parseRange(std::string const & line){
     std::vector<std::string> bounds = splitString(line,"-");
     //Check if there are two non-zero parts
     if((2 == bounds.size()) &&
-       (bounds[0].size() > 0) &&
-       (bounds[1].size() > 0)){
+       (!bounds[0].empty()) &&
+       (!bounds[1].empty())){
       std::pair<size_t,size_t> pair;
      
       //Convert the first numeric value
@@ -69,7 +69,7 @@ std::vector<size_t> parseList(std::string const & line){
   for(size_t iSplit = 0; iSplit < commaSplit.size();iSplit++){
     //Check if this token is a range
     std::vector<std::pair<size_t,size_t> > range = parseRange(commaSplit[iSplit]);
-    if(range.size() > 0){
+    if(!range.empty()){
       //we have a range
       for(size_t iRange = range[0].first; iRange <= range[0].second;iRange++){
 	ret.push_back(iRange);

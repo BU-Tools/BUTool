@@ -149,7 +149,7 @@ uint64_t BUTool::RegisterHelperIO::ComputeValueFromRegister(std::string const & 
 
   // Figure out the number of bit shifts from the size of the word
   // 32 bits is the default, but it will be less for smaller values
-  int numBitShifts = 32;
+  int numBitShifts = 32; //NOLINT
   
   while ( (regMask & 0x1) == 0 ) { regMask >>= 1; }
   int count = 0;
