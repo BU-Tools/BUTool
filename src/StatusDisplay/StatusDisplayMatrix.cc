@@ -210,6 +210,15 @@ namespace BUTool{
             result += " ";
           }
 
+          // Position out of bounds of the parsed name size
+          // In a valid markup name, this should never happen, throw BAD_VALUE
+          if (!(position < parsedName.size())) {
+            BUException::BAD_VALUE e;	    
+            std::string error("Bad markup name for ");
+            error += parsedName[0]; 
+            e.Append(error.c_str());
+            throw e;
+          }
           result.append(parsedName[position]);
         }
 
