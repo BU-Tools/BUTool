@@ -154,7 +154,7 @@ namespace BUTool{
     */
     for (size_t iChar = 0; iChar < name.size(); iChar++) {
       if (name[iChar] == invalidChar) {
-        BUException::BAD_VALUE e;	    
+        BUException::BAD_MARKUP_NAME e;	    
         std::string error("Spaces are not allowed in markup ");
         error += name;
         e.Append(error.c_str());
@@ -165,12 +165,16 @@ namespace BUTool{
 
   std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
     /* 
-    Build a row or column name, using a single underscore ('_') character in the beginning as a special token
-    Currently supports the following format: markup="_N", where N is an integer between 0 and 9 (inclusive)
+    Build a row or column name, using a single underscore ('_') character as a special token.
+    A double underscore ('__') is treated as a literal underscore, and printed as '_'.
+    
+    If a non-digit char is following the underscore, that single underscore char will also be treated as literal.
 
     Example: If we had a register with the name A.B.C.D, the following would be true:
     - If "Row=_3" is set, the row name would be "C"
-    - If "Row=ROW_1" is set, the row name would be "ROW_1"
+    - If "Row=_3_4" is set, the row name would be "C D"
+    - If "Row=ROW__1" is set, the row name would be "ROW_1"
+    - If "Row=ROW_A" is set, the row name would be "ROW_A"
     */
 
     // The name we're going to return
@@ -180,32 +184,65 @@ namespace BUTool{
     CheckForInvalidCharacter(markup, ' ');
     
     for(size_t iChar = 0; iChar < markup.size(); iChar++){
-      // Check if this is a special parse character
-      // If it is, we'll check the number next to it to determine the position
-      if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) && (iChar == 0)) {
-        // We must have an integer right after the parse token, if not, raise an exception
-        const bool validMarkup = (iChar + 1 < markup.size()) && (isdigit(markup[iChar+1]));
-        if (!validMarkup) {
-          BUException::BAD_VALUE e;	    
+      /*
+       * Check if markup[iChar] is a special parse character ('_')
+       * If it is, we'll check the character next to it. There are two possibilities:
+       *   1. It is an integer -> That will point to the portion of the register name we want to use
+       *   2. It is another underscore -> The two underscores will be treated as a literal, single underscore 
+       *   3. It is a non-digit char -> The underscore will be treated as a literal, single underscore
+       * 
+       * The function will throw a BAD_MARKUP_NAME exception, if the integer specified after the underscore
+       * does not point to a valid location in the parsed register name.
+       */
+      if ((markup[iChar] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN)) {
+        // Check the next character, make sure that it is within range
+        // This essentially means that the last character in a valid markup CANNOT be an underscore.
+        if (!(iChar + 1 < markup.size())) {
+          BUException::BAD_MARKUP_NAME e;	    
           std::string error("Bad markup name for ");
           error += parsedName[0]; 
           e.Append(error.c_str());
           throw e;
         }
 
-        // Read the integer to determine the position
-        std::string positionStr;
-        positionStr.push_back(markup[iChar+1]);
-        
-        int position = std::stoi(positionStr);
-        // Add whitespace if we need it
-        if (result.size() > 0) {
-          result += " ";
+        // Check if the next character is an integer
+        if (isdigit(markup[iChar+1])) {
+          std::string positionStr;
+          positionStr.push_back(markup[iChar+1]);
+          size_t position = std::stoi(positionStr);
+         
+          // Add whitespace if we need it
+          if (result.size() > 0) {
+            result += " ";
+          }
+
+          // Position out of bounds of the parsed name size
+          // In a valid markup name, this should never happen, throw BAD_MARKUP_NAME
+          if (!(position < parsedName.size())) {
+            BUException::BAD_MARKUP_NAME e;	    
+            std::string error("Bad markup name for ");
+            error += parsedName[0]; 
+            e.Append(error.c_str());
+            throw e;
+          }
+          result.append(parsedName[position]);
+          // Do not process the next character again
+          iChar++;
         }
-        result.append(parsedName[position]);
-        
-        // Do not process the next integer again
-        iChar++;
+
+        // Check if the next character is another underscore
+        else if (markup[iChar+1] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) {
+          result.push_back(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN);
+          // Do not process the next character again
+          iChar++;
+        }
+
+        // Any other possibility means that the next character is a non-digit char
+        // In this case, treat this underscore as a literal and move on to the next char
+        else {
+          result.push_back(markup[iChar]);
+        }
+
       }
       // Normal character, just add to the resulting name
       else {
