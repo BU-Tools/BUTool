@@ -224,8 +224,7 @@ namespace BUTool{
 
         // Check if the next character is another underscore
         else if (markup[iChar+1] == STATUS_DISPLAY_PARAMETER_PARSE_TOKEN) {
-          std::string parseToken(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN);
-          result.append(parseToken.c_str());
+          result.push_back(STATUS_DISPLAY_PARAMETER_PARSE_TOKEN);
         }
 
         // Any other possibility is a bad markup name
