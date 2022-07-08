@@ -53,8 +53,10 @@ void Launcher::LoadCommandList()
   AddCommand("add_dev_ofile",&Launcher::AddDeviceOutputFile,
 	     "Place device print calls in filename.\n"\
 	     "  Usage:\n"\
-	     "  add_dev_ofile filename <device#>\n"\
-             "  If no device# listed, it will be added to all devices\n");  
+	     "  add_dev_ofile filename <device#> <printLevel>\n"\
+             "  If no device# listed, it will be added to all devices\n"\
+             "  Print level can be the following:\n"\
+             "  0: INFO, 1: DEBUG, 2: ERROR\n");  
   AddCommand("set_var",&Launcher::SetVariable,
 	     "Set an internal variable.\n"\
 	     "  Usage:\n"\
@@ -429,19 +431,34 @@ CommandReturn::status Launcher::AddDeviceOutputFile(std::vector<std::string> str
       iStartDev = iArg[1];
       iEndDev = iArg[1]+1; //Cause the following loop to end after iArg[i]
     }
-
+    
+    Level::level printLevel = Level::INFO;
+    // A print-level argument has been given.
+    if (iArg.size() > 2){
+      uint64_t printLevelInt = iArg[2];
+      switch(printLevelInt) {
+        case 0:
+          printLevel = Level::INFO;
+          break;
+        case 1:
+          printLevel = Level::DEBUG;
+          break;
+        case 2:
+          printLevel = Level::ERROR;
+          break;
+        default:
+          return CommandReturn::BAD_ARGS;
+      }
+    }
+    
+    // Loop over devices and add the output stream for each device
     for(size_t iDev = iStartDev; 
-	iDev < device.size() && iDev < iEndDev;
-	iDev++){
+      iDev < device.size() && iDev < iEndDev;
+      iDev++) {
       if(iDev < device.size()){
-	BUTextIO * text_ptr = NULL; 
-	if(
-	   (text_ptr = dynamic_cast<BUTextIO*>(device[iArg[0]])) != NULL
-	   ){
-	  text_ptr->AddOutputStream(Level::INFO,newStream);
-	}	
-      }else{
-	Print(Level::INFO,"Error: %" PRIu64 " out of range (%zu)",iArg[0],device.size());
+        device[iDev]->AddOutputStream(printLevel, newStream);
+      } else {
+        Print(Level::INFO,"Error: %" PRIu64 " out of range (%zu)",iDev,device.size());
       }   
     } 
     return CommandReturn::OK;

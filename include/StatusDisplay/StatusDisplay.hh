@@ -101,7 +101,7 @@ namespace BUTool{
     RegisterHelperIO * regIO;
     void AppendAuthor(std::string const & author);
     void SetTitle(std::string const & _title){title=_title;};
-    virtual void Process(std::string const & singleTable) = 0;
+    void Process(std::string const & singleTable);
     std::map<std::string,StatusDisplayMatrix> tables;
     void SetVersion(int ver){version = ver;};
   private:

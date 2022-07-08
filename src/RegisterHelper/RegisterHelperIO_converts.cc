@@ -9,10 +9,18 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+//For PRI macros
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
+using boost::algorithm::iequals;
+
+#define DEFAULT_FORMAT "X"
+
 std::string BUTool::RegisterHelperIO::GetConvertFormat(std::string const & reg){
   // From a given node address, retrieve the "Format" parameter of the node
   auto parameter = GetRegParameters(reg);
-  std::string format("none");
+  std::string format(DEFAULT_FORMAT);
   auto formatVal = parameter.find("Format");
   if(formatVal != parameter.end()){
     format = formatVal->second;
@@ -29,25 +37,29 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
   //Search for Format
   if(formatVal != parameter.end()){
     std::string format = formatVal->second;
-    if(!format.empty()){
-      if (( format[0] == 'T') ||
-	  ( format[0] == 't') ||
-	  ( boost::algorithm::iequals(format, std::string("IP")) ) ||
-	  ( boost::algorithm::iequals(format, "X")) ) {
-	ret = STRING;
+    if(!format.empty()) {
+      // String data type
+      if (( format[0] == 't') ||
+          ( format[0] == 'T') ||
+          ( iequals(format, "IP") )) 
+      {
+        ret = STRING;
       }
-      if ((format[0] == 'M') |
-	  (format[0] == 'm') |
-	  (format == "fp16")) {
-	ret = FP;
+      // Floating point values
+      else if ((format[0] == 'M') ||
+          (format[0] == 'm') ||
+          (format == "fp16")) {
+        ret = FP;
       }
-      if ((format.size() == 1) &&
-	  (format[0] == 'd')) {
-	ret = INT;
+      // Signed integer data type
+      else if ((format.size() == 1) &&
+          (format[0] == 'd')) {
+        ret = INT;
       }
-      if ((format.size() == 1) &&
-	  (format[0] == 'u')) {
-	ret = UINT;
+      // Unsigned integer, can be in hex format as well if format='X' is specified
+      else if ((format.size() == 1) &&
+          ( (format[0] == 'u') || (iequals(format, "X")) ) ) {
+        ret = UINT;
       }
     }
   }
@@ -55,7 +67,7 @@ BUTool::RegisterHelperIO::ConvertType BUTool::RegisterHelperIO::GetConvertType(s
 }
 
 
-double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string const & reg){
+double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(uint64_t rawValue){
   // Helper function to do the "fp16->double" conversion
   double doubleVal;
 
@@ -67,7 +79,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string cons
     } fp16;
     int16_t raw;
   } val;
-  val.raw = ReadRegister(reg);
+  val.raw = rawValue;
 
   switch (val.fp16.exponent) {
   // Case where the exponent is minimum
@@ -108,7 +120,7 @@ double BUTool::RegisterHelperIO::ConvertFloatingPoint16ToDouble(std::string cons
   return doubleVal;
 }
 
-double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg, std::string const & format){
+double BUTool::RegisterHelperIO::ConvertIntegerToDouble(uint64_t rawValue, std::string const & format){
   // Helper function to convert an integer to float using the following format:
   // y = (sign)*(M_n/M_d)*x + (sign)*(b_n/b_d)
   //       [0]   [1] [2]        [3]   [4] [5]
@@ -116,10 +128,9 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg,
 
   std::vector<uint64_t> mathValues;
   size_t iFormat=1;
- 
-  uint32_t rawVal = ReadRegister(reg);
- 
-  while (mathValues.size() != 6 && iFormat < format.size()) { //NOLINT
+  const size_t requiredArgumentCount = 6;
+  while (mathValues.size() != requiredArgumentCount &&
+	 iFormat < format.size()) {
     if (format[iFormat] == '_') {
       // Start parsing the value after the '_' and add the corresponding value to mathValues array
       for (size_t jFormat=++iFormat; jFormat < format.size(); jFormat++) {
@@ -142,7 +153,7 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg,
 
   // Compute the transformed value from the raw value
   // Will compute: (m*x) + b
-  double transformedValue = rawVal;
+  double transformedValue = rawValue;
   transformedValue *= double(mathValues[1]);
   transformedValue /= double(mathValues[2]);
   // Apply the sign of m
@@ -159,7 +170,7 @@ double BUTool::RegisterHelperIO::ConvertIntegerToDouble(std::string const & reg,
   return transformedValue;
 }
 
-double BUTool::RegisterHelperIO::ConvertLinear11ToDouble(std::string const & reg){
+double BUTool::RegisterHelperIO::ConvertLinear11ToDouble(uint64_t rawValue){
   // Helper function to convert linear11 format to double
 
   union {
@@ -170,18 +181,16 @@ double BUTool::RegisterHelperIO::ConvertLinear11ToDouble(std::string const & reg
     int16_t raw;
   } val;
   
-  val.raw = ReadRegister(reg);
+  val.raw = rawValue;
   double floatingValue = double(val.linear11.integer) * pow(2, val.linear11.exponent);
   
   return floatingValue;
 }
 
-std::string BUTool::RegisterHelperIO::ConvertIPAddressToString(std::string const & reg){
+std::string BUTool::RegisterHelperIO::ConvertIPAddressToString(uint64_t rawValue){
   // Helper function to convert IP addresses to string
   struct in_addr addr;
-  int16_t val = ReadRegister(reg);
-  addr.s_addr = in_addr_t(val);
-
+  addr.s_addr = in_addr_t(rawValue);
   return inet_ntoa(addr);
 }
 
@@ -206,7 +215,7 @@ std::vector<std::string> BUTool::RegisterHelperIO::FindRegistersWithParameter(st
   return registerNames;
 }
 
-std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & reg, std::string const & format){
+std::string BUTool::RegisterHelperIO::ConvertEnumToString(uint64_t rawValue, std::string const & format){
   // Helper function to convert enum to std::string
   std::map<uint64_t, std::string> enumMap;
   
@@ -243,16 +252,44 @@ std::string BUTool::RegisterHelperIO::ConvertEnumToString(std::string const & re
 
   // Now we have the enumeration map, read the integer value from the register
   // Then return the corresponding string
-  uint32_t regValue = ReadRegister(reg);
-  if (enumMap.find(regValue) != enumMap.end()) {
+
+  // Store the result in this C-style buffer
+  // This function will return the content in this buffer
+  // after converting it into a C++ string 
+  const int bufferSize = 20;
+  char buffer[bufferSize+1];
+  memset(buffer,' ',bufferSize);
+  buffer[bufferSize] = '\0';
+
+  if (enumMap.find(rawValue) != enumMap.end()) {
     // If format starts with 't', just return the string value
     // Otherwise, return the value together with the number
     if (format[0] == 't') {
-      return enumMap[regValue];
+      snprintf(buffer,bufferSize,"%s",enumMap[rawValue].c_str());
     }
-    return (enumMap[regValue] + " " + std::to_string(regValue));
+    else {
+      snprintf(buffer,bufferSize,"%s (0x%" PRIX64 ")",enumMap[rawValue].c_str(),rawValue);
+    }
+  }
+  
+  // Could not find the value in enumeration map
+  else {
+    snprintf(buffer,bufferSize,"0x%" PRIX64 ")",rawValue);
   }
 
-  // Cannot find it, TODO: better handle this possibility
-  return "NOT_FOUND";
+  return std::string(buffer);
+}
+
+std::string BUTool::RegisterHelperIO::ConvertHexNumberToString(uint64_t rawValue){
+  // Helper function to convert uint64_t to string in hex format
+
+  // Write the value into a buffer in hex-format,
+  // return it as a C++ string
+  const int bufferSize = 20;
+  char buffer[bufferSize+1];
+  buffer[bufferSize] = '\0';
+
+  snprintf(buffer, bufferSize, "0x%" PRIX64, rawValue);
+
+  return std::string(buffer);
 }

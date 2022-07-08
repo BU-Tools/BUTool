@@ -73,6 +73,11 @@ ifdef MAP_TYPE
 CXX_FLAGS += ${MAP_TYPE}
 endif
 
+# Compile-time flag to specify to use the new StatusDisplay name parser for row and column names
+ifeq (${BUTOOL_SD_USE_NEW_PARSER}, true)
+CXX_FLAGS += -DSD_USE_NEW_PARSER
+endif
+
 LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
@@ -148,7 +153,7 @@ ${LIBRARY_TOOL_OBJECT_FILES}: obj/%.o : src/%.cc
 # ------------------------
 # helpers library
 # ------------------------
-${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION}
+${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LINK_LIBRARY_FLAGS} ${LIBRARY_HELPERS_OBJECT_FILES} -o $@
 

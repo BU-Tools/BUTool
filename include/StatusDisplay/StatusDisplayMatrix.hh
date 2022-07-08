@@ -16,7 +16,7 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 #include <map>
 #include <boost/tokenizer.hpp> //for tokenizer
 #include "StatusDisplayCell.hh"
-
+#include "RegisterHelper/RegisterHelperIO.hh"
 
 #define STATUS_DISPLAY_DEFAULT_FORMAT "X"
 #define STATUS_DISPLAY_PARAMETER_PARSE_TOKEN '_'
@@ -38,7 +38,7 @@ namespace BUTool{
   public:
     StatusDisplayMatrix(){Clear();};
     ~StatusDisplayMatrix(){Clear();};
-    void Add(std::string  address,uint32_t value, uint32_t value_mask, uMap const & parameters);
+    void Add(std::string registerName, RegisterHelperIO* regIO);
     void Render(std::ostream & stream,int status,StatusMode statusMode = TEXT) const;
     std::vector<std::string> GetTableRows() const;
     std::vector<std::string> GetTableColumns() const;
@@ -47,12 +47,17 @@ namespace BUTool{
     void Clear();
     
     std::string NameBuilder(std::string const & markup,
-			    std::string const & name) const;
-    void CheckName(std::string const & newTableName);
-    std::string ParseRow(uMap const & parameters,
-			 std::string const & addressBase) const;
-    std::string ParseCol(uMap const & parameters,
-			 std::string const & addressBase) const;
+			    std::string const & registerName) const;
+    std::string BuildNameWithSingleUnderscore(std::string const & markup,
+          std::vector<std::string> const & parsedName) const;
+    std::string BuildNameWithMultipleUnderscores(std::string const & markup,
+          std::vector<std::string> const & parsedName) const;
+    void CheckForInvalidCharacter(std::string const & name,
+          char const & invalidChar) const;
+    void CheckName(std::string const & );
+    std::string ParseRowOrCol(RegisterHelperIO* regIO,
+			 std::string const & registerName,
+       std::string const & parameterName) const;
 
     std::vector<StatusDisplayCell*> row(std::string const &);
     std::vector<StatusDisplayCell*> col(std::string const &);
