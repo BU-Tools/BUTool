@@ -14,6 +14,9 @@ jobs:
         echo "Starting job: $(date)"
         ls -lah .
         source env.sh
+        pwd
+        ls -lah external/
+        ls -lah external/BUException/
     - name: Build BUTool
       run: make
     - name: Build GenericDSAT plugin
