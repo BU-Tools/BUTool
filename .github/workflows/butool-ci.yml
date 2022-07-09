@@ -8,10 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository and submodules
+    - name: Checkout BUTool repository and submodules
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    - name: Checkout GenericDSAT plugin and submodules
+      uses: actions/checkout@v3
+      with:
+        repository: 'BU-EDF/GenericDSATDevice_plugin'
+        ref: 'develop'
+        submodules: 'recursive'
     - name: Install dependencies
       run: |
         echo "Starting job: $(date)"
@@ -22,7 +28,6 @@ jobs:
       run: make
     - name: Build GenericDSAT plugin
       run: |
-        git clone --recursive https://gitlab.com/BU-EDF/GenericDSATDevice_plugin.git
         cd GenericDSATDevice_plugin
         BUTOOL_PATH=$(realpath ../BUTool)
         source env.sh ${BUTOOL_PATH}
