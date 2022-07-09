@@ -16,6 +16,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: 'BU-EDF/GenericDSATDevice_plugin'
+        path: 'GenericDSATDevice_plugin'
         ref: 'develop'
         submodules: 'recursive'
     - name: Install dependencies
