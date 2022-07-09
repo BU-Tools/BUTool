@@ -15,16 +15,21 @@ jobs:
     - name: Checkout GenericDSAT plugin and submodules
       uses: actions/checkout@v3
       with:
-        repository: 'BU-EDF/GenericDSATDevice_plugin'
+        repository: 'alpakpinar/GenericDSATDevice_plugin'
         path: 'GenericDSATDevice_plugin'
         ref: 'develop'
         submodules: 'recursive'
     - name: Install dependencies
       run: |
-        echo "Starting job: $(date)"
-        sudo apt install libboost-regex-dev build-essential zlib1g-dev libreadline-dev libboost-dev libboost-program-options-dev libncurses5-dev
-        ls -lah .
-        source env.sh
+        sudo apt install \
+          libboost-regex-dev \
+          build-essential \
+          zlib1g-dev \
+          libreadline-dev \
+          libboost-dev \
+          libboost-program-options-dev \
+          libncurses5-dev
+    
     - name: Build BUTool
       run: make
     - name: Build GenericDSAT plugin
