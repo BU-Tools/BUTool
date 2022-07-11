@@ -35,11 +35,7 @@ jobs:
           libncurses5-dev
     
     - name: Build BUTool
-      run: |
-        make
-        ls -lah lib
-        ldd lib/libBUTool.so
-        ldd lib/libBUTool_Helpers.so
+      run: make
     
     - name: Build GenericDSAT plugin
       working-directory: ./GenericDSATDevice_plugin
@@ -53,12 +49,10 @@ jobs:
     
     - name: Run StatusDisplay test
       working-directory: ./GenericDSATDevice_plugin
+      env:
+        BUTOOL_PATH: ${{ env.BUTOOL_PATH }}
+        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
       run: |
-        BUTOOL_PATH=${{ env.BUTOOL_PATH }}
-        LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
-        ls -lah lib
-        ldd lib/libDSAT_GenericDSATDevice.so
-        ldd lib/libDSAT_GenericDSAT.so
         ./run_BUTool_test.sh
     
     - name: Cleanup GenericDSAT plugin
