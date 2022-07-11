@@ -13,14 +13,15 @@ jobs:
       with:
         submodules: recursive
     - name: Checkout GenericDSAT plugin and submodules
-      uses: actions/checkout@v3
-      with:
-        repository: 'alpakpinar/GenericDSATDevice_plugin'
-        path: 'GenericDSATDevice_plugin'
-        ref: 'develop'
-        submodules: 'recursive'
+      run: |
+        git clone --branch develop \
+          --recursive \
+          --depth 1 \
+          --shallow-submodules \
+          https://gitlab.com/BU-EDF/GenericDSATDevice_plugin.git
     - name: Install dependencies
       run: |
+        ls -lah .
         sudo apt install \
           libboost-regex-dev \
           build-essential \
