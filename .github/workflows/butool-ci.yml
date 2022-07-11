@@ -36,7 +36,7 @@ jobs:
     - name: Build GenericDSAT plugin
       run: |
         cd GenericDSATDevice_plugin
-        BUTOOL_PATH=$(realpath ../BUTool)
+        BUTOOL_PATH=$(realpath ../)
         source env.sh ${BUTOOL_PATH}
         make
     - name: Run StatusDisplay test
