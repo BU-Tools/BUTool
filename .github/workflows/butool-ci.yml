@@ -12,6 +12,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    
     - name: Checkout GenericDSAT plugin and submodules
       run: |
         git clone --branch develop \
@@ -19,9 +20,11 @@ jobs:
           --depth 1 \
           --shallow-submodules \
           https://gitlab.com/BU-EDF/GenericDSATDevice_plugin.git
+    
     - name: Install dependencies
       run: |
         ls -lah .
+        echo "Home directory: ${HOME}"
         sudo apt install \
           libboost-regex-dev \
           build-essential \
@@ -33,18 +36,22 @@ jobs:
     
     - name: Build BUTool
       run: make
+    
     - name: Build GenericDSAT plugin
+      working-directory: GenericDSATDevice_plugin
       run: |
-        cd GenericDSATDevice_plugin
-        BUTOOL_PATH=$(realpath ../)
-        source env.sh ${BUTOOL_PATH}
+        source env.sh ${HOME}
         make
+    
     - name: Run StatusDisplay test
+      working-directory: GenericDSATDevice_plugin
       run: ./run_BUTool_test.sh
-    - name: Cleanup
-      run: |
-        make clean
-        cd ${BUTOOL_PATH}
-        make clean
+    
+    - name: Cleanup GenericDSAT plugin
+      working-directory: GenericDSATDevice_plugin
+      run: make clean
+
+    - name: Cleanup BUTool
+      run: make clean
 
         
