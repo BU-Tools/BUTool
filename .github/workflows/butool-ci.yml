@@ -52,6 +52,9 @@ jobs:
       run: |
         BUTOOL_PATH=${{ env.BUTOOL_PATH }}
         LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
+        ls -lah lib
+        ldd lib/libDSAT_GenericDSATDevice.so
+        ldd lib/libDSAT_GenericDSAT.so
         ./run_BUTool_test.sh
     
     - name: Cleanup GenericDSAT plugin
