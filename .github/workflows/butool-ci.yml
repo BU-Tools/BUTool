@@ -37,31 +37,25 @@ jobs:
     - name: Build BUTool
       run: make
     
-    - name: Build GenericDSAT plugin and run StatusDisplay test
+    - name: Build GenericDSAT plugin
       working-directory: ./GenericDSATDevice_plugin
       run: |
         BUTOOL_PATH=$(realpath ../)
         echo "Setting up environment with BUTOOL_PATH=${BUTOOL_PATH}"
         source env.sh ${BUTOOL_PATH}
         make
-        echo ${LD_LIBRARY_PATH}
-        echo ${BUTOOL_PATH}
         echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> ${GITHUB_ENV}
         echo "BUTOOL_PATH=${BUTOOL_PATH}" >> ${GITHUB_ENV}
+    
+    - name: Run StatusDisplay test
+      working-directory: ./GenericDSATDevice_plugin
+      run: |
+        BUTOOL_PATH=${{ env.BUTOOL_PATH }}
+        LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
         ls -lah lib
         ldd lib/libDSAT_GenericDSATDevice.so
         ldd lib/libDSAT_GenericDSAT.so
         ./run_BUTool_test.sh
-    
-    # - name: Run StatusDisplay test
-    #   working-directory: ./GenericDSATDevice_plugin
-    #   run: |
-    #     BUTOOL_PATH=${{ env.BUTOOL_PATH }}
-    #     LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
-    #     ls -lah lib
-    #     ldd lib/libDSAT_GenericDSATDevice.so
-    #     ldd lib/libDSAT_GenericDSAT.so
-    #     ./run_BUTool_test.sh
     
     - name: Cleanup GenericDSAT plugin
       working-directory: ./GenericDSATDevice_plugin
