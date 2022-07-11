@@ -44,12 +44,14 @@ jobs:
         echo "Setting up environment with BUTOOL_PATH=${BUTOOL_PATH}"
         source env.sh ${BUTOOL_PATH}
         make
+        echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> ${GITHUB_ENV}
         echo "BUTOOL_PATH=${BUTOOL_PATH}" >> ${GITHUB_ENV}
     
     - name: Run StatusDisplay test
       working-directory: ./GenericDSATDevice_plugin
       run: |
         BUTOOL_PATH=${{ env.BUTOOL_PATH }}
+        LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}
         ./run_BUTool_test.sh
     
     - name: Cleanup GenericDSAT plugin
