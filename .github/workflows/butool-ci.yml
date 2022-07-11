@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         ls -lah .
-        echo "Home directory: ${HOME}"
+        echo "Working directory: ${PWD}"
         sudo apt install \
           libboost-regex-dev \
           build-essential \
@@ -38,17 +38,19 @@ jobs:
       run: make
     
     - name: Build GenericDSAT plugin
-      working-directory: GenericDSATDevice_plugin
+      working-directory: ./GenericDSATDevice_plugin
       run: |
-        source env.sh ${HOME}
+        BUTOOL_PATH=$(realpath ../)
+        echo "Setting up environment with BUTOOL_PATH=${BUTOOL_PATH}"
+        source env.sh ${BUTOOL_PATH}
         make
     
     - name: Run StatusDisplay test
-      working-directory: GenericDSATDevice_plugin
+      working-directory: ./GenericDSATDevice_plugin
       run: ./run_BUTool_test.sh
     
     - name: Cleanup GenericDSAT plugin
-      working-directory: GenericDSATDevice_plugin
+      working-directory: ./GenericDSATDevice_plugin
       run: make clean
 
     - name: Cleanup BUTool
