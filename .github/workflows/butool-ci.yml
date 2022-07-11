@@ -35,7 +35,11 @@ jobs:
           libncurses5-dev
     
     - name: Build BUTool
-      run: make
+      run: |
+        make
+        ls -lah lib
+        ldd lib/libBUTool.so
+        ldd lib/libBUTool_Helpers.so
     
     - name: Build GenericDSAT plugin
       working-directory: ./GenericDSATDevice_plugin
