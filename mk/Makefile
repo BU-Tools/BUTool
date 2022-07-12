@@ -83,7 +83,7 @@ LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${L
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
 ### LINTER checking ###
-LINTER=clang-tidy -extra-arg=-Wno-unknown-warning-option
+LINTER?=clang-tidy -extra-arg=-Wno-unknown-warning-option
 #second line sets warnings to errors except for certain things
 LINTER_DEFAULT_ARGS=-checks=readability-* --warnings-as-errors=readability-*,-readability-implicit-bool-conversion,-readability-else-after-return,-readability-function-cognitive-complexity,-readability-convert-member-functions-to-static,-clang-diagnostic-unknown-warning-option,-readability-make-member-function-const
 
