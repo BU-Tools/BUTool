@@ -4,7 +4,7 @@ export CACTUS_ROOT
 export UIO_UHAL_PATH
 
 UHAL_VER_MAJOR ?= 2
-UHAL_VER_MINOR ?= 7
+UHAL_VER_MINOR ?= 8
 
 
 HAS_FALLTHROUGH=$(shell ./mk/has_Wimplicit-fallthrough)

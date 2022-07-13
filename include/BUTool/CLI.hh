@@ -14,7 +14,7 @@
 #include <readline/history.h>
 
 //helper for auto-complete
-#include "CLIHelper.hh"
+#include <BUTool/CLIHelper.hh>
 
 //std::string LimitStringLines(std::string, size_t, size_t);
 
