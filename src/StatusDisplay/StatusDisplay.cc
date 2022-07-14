@@ -141,16 +141,17 @@ namespace BUTool{
   {
     // For now, only print out the exceptions in TEXT mode
     if (statusMode == TEXT) {
-      stream << "CAUGHT ERRORS: \n\n";
+      stream << "ERROR SUMMARY \n\n";
+      stream << "============= \n\n";
       // Loop over the exceptions map and print out the errors
       for (const auto & iterator : caughtExceptions) {
         std::string exceptionType = iterator.first;
-        std::vector<BUException::exBase&> exceptions = iterator.second;
+        std::vector<std::string> registers = iterator.second;
 
         stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
 
-        for (const auto & exception : exceptions) {
-          stream << exception.what() << "\n";
+        for (const auto & registerName : registers) {
+          stream << registerName << "\n";
         }
       }
     }
@@ -262,13 +263,13 @@ namespace BUTool{
           tables[tableName].Add(*itName, regIO);
         }
       } catch(BUException::BUS_ERROR & e) {
-        caughtExceptions["BUS_ERROR"].push_back(e);
+        caughtExceptions["BUS_ERROR"].push_back(*itName);
         continue;
       } catch(BUException::BAD_VALUE & e) {
-        caughtExceptions["BAD_VALUE"].push_back(e);
+        caughtExceptions["BAD_VALUE"].push_back(*itName);
         continue;
       } catch(BUException::BAD_MARKUP_NAME & e) {
-        caughtExceptions["BAD_MARKUP_NAME"].push_back(e);
+        caughtExceptions["BAD_MARKUP_NAME"].push_back(*itName);
         continue;
       }
     }
