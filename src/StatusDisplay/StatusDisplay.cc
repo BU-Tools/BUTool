@@ -139,6 +139,9 @@ namespace BUTool{
 
   void StatusDisplay::ReportExceptions(std::ostream & stream) const
   {
+    // Maximum number of exceptions we're going to print out per error type
+    const size_t MAX_EXCEPTIONS_TO_PRINT=10; 
+    
     // For now, only print out the exceptions in TEXT mode
     if (statusMode == TEXT) {
       stream << "============= \n";
@@ -157,12 +160,13 @@ namespace BUTool{
 
           stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
 
-          // Print out the actual exception messages with the impacted registers
-          for (const auto & exception : exceptions) {
-            stream << "Register : " << exception.first << "\n";
-            stream << "Error    : " << exception.second << "\n";
+          // Print out the actual exception messages with the impacted registers, given that there are not too many
+          if (exceptions.size() < MAX_EXCEPTIONS_TO_PRINT) {
+            for (const auto & exception : exceptions) {
+              stream << "Register : " << exception.first << "\n";
+              stream << "Error    : " << exception.second << "\n\n";
+            }
           }
-
         }
       }
     }

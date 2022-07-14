@@ -203,8 +203,8 @@ namespace BUTool{
         if (!(iChar + 1 < markup.size())) {
           BUException::BAD_MARKUP_NAME e;	    
           std::string error("Bad markup name for ");
-          error += parsedName[0] + " (" + markup + ")\n";
-          error += "Last character cannot be an underscore!"; 
+          error += parsedName[0] + " (" + markup + ")";
+          error += " -> Last character cannot be an underscore!"; 
           e.Append(error.c_str());
           throw e;
         }
@@ -225,8 +225,8 @@ namespace BUTool{
           if (!(position < parsedName.size())) {
             BUException::BAD_MARKUP_NAME e;	    
             std::string error("Bad markup name for ");
-            error += parsedName[0] + " (" + markup + ")\n";
-            error += "Position " + positionStr + " is out of bounds!"; 
+            error += parsedName[0] + " (" + markup + ")";
+            error += " -> Position " + positionStr + " is out of bounds!"; 
             e.Append(error.c_str());
             throw e;
           }
