@@ -115,7 +115,7 @@ namespace BUTool{
     StatusMode statusMode;
     int version;
     // Array to store the caught exceptions during status display
-    std::map<std::string, std::vector<std::string>> caughtExceptions;
+    std::map<std::string, std::vector<std::pair<std::string, std::string>> > caughtExceptions;
   };
 }
 #endif

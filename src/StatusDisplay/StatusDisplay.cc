@@ -153,9 +153,16 @@ namespace BUTool{
         // Loop over the exceptions map and print out the errors
         for (const auto & iterator : caughtExceptions) {
           std::string exceptionType = iterator.first;
-          std::vector<std::string> registers = iterator.second;
+          std::vector<std::string> exceptions = iterator.second;
 
-          stream << "Error type: " << exceptionType << ", # of errors: " << registers.size() << "\n\n";
+          stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
+
+          // Print out the actual exceptions with the impacted registers
+          for (const auto & exception : exceptions) {
+            stream << "Register: " << exception.first << "\n";
+            stream << "Error   : " << exception.second << "\n";
+          }
+
         }
       }
     }
@@ -273,13 +280,13 @@ namespace BUTool{
           tables[tableName].Add(*itName, regIO);
         }
       } catch(BUException::BUS_ERROR & e) {
-        caughtExceptions["BUS_ERROR"].push_back(*itName);
+        caughtExceptions["BUS_ERROR"].push_back(std::make_pair(*itName, e.Description()));
         continue;
       } catch(BUException::BAD_VALUE & e) {
-        caughtExceptions["BAD_VALUE"].push_back(*itName);
+        caughtExceptions["BAD_VALUE"].push_back(std::make_pair(*itName, e.Description()));
         continue;
       } catch(BUException::BAD_MARKUP_NAME & e) {
-        caughtExceptions["BAD_MARKUP_NAME"].push_back(*itName);
+        caughtExceptions["BAD_MARKUP_NAME"].push_back(std::make_pair(*itName, e.Description()));
         continue;
       }
     }
