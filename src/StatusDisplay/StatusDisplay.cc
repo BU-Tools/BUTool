@@ -153,7 +153,7 @@ namespace BUTool{
         // Loop over the exceptions map and print out the errors
         for (const auto & iterator : caughtExceptions) {
           std::string exceptionType = iterator.first;
-          std::vector<std::string> exceptions = iterator.second;
+          auto exceptions = iterator.second;
 
           stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
 
