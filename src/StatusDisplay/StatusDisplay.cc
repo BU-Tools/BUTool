@@ -147,7 +147,7 @@ namespace BUTool{
 
       // If map is empty, just print out a message saying that no errors are observed
       if (caughtExceptions.empty()) {
-        stream << "No errors are caught!\n"; 
+        stream << "No errors are caught!\n\n"; 
       }
       else {
         // Loop over the exceptions map and print out the errors
@@ -157,10 +157,10 @@ namespace BUTool{
 
           stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
 
-          // Print out the actual exceptions with the impacted registers
+          // Print out the actual exception messages with the impacted registers
           for (const auto & exception : exceptions) {
-            stream << "Register: " << exception.first << "\n";
-            stream << "Error   : " << exception.second << "\n";
+            stream << "Register : " << exception.first << "\n";
+            stream << "Error    : " << exception.second << "\n";
           }
 
         }
