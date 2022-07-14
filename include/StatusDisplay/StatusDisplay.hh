@@ -20,6 +20,8 @@ typedef boost::unordered_map<std::string, std::string> uMap;
 #include "StatusDisplayCell.hh"
 #include <RegisterHelper/RegisterHelperIO.hh>
 
+#include "BUException/ExceptionBase.hh"
+
 namespace BUTool{
 
 
@@ -38,7 +40,8 @@ namespace BUTool{
     std::string ReportBody(size_t level, std::string const & singleTable = std::string(""));
     void ReportTrailer(std::ostream & stream) const;
     std::string ReportTrailer() const;
-
+    void ReportExceptions(std::ostream & stream) const;
+    std::string ReportExceptions() const;
 
     /*! \brief Emit a status report to output stream
      *
@@ -111,6 +114,8 @@ namespace BUTool{
     bool debug;
     StatusMode statusMode;
     int version;
+    // Array to store the caught exceptions during status display
+    std::map<std::string, std::vector<BUException::exBase&>> caughtExceptions;
   };
 }
 #endif
