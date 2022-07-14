@@ -204,7 +204,7 @@ namespace BUTool{
           BUException::BAD_MARKUP_NAME e;	    
           std::string error("Bad markup name for ");
           error += parsedName[0] + " (" + markup + ")\n";
-          error += ": Last character cannot be an underscore!"; 
+          error += "Last character cannot be an underscore!"; 
           e.Append(error.c_str());
           throw e;
         }
@@ -226,7 +226,7 @@ namespace BUTool{
             BUException::BAD_MARKUP_NAME e;	    
             std::string error("Bad markup name for ");
             error += parsedName[0] + " (" + markup + ")\n";
-            error += ": Position " + positionStr + " is out of bounds!"; 
+            error += "Position " + positionStr + " is out of bounds!"; 
             e.Append(error.c_str());
             throw e;
           }
