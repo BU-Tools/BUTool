@@ -148,7 +148,7 @@ namespace BUTool{
         std::string exceptionType = iterator.first;
         std::vector<std::string> registers = iterator.second;
 
-        stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
+        stream << "Error type: " << exceptionType << ", # of errors: " << registers.size() << "\n\n";
 
         for (const auto & registerName : registers) {
           stream << registerName << "\n";
