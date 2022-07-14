@@ -141,17 +141,21 @@ namespace BUTool{
   {
     // For now, only print out the exceptions in TEXT mode
     if (statusMode == TEXT) {
-      stream << "ERROR SUMMARY \n\n";
+      stream << "============= \n";
+      stream << "ERROR SUMMARY \n";
       stream << "============= \n\n";
-      // Loop over the exceptions map and print out the errors
-      for (const auto & iterator : caughtExceptions) {
-        std::string exceptionType = iterator.first;
-        std::vector<std::string> registers = iterator.second;
 
-        stream << "Error type: " << exceptionType << ", # of errors: " << registers.size() << "\n\n";
+      // If map is empty, just print out a message saying that no errors are observed
+      if (caughtExceptions.empty()) {
+        stream << "No errors are caught!\n"; 
+      }
+      else {
+        // Loop over the exceptions map and print out the errors
+        for (const auto & iterator : caughtExceptions) {
+          std::string exceptionType = iterator.first;
+          std::vector<std::string> registers = iterator.second;
 
-        for (const auto & registerName : registers) {
-          stream << registerName << "\n";
+          stream << "Error type: " << exceptionType << ", # of errors: " << registers.size() << "\n\n";
         }
       }
     }
