@@ -265,9 +265,11 @@ namespace BUTool{
       try {
         // Look for parameters: "Status", "Table"
         // If one or more of these parameters do not exist, skip this register
+        std::string status;
+        std::string tableName;
         try {
-          std::string status = regIO->GetRegParameterValue(*itName, "Status");
-          std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+          status = regIO->GetRegParameterValue(*itName, "Status");
+          tableName = regIO->GetRegParameterValue(*itName, "Table");
         }
         // Straight out ignore these errors
         catch (BUException::BAD_VALUE & e) {
