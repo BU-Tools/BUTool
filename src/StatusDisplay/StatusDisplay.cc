@@ -258,8 +258,14 @@ namespace BUTool{
       try {
         // Look for parameters: "Status", "Table"
         // If one or more of these parameters do not exist, skip this register
-        std::string status = regIO->GetRegParameterValue(*itName, "Status");
-        std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+        try {
+          std::string status = regIO->GetRegParameterValue(*itName, "Status");
+          std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+        }
+        // Straight out ignore these errors
+        catch (BUException::BAD_VALUE & e) {
+          continue;
+        }
         
         // If this cell is in the table we're looking for, add it to the
         // relevant StatusDisplayMatrix instance
