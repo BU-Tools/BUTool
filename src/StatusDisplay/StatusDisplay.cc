@@ -184,7 +184,7 @@ namespace BUTool{
       e.Append("Table ");
       e.Append(table.c_str());
       e.Append(" not found\n");
-      throw e;
+      throw e
     }
     return &tables.at(table);
   }
