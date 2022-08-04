@@ -140,32 +140,27 @@ namespace BUTool{
   void StatusDisplay::ReportExceptions(std::ostream & stream) const
   {
     // Maximum number of exceptions we're going to print out per error type
-    const size_t MAX_EXCEPTIONS_TO_PRINT=10; 
+    const size_t MAX_EXCEPTIONS_TO_PRINT = 10; 
     
-    // For now, only print out the exceptions in TEXT mode
-    if (statusMode == TEXT) {
+    // Report exceptions if the exception map is not empty
+    // Currently we only do this for statusMode = TEXT
+    if ( (!caughtExceptions.empty()) && (statusMode == TEXT) ) {
       stream << "============= \n";
       stream << "ERROR SUMMARY \n";
       stream << "============= \n\n";
+      
+      // Loop over the exceptions map and print out the errors for each error type
+      for (const auto & iterator : caughtExceptions) {
+        std::string exceptionType = iterator.first;
+        auto exceptions = iterator.second;
 
-      // If map is empty, just print out a message saying that no errors are observed
-      if (caughtExceptions.empty()) {
-        stream << "No errors are caught!\n\n"; 
-      }
-      else {
-        // Loop over the exceptions map and print out the errors
-        for (const auto & iterator : caughtExceptions) {
-          std::string exceptionType = iterator.first;
-          auto exceptions = iterator.second;
+        stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
 
-          stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
-
-          // Print out the actual exception messages with the impacted registers, given that there are not too many
-          if (exceptions.size() < MAX_EXCEPTIONS_TO_PRINT) {
-            for (const auto & exception : exceptions) {
-              stream << "Register : " << exception.first << "\n";
-              stream << "Error    : " << exception.second << "\n\n";
-            }
+        // Print out the actual exception messages with the impacted registers, given that there are not too many
+        if (exceptions.size() < MAX_EXCEPTIONS_TO_PRINT) {
+          for (const auto & exception : exceptions) {
+            stream << "Register : " << exception.first << "\n";
+            stream << "Error    : " << exception.second << "\n\n";
           }
         }
       }
