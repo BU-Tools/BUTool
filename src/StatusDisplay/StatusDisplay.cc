@@ -286,7 +286,6 @@ namespace BUTool{
           tables[tableName].Add(*itName, regIO);
         }
       } catch(BUException::BUS_ERROR & e) {
-        caughtExceptions["BUS_ERROR"].push_back(std::make_pair(*itName, e.Description()));
         continue;
       } catch(BUException::BAD_VALUE & e) {
         caughtExceptions["BAD_VALUE"].push_back(std::make_pair(*itName, e.Description()));
