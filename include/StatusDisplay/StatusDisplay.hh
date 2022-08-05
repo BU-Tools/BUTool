@@ -40,8 +40,8 @@ namespace BUTool{
     std::string ReportBody(size_t level, std::string const & singleTable = std::string(""));
     void ReportTrailer(std::ostream & stream) const;
     std::string ReportTrailer() const;
-    void ReportExceptions(std::ostream & stream) const;
-    std::string ReportExceptions() const;
+    void ReportExceptions(std::ostream & stream);
+    std::string ReportExceptions();
 
     /*! \brief Emit a status report to output stream
      *

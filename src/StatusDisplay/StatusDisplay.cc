@@ -137,7 +137,7 @@ namespace BUTool{
     }  
   }
 
-  void StatusDisplay::ReportExceptions(std::ostream & stream) const
+  void StatusDisplay::ReportExceptions(std::ostream & stream)
   {
     // Maximum number of exceptions we're going to print out per error type
     const size_t MAX_EXCEPTIONS_TO_PRINT = 10; 
@@ -193,7 +193,7 @@ namespace BUTool{
     return str.str();
   }
 
-  std::string StatusDisplay::ReportExceptions() const {
+  std::string StatusDisplay::ReportExceptions() {
     std::stringstream str;
     ReportExceptions(str);
     return str.str();
