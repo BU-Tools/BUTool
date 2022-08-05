@@ -165,6 +165,8 @@ namespace BUTool{
         }
       }
     }
+    // Clear the exception map after it is reported
+    caughtExceptions.clear();
   }
 
   std::string StatusDisplay::ReportHeader() const {
