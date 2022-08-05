@@ -261,33 +261,37 @@ namespace BUTool{
         itName != Names.end();
         itName++){
 
+      // Look for parameters: "Status", "Table"
+      // If one or more of these parameters do not exist, skip this register
+      std::string status;
+      std::string tableName;
       try {
-        // Look for parameters: "Status", "Table"
-        // If one or more of these parameters do not exist, skip this register
-        std::string status;
-        std::string tableName;
+        status = regIO->GetRegParameterValue(*itName, "Status");
+        tableName = regIO->GetRegParameterValue(*itName, "Table");
+      }
+      // Straight out ignore these errors
+      catch (BUException::BAD_VALUE & e) {
+        continue;
+      }
+        
+      // If this cell is in the table we're looking for, add it to the
+      // relevant StatusDisplayMatrix instance.
+      // Catch some exceptions in the process
+      if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
         try {
-          status = regIO->GetRegParameterValue(*itName, "Status");
-          tableName = regIO->GetRegParameterValue(*itName, "Table");
-        }
-        // Straight out ignore these errors
+          tables[tableName].Add(*itName, regIO);
+        } 
+        catch (BUException::BUS_ERROR & e) {
+          continue;
+        } 
         catch (BUException::BAD_VALUE & e) {
+          caughtExceptions["BAD_VALUE"].push_back(std::make_pair(*itName, e.Description()));
+          continue;
+        } 
+        catch (BUException::BAD_MARKUP_NAME & e) {
+          caughtExceptions["BAD_MARKUP_NAME"].push_back(std::make_pair(*itName, e.Description()));
           continue;
         }
-        
-        // If this cell is in the table we're looking for, add it to the
-        // relevant StatusDisplayMatrix instance
-        if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
-          tables[tableName].Add(*itName, regIO);
-        }
-      } catch(BUException::BUS_ERROR & e) {
-        continue;
-      } catch(BUException::BAD_VALUE & e) {
-        caughtExceptions["BAD_VALUE"].push_back(std::make_pair(*itName, e.Description()));
-        continue;
-      } catch(BUException::BAD_MARKUP_NAME & e) {
-        caughtExceptions["BAD_MARKUP_NAME"].push_back(std::make_pair(*itName, e.Description()));
-        continue;
       }
     }
   }
