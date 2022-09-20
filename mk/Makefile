@@ -10,8 +10,8 @@ RUNTIME_LDPATH?=${PWD}
 
 
 #Exception class
-LIBRARY_EXCEPTION_PATH = ${BUTOOL_PATH}/external/BUException
-LIBRARY_EXCEPTION = ${BUTOOL_PATH}/lib/libToolException.so
+LIBRARY_BUEXCEPTION_PATH ?= ${BUTOOL_PATH}/external/BUException
+LIBRARY_BUEXCEPTION      = ${LIBRARY_BUEXCEPTION_PATH}/lib/libToolException.so
 
 # BUTextIO class
 LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
@@ -19,34 +19,33 @@ LIBRARY_BUTEXTIO_SOURCES = $(wildcard src/BUTextIO/*.cc)
 LIBRARY_BUTEXTIO_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_BUTEXTIO_SOURCES})
 
 LIBRARY_TOOL = lib/libBUTool.so
-LIBRARY_TOOL_SOURCES  = $(wildcard src/tool/*.cc)
+LIBRARY_TOOL_SOURCES  = $(wildcard src/BUTool/*.cc)
 LIBRARY_TOOL_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_TOOL_SOURCES})
 
 LIBRARY_HELPERS = lib/libBUTool_Helpers.so
-LIBRARY_HELPERS_SOURCES  = $(wildcard src/helpers/*.cc)
-LIBRARY_HELPERS_SOURCES += $(wildcard src/helpers/StatusDisplay/*.cc)
+LIBRARY_HELPERS_SOURCES  = $(wildcard src/BUTool/helpers/*.cc)
+LIBRARY_HELPERS_SOURCES += $(wildcard src/StatusDisplay/*.cc)
+LIBRARY_HELPERS_SOURCES += $(wildcard src/RegisterHelper/*.cc)
 LIBRARY_HELPERS_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_HELPERS_SOURCES})
 
-LIBRARY_WIBDEVICE = lib/libBUTool_WIBDevice.so
-LIBRARY_WIBDEVICE_SOURCES = $(wildcard src/wib_device/*.cc)
-LIBRARY_WIBDEVICE_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_WIBDEVICE_SOURCES})
-
-EXECUTABLE_SOURCES = $(wildcard src/tool/*.cxx)
+EXECUTABLE_SOURCES = $(wildcard src/BUTool/*.cxx)
 EXECUTABLE_OBJECT_FILES = $(patsubst src/%.cxx,obj/%.o,${EXECUTABLE_SOURCES})
 EXECUTABLES = $(patsubst src/%.cxx,bin/%.exe,${EXECUTABLE_SOURCES})
 
 PLUGIN_DIR=plugins/
 
 RELATIVE_INCLUDE_PATH = \
-			include  \
-			${LIBRARY_EXCEPTION_PATH}/include
+			include \
+			${LIBRARY_BUEXCEPTION_PATH}/include/
 INCLUDE_PATH = $(patsubst %,-I%,$(abspath ${RELATIVE_INCLUDE_PATH}))
-export INCLUDE_PATH
+
+#export INCLUDE_PATH
 
 RELATIVE_LIBRARY_PATH = \
-			lib 
+			lib \
+			${LIBRARY_BUEXCEPTION_PATH}/lib 
 LIBRARY_PATH = $(patsubst %,-L%,$(abspath ${RELATIVE_LIBRARY_PATH}))
-export LIBRARY_PATH
+#export LIBRARY_PATH
 
 LIBRARIES =    	-lToolException		\
 		-lreadline 		\
@@ -74,9 +73,19 @@ ifdef MAP_TYPE
 CXX_FLAGS += ${MAP_TYPE}
 endif
 
+# Compile-time flag to specify to use the new StatusDisplay name parser for row and column names
+ifeq (${BUTOOL_SD_USE_NEW_PARSER}, true)
+CXX_FLAGS += -DSD_USE_NEW_PARSER
+endif
+
 LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
+
+### LINTER checking ###
+LINTER?=clang-tidy -extra-arg=-Wno-unknown-warning-option
+#second line sets warnings to errors except for certain things
+LINTER_DEFAULT_ARGS=-checks=readability-* --warnings-as-errors=readability-*,-readability-implicit-bool-conversion,-readability-else-after-return,-readability-function-cognitive-complexity,-readability-convert-member-functions-to-static,-clang-diagnostic-unknown-warning-option,-readability-make-member-function-const
 
 .PHONY: all _all clean _cleanall build _buildall self plugin init git_remote_to_ssh git_remote_to_https
 
@@ -98,8 +107,9 @@ self: ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_TOOL}  ${EXECU
 # ------------------------
 # exception library
 # ------------------------
-${LIBRARY_EXCEPTION}: 
-	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
+${LIBRARY_BUEXCEPTION}:
+	${MAKE} -C external/BUException
+#	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
 
 
 # ------------------------
@@ -111,17 +121,19 @@ ${LIBRARY_BUTEXTIO}: ${LIBRARY_BUTEXTIO_OBJECT_FILES}
 
 ${LIBRARY_BUTEXTIO_OBJECT_FILES}: obj/%.o : src/%.cc
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
 # Executables
 # ------------------------
-${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_EXCEPTION} ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_BUTEXTIO}
+${EXECUTABLES}: bin/%.exe: obj/%.o ${LIBRARY_BUEXCEPTION} ${EXECUTABLE_OBJECT_FILES}  ${LIBRARY_TOOL}  ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} $< -o $@ ${LINK_EXECUTABLE_FLAGS}
 
 ${EXECUTABLE_OBJECT_FILES}: obj/%.o : src/%.cxx
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} -c ${CXX_FLAGS}  $< -o $@
 
 -include $(EXECUTABLE_OBJECT_FILES:.o=.d)
@@ -129,23 +141,25 @@ ${EXECUTABLE_OBJECT_FILES}: obj/%.o : src/%.cxx
 # ------------------------
 # tool library
 # ------------------------
-${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO}
+${LIBRARY_TOOL}: ${LIBRARY_TOOL_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LIBRARY_TOOL_OBJECT_FILES} ${LINK_LIBRARY_FLAGS} -o $@
 
 ${LIBRARY_TOOL_OBJECT_FILES}: obj/%.o : src/%.cc 
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} -c $< -o $@
 
 # ------------------------
 # helpers library
 # ------------------------
-${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_EXCEPTION}
+${LIBRARY_HELPERS}: ${LIBRARY_HELPERS_OBJECT_FILES} ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO}
 	mkdir -p $(dir $@)
 	${CXX} ${LINK_LIBRARY_FLAGS} ${LIBRARY_HELPERS_OBJECT_FILES} -o $@
 
 ${LIBRARY_HELPERS_OBJECT_FILES}: obj/%.o : src/%.cc 
 	mkdir -p $(dir $@)
+	${LINTER} $< ${LINTER_DEFAULT_ARGS} -- $(CXX_FLAGS)	
 	${CXX} ${CXX_FLAGS} ${UHAL_CXX_FLAGHS} -c $< -o $@
 
 -include $(LIBRARY_OBJECT_FILES:.o=.d)
@@ -156,12 +170,12 @@ ${LIBRARY_HELPERS_OBJECT_FILES}: obj/%.o : src/%.cc
 # -----------------------
 install: all
 	 install -m 775 -d ${INSTALL_PATH}/bin
-	 install -b -m 775 ./bin/tool/BUTool.exe ${INSTALL_PATH}/bin
+	 install -b -m 775 ./bin/BUTool/BUTool.exe ${INSTALL_PATH}/bin
 	 install -m 775 -d ${INSTALL_PATH}/lib
 	 install -b -m 775 ./lib/* ${INSTALL_PATH}/lib
 	 install -m 775 -d ${INSTALL_PATH}/include
 	 cp -r ./include/* ${INSTALL_PATH}/include
-	 cp -r ${LIBRARY_EXCEPTION_PATH}/include/* ${INSTALL_PATH}/include
+	 ${MAKE} install ${FLAGS} -C external/BUException
 	 ${MAKE} install ${FLAGS} -C ${PLUGIN_DIR} 
 
 
@@ -172,5 +186,5 @@ install: all
 
 FLAGS = $(ifeq $(MAKEFLAGS) "","",-$(MAKEFLAGS))
 
-plugin: ${LIBRARY_EXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
+plugin: ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
 	 ${MAKE} ${FLAGS} -C ${PLUGIN_DIR} 

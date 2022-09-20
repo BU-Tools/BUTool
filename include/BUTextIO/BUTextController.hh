@@ -1,8 +1,8 @@
 #ifndef __BU_TEXT_CONTROLLER_HH__
 #define __BU_TEXT_CONTROLLER_HH__
 
-#include "Print.hh"
-#include "PrintLevel.hh"
+#include <BUTextIO/Print.hh>
+#include <BUTextIO/PrintLevel.hh>
 
 #include <vector>
 #include <iostream>

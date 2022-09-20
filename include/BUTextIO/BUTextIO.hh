@@ -1,16 +1,17 @@
 #ifndef __BU_TEXT_IO_HH__
 #define __BU_TEXT_IO_HH__
 
-#include "BUTextController.hh"
+#include <BUTextIO/BUTextController.hh>
 
 class BUTextIO {
 public:
     BUTextIO();
-    virtual ~BUTextIO() {};
+    ~BUTextIO() {};
     void AddOutputStream(Level::level level, std::ostream *os);
     void RemoveOutputStream(Level::level level, std::ostream* os);
     void ResetStreams(Level::level level);
     void Print(Level::level level, const char *fmt, ...);
+    void Print(Level::level level, const char *fmt, va_list argp);
 private:
     std::vector<BUTextController> controllers;
 };
