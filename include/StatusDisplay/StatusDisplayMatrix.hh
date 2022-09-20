@@ -47,11 +47,14 @@ namespace BUTool{
     void Clear();
     
     std::string NameBuilder(std::string const & markup,
-			    std::string const & registerName) const;
+			    std::string const & registerName,
+          std::string const & parameterName) const;
     std::string BuildNameWithSingleUnderscore(std::string const & markup,
-          std::vector<std::string> const & parsedName) const;
+          std::vector<std::string> const & parsedName,
+          std::string const & parameterName) const;
     std::string BuildNameWithMultipleUnderscores(std::string const & markup,
-          std::vector<std::string> const & parsedName) const;
+          std::vector<std::string> const & parsedName,
+          std::string const & parameterName) const;
     void CheckForInvalidCharacter(std::string const & name,
           char const & invalidChar) const;
     void CheckName(std::string const & );

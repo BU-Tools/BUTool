@@ -87,7 +87,7 @@ namespace BUTool{
     // Find the table name for this register. If we can't find one, throw an exception
     std::string tableName = regIO->GetRegParameterValue(registerName, "Table");
     
-    CheckName(NameBuilder(tableName,registerName));
+    CheckName(NameBuilder(tableName,registerName,"Table"));
 
     // Determine row and column
     std::string row = ParseRowOrCol(regIO,registerName,"Row");
@@ -166,7 +166,9 @@ namespace BUTool{
     }
   }
 
-  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,std::vector<std::string> const & parsedName) const{
+  std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,
+                  std::vector<std::string> const & parsedName,
+                  std::string const & parameterName) const{
     /* 
     Build a row or column name, using a single underscore ('_') character as a special token.
     A double underscore ('__') is treated as a literal underscore, and printed as '_'.
@@ -189,7 +191,7 @@ namespace BUTool{
     for(size_t iChar = 0; iChar < markup.size(); iChar++){
       /*
        * Check if markup[iChar] is a special parse character ('_')
-       * If it is, we'll check the character next to it. There are two possibilities:
+       * If it is, we'll check the character next to it. There are three possibilities:
        *   1. It is an integer -> That will point to the portion of the register name we want to use
        *   2. It is another underscore -> The two underscores will be treated as a literal, single underscore 
        *   3. It is a non-digit char -> The underscore will be treated as a literal, single underscore
@@ -202,8 +204,9 @@ namespace BUTool{
         // This essentially means that the last character in a valid markup CANNOT be an underscore.
         if (!(iChar + 1 < markup.size())) {
           BUException::BAD_MARKUP_NAME e;	    
-          std::string error("Bad markup name for ");
-          error += parsedName[0]; 
+          std::string error("Bad " + parameterName + " name for ");
+          error += parsedName[0] + " (" + markup + ")";
+          error += " -> Last character cannot be an underscore!"; 
           e.Append(error.c_str());
           throw e;
         }
@@ -223,8 +226,9 @@ namespace BUTool{
           // In a valid markup name, this should never happen, throw BAD_MARKUP_NAME
           if (!(position < parsedName.size())) {
             BUException::BAD_MARKUP_NAME e;	    
-            std::string error("Bad markup name for ");
-            error += parsedName[0]; 
+            std::string error("Bad " + parameterName + " name for ");
+            error += parsedName[0] + " (" + markup + ")";
+            error += " -> Position " + positionStr + " is out of bounds!"; 
             e.Append(error.c_str());
             throw e;
           }
@@ -255,7 +259,9 @@ namespace BUTool{
     return result;
   }
 
-  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,std::vector<std::string> const & parsedName) const {
+  std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,
+              std::vector<std::string> const & parsedName,
+              std::string const & parameterName) const {
     /* 
     Build a row or column name, using multiple underscore ('_') characters as a special token
     Determines the row and column name according to the following:
@@ -317,7 +323,7 @@ namespace BUTool{
             }
             if(pos > int(parsedName.size())){
               BUException::BAD_VALUE e;	    
-              std::string error("Bad markup name for ");
+              std::string error("Bad " + parameterName + " name for ");
               error += parsedName[0] + " with token " + std::to_string(pos) + " from markup " + markup;
               e.Append(error.c_str());
               throw e;
@@ -329,7 +335,7 @@ namespace BUTool{
             ret.append(parsedName[pos]);
           }else{
             BUException::BAD_VALUE e;	    
-            std::string error("Bad markup for ");
+            std::string error("Bad " + parameterName + " name for ");
             error += parsedName[0] + " from markup " + markup;
             e.Append(error.c_str());
             throw e;
@@ -344,7 +350,9 @@ namespace BUTool{
     return ret;
   }
 
-  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,std::string const & registerName) const{
+  std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,
+                  std::string const & registerName,
+                  std::string const & parameterName) const{
     /*
     Main name builder function to determine row and column names for StatusDisplayMatrix tables.
     Row and column names are inferred from the "Row" and "Column" parameters in the address table.
@@ -367,10 +375,10 @@ namespace BUTool{
     }
     
     #ifdef SD_USE_NEW_PARSER
-    return BuildNameWithMultipleUnderscores(markup, parsedName);
+    return BuildNameWithMultipleUnderscores(markup, parsedName, parameterName);
     #endif
 
-    return BuildNameWithSingleUnderscore(markup, parsedName);
+    return BuildNameWithSingleUnderscore(markup, parsedName, parameterName);
   }
 
   std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
@@ -396,7 +404,7 @@ namespace BUTool{
 
     boost::to_upper(markup);
     // Determine the row or column name from the markup and the register name
-    std::string newName = NameBuilder(markup, registerName);
+    std::string newName = NameBuilder(markup, registerName, parameterName);
 
     // If there is a "_LO" or "_HI" in the row/column name, drop it
     if (newName.find("_LO") == newName.size()-3) {

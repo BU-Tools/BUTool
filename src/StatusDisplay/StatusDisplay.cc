@@ -113,9 +113,9 @@ namespace BUTool{
     // Now output the content, looping over the tables
     // Eventually calls one of PrintLaTeX(), PrintHTML() or Print() for each table
     for(std::map<std::string,StatusDisplayMatrix>::iterator itTable = tables.begin();
-	itTable != tables.end();
-	itTable++){
-      itTable->second.Render(stream,level,statusMode);
+	    itTable != tables.end();
+	    itTable++) {
+        itTable->second.Render(stream,level,statusMode);
     }
     // Clean up tables for next time
     tables.clear();
@@ -135,6 +135,38 @@ namespace BUTool{
     } else if (statusMode == TEXT) {
       stream << "SW VER: " << version << "\n";
     }  
+  }
+
+  void StatusDisplay::ReportExceptions(std::ostream & stream)
+  {
+    // Maximum number of exceptions we're going to print out per error type
+    const size_t MAX_EXCEPTIONS_TO_PRINT = 10; 
+    
+    // Report exceptions if the exception map is not empty
+    // Currently we only do this for statusMode = TEXT
+    if ( (!caughtExceptions.empty()) && (statusMode == TEXT) ) {
+      stream << "============= \n";
+      stream << "ERROR SUMMARY \n";
+      stream << "============= \n\n";
+      
+      // Loop over the exceptions map and print out the errors for each error type
+      for (const auto & iterator : caughtExceptions) {
+        std::string exceptionType = iterator.first;
+        auto exceptions = iterator.second;
+
+        stream << "Error type: " << exceptionType << ", # of errors: " << exceptions.size() << "\n\n";
+
+        // Print out the actual exception messages with the impacted registers, given that there are not too many
+        if (exceptions.size() < MAX_EXCEPTIONS_TO_PRINT) {
+          for (const auto & exception : exceptions) {
+            stream << "Register : " << exception.first << "\n";
+            stream << "Error    : " << exception.second << "\n\n";
+          }
+        }
+      }
+    }
+    // Clear the exception map after it is reported
+    caughtExceptions.clear();
   }
 
   std::string StatusDisplay::ReportHeader() const {
@@ -160,12 +192,19 @@ namespace BUTool{
     ReportTrailer(str);
     return str.str();
   }
+
+  std::string StatusDisplay::ReportExceptions() {
+    std::stringstream str;
+    ReportExceptions(str);
+    return str.str();
+  }
   
   void StatusDisplay::Report(size_t level,std::ostream & stream,std::string const & singleTable)
   {
     ReportHeader(stream);
     ReportStyle(stream);
     ReportBody(level,stream,singleTable);
+    ReportExceptions(stream);
     ReportTrailer(stream);
   }
 
@@ -210,28 +249,51 @@ namespace BUTool{
 //  }
 
   void StatusDisplay::Process(std::string const & singleTable) {
-    // Build tables
+    /*
+     * Build a single table with the given name. This function will add the specified
+     * registers to the StatusDisplayMatrix instance representing this table, together
+     * with row and column name information.
+     * 
+     * This function also catches any BAD_VALUE or BAD_MARKUP_NAME exceptions thrown in the process,
+     * to be reported to the user later.
+     */
     std::vector<std::string> Names = regIO->GetRegsRegex("*");
     // Process all the nodes and build table structure
     for(std::vector<std::string>::iterator itName = Names.begin();
         itName != Names.end();
         itName++){
 
+      // Look for parameters: "Status", "Table"
+      // If one or more of these parameters do not exist, skip this register
+      std::string status;
+      std::string tableName;
       try {
-        // Look for parameters: "Status", "Table"
-        // If one or more of these parameters do not exist, skip this register
-        std::string status = regIO->GetRegParameterValue(*itName, "Status");
-        std::string tableName = regIO->GetRegParameterValue(*itName, "Table");
+        status = regIO->GetRegParameterValue(*itName, "Status");
+        tableName = regIO->GetRegParameterValue(*itName, "Table");
+      }
+      // Straight out ignore these errors
+      catch (BUException::BAD_VALUE & e) {
+        continue;
+      }
         
-        // If this cell is in the table we're looking for, add it to the
-        // relevant StatusDisplayMatrix instance
-        if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
+      // If this cell is in the table we're looking for, add it to the
+      // relevant StatusDisplayMatrix instance.
+      // Catch some exceptions in the process
+      if( singleTable.empty() || TableNameCompare(tableName,singleTable)){
+        try {
           tables[tableName].Add(*itName, regIO);
+        } 
+        catch (BUException::BUS_ERROR & e) {
+          continue;
+        } 
+        catch (BUException::BAD_VALUE & e) {
+          caughtExceptions["BAD_VALUE"].push_back(std::make_pair(*itName, e.Description()));
+          continue;
+        } 
+        catch (BUException::BAD_MARKUP_NAME & e) {
+          caughtExceptions["BAD_MARKUP_NAME"].push_back(std::make_pair(*itName, e.Description()));
+          continue;
         }
-      } catch(BUException::BUS_ERROR & e) {
-        continue;
-      } catch(BUException::BAD_VALUE & e) {
-        continue;
       }
     }
   }
