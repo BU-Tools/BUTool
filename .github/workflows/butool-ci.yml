@@ -1,0 +1,73 @@
+name: BUTool StatusDisplay CI
+
+# Control when to run the CI job
+on: 
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout BUTool repository and submodules
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Checkout GenericDSAT plugin and submodules
+      run: |
+        git clone --branch develop \
+          --recursive \
+          --depth 1 \
+          --shallow-submodules \
+          https://gitlab.com/BU-EDF/GenericDSATDevice_plugin.git
+    
+    - name: Install dependencies
+      run: |
+        ls -lah .
+        echo "Working directory: ${PWD}"
+        sudo apt install \
+          libboost-regex-dev \
+          build-essential \
+          zlib1g-dev \
+          libreadline-dev \
+          libboost-dev \
+          libboost-program-options-dev \
+          libncurses5-dev
+    
+    - name: Build BUTool
+      run: make
+    
+    - name: Build GenericDSAT plugin
+      working-directory: ./GenericDSATDevice_plugin
+      run: |
+        BUTOOL_PATH=$(realpath ../)
+        echo "Setting up environment with BUTOOL_PATH=${BUTOOL_PATH}"
+        source env.sh ${BUTOOL_PATH}
+        make
+        echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> ${GITHUB_ENV}
+        echo "BUTOOL_PATH=${BUTOOL_PATH}" >> ${GITHUB_ENV}
+    
+    - name: Run StatusDisplay test
+      working-directory: ./GenericDSATDevice_plugin
+      env:
+        BUTOOL_PATH: ${{ env.BUTOOL_PATH }}
+        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+      run: |
+        ./run_BUTool_test.sh
+    
+    - name: Cleanup GenericDSAT plugin
+      working-directory: ./GenericDSATDevice_plugin
+      run: make clean
+
+    - name: Cleanup BUTool
+      run: make clean
+
+        
