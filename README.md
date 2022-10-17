@@ -5,7 +5,7 @@ Electronics Design Facility.
 It makes use of plug-in libraries for interacting with different pieces of
 hardware.
 Instructions on how to add plug-ins can be found on the BUTool wiki
-http://gauss.bu.edu/redmine/projects/butool/wiki/BUTool_Wiki
+https://bu-edf.gitlab.io/BUTool/
 
 
 
