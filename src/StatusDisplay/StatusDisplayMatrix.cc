@@ -770,7 +770,7 @@ namespace BUTool{
 
         // Check if this is a number represented in hex notation
         // If that is the case, start checking from starting from position 2
-        if (cellValue.compare(0, 2, '0x') == 0) {
+        if (cellValue.compare(0, 2, "0x") == 0) {
           startPosition = 2;
         } 
 
