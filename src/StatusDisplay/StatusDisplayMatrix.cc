@@ -764,9 +764,19 @@ namespace BUTool{
 
         // Retrieve the cell value and check if it is a number
         std::string cellValue = itMap->second->Print(0,true);
+
         bool valueIsNumber = true;
-        for (const char & ch : cellValue) {
-          if (isdigit(ch) == 0) {
+        uint8_t startPosition = 0;
+
+        // Check if this is a number represented in hex notation
+        // If that is the case, start checking from starting from position 2
+        if (cellValue.compare(0, 2, '0x') == 0) {
+          startPosition = 2;
+        } 
+
+        for (uint8_t idx=startPosition; idx<cellValue.size(); idx++) {
+          // If this if clause is True, we found a non-hex character in the string
+          if (isxdigit(cellValue[idx]) == 0) {
             valueIsNumber = false;
             break;
           }
