@@ -748,10 +748,43 @@ namespace BUTool{
 	  std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
 	  if(itMap != colMap.end()){
 	    time_t time_now = time(NULL);
+      
+      // Build the graphite command for this cell
 	    if(itMap->second->Display(status,forceDisplay)){	      
-	      stream << name << "." << itRow->first << "." << colName[iCol] << " "
-		     << itMap->second->Print(0,true) 
-		     << " " << time_now << "\n";
+        // Check for spaces in the row and column names
+        // If there is a space, replace it with an underscore
+        std::string rowForCell = itRow->first;
+        std::string colForCell = colName[icol];
+
+        std::replace(rowForCell.begin(), rowForCell.end(), ' ', '_');
+        std::replace(colForCell.begin(), colForCell.end(), ' ', '_');
+
+        // Append table, row and column names to the stream
+        stream << name << "." << rowForCell << "." << colForCell;
+
+        // Retrieve the cell value and check if it is a number
+        std::string cellValue = itMap->second->Print(0,true);
+        bool valueIsNumber = true;
+        for (const char & ch : cellValue) {
+          if (isdigit(ch) == 0) {
+            valueIsNumber = false;
+            break;
+          }
+        }
+
+        /* 
+         * If the cell value is not a number, append it to the column name (colForCell) 
+         * with a dot, and fill the value as 1. This is done for Graphite-related purposes,
+         * since it expects all cell values to be numbers.
+         */
+        if (valueIsNumber) {
+          stream << " " << cellValue;
+        } else {
+          stream << "." << cellValue << " 1";
+        }
+
+        // Finally, add the timestamp
+        stream << " " << time_now << "\n";
 	    }
 	  }
 	}
