@@ -754,7 +754,7 @@ namespace BUTool{
         // Check for spaces in the row and column names
         // If there is a space, replace it with an underscore
         std::string rowForCell = itRow->first;
-        std::string colForCell = colName[icol];
+        std::string colForCell = colName[iCol];
 
         std::replace(rowForCell.begin(), rowForCell.end(), ' ', '_');
         std::replace(colForCell.begin(), colForCell.end(), ' ', '_');
