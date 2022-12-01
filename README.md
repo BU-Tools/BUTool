@@ -54,8 +54,7 @@ cd BUTool/
 make RUNTIME_LDPATH=/opt/BUTool COMPILETIME_ROOT=--sysroot=/  LIBRARY_BUEXCEPTION_PATH=/opt/BUTool
 
 # Install it under /opt/BUTool
-make install RUNTIME_LDPATH=/opt/BUTool COMPILETIME_ROOT=--sysroot=/ \
-  LIBRARY_BUEXCEPTION_PATH=/opt/BUTool INSTALL_PATH=/opt/BUTool
+make install RUNTIME_LDPATH=/opt/BUTool COMPILETIME_ROOT=--sysroot=/ LIBRARY_BUEXCEPTION_PATH=/opt/BUTool INSTALL_PATH=/opt/BUTool
 ```
 
 Note that `RUNTIME_LDPATH` is set to `/opt/BUTool` such that at runtime (when `BUTool` is launched), the linker looks for libraries under the path `/opt/BUTool/lib`. 
