@@ -776,7 +776,8 @@ namespace BUTool{
 
         for (uint8_t idx=startPosition; idx<cellValue.size(); idx++) {
           // If this if clause is True, we found a non-hex character in the string
-          if (isxdigit(cellValue[idx]) == 0) {
+          if (isxdigit(cellValue[idx]) == 0 && 
+	      (cellValue[idx] != '-' && cellValue[idx] != '.') ) {
             valueIsNumber = false;
             break;
           }
