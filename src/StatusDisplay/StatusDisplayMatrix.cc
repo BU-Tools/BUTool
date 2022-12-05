@@ -34,11 +34,11 @@ namespace BUTool{
     colName.clear();
     //Deallocate the data
     for(std::map<std::string,StatusDisplayCell*>::iterator itCell = cell.begin();
-	itCell != cell.end();
-	itCell++){
+        itCell != cell.end();
+        itCell++){
       if(itCell->second != NULL){
-	delete itCell->second;
-	itCell->second = NULL;
+        delete itCell->second;
+        itCell->second = NULL;
       }
     }
     //clear the vector
@@ -52,7 +52,7 @@ namespace BUTool{
   std::vector<std::string> StatusDisplayMatrix::GetTableRows() const {
     std::vector<std::string> rows;
     for (std::map<std::string,std::map<std::string, StatusDisplayCell *> >::const_iterator it = rowColMap.begin(); 
-	 it != rowColMap.end(); it++) {
+         it != rowColMap.end(); it++) {
       rows.push_back(it->first);
     }
     return rows;
@@ -61,7 +61,7 @@ namespace BUTool{
   std::vector<std::string> StatusDisplayMatrix::GetTableColumns() const {
     std::vector<std::string> cols;
     for (std::map<std::string,std::map<std::string, StatusDisplayCell *> >::const_iterator it = colRowMap.begin();
-	 it != colRowMap.end();it++) {
+         it != colRowMap.end();it++) {
       cols.push_back(it->first);
     }
     return cols;
@@ -152,8 +152,8 @@ namespace BUTool{
 
   void StatusDisplayMatrix::CheckForInvalidCharacter(std::string const & name, char const & invalidChar) const{
     /*
-    Function to check if there is an invalid character in the given string
-    Throws a BUException if there is one.
+      Function to check if there is an invalid character in the given string
+      Throws a BUException if there is one.
     */
     for (size_t iChar = 0; iChar < name.size(); iChar++) {
       if (name[iChar] == invalidChar) {
@@ -167,19 +167,19 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::BuildNameWithSingleUnderscore(std::string const & markup,
-                  std::vector<std::string> const & parsedName,
-                  std::string const & parameterName) const{
+                                                                 std::vector<std::string> const & parsedName,
+                                                                 std::string const & parameterName) const{
     /* 
-    Build a row or column name, using a single underscore ('_') character as a special token.
-    A double underscore ('__') is treated as a literal underscore, and printed as '_'.
+       Build a row or column name, using a single underscore ('_') character as a special token.
+       A double underscore ('__') is treated as a literal underscore, and printed as '_'.
     
-    If a non-digit char is following the underscore, that single underscore char will also be treated as literal.
+       If a non-digit char is following the underscore, that single underscore char will also be treated as literal.
 
-    Example: If we had a register with the name A.B.C.D, the following would be true:
-    - If "Row=_3" is set, the row name would be "C"
-    - If "Row=_3_4" is set, the row name would be "C D"
-    - If "Row=ROW__1" is set, the row name would be "ROW_1"
-    - If "Row=ROW_A" is set, the row name would be "ROW_A"
+       Example: If we had a register with the name A.B.C.D, the following would be true:
+       - If "Row=_3" is set, the row name would be "C"
+       - If "Row=_3_4" is set, the row name would be "C D"
+       - If "Row=ROW__1" is set, the row name would be "ROW_1"
+       - If "Row=ROW_A" is set, the row name would be "ROW_A"
     */
 
     // The name we're going to return
@@ -260,15 +260,15 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::BuildNameWithMultipleUnderscores(std::string const & markup,
-              std::vector<std::string> const & parsedName,
-              std::string const & parameterName) const {
+                                                                    std::vector<std::string> const & parsedName,
+                                                                    std::string const & parameterName) const {
     /* 
-    Build a row or column name, using multiple underscore ('_') characters as a special token
-    Determines the row and column name according to the following:
+       Build a row or column name, using multiple underscore ('_') characters as a special token
+       Determines the row and column name according to the following:
     
-    - Single underscore: Treated as a literal underscore
-    - Double underscore ("__N"): Get the Nth portion of the register name (count from LEFT)
-    - Triple underscore ("___N"): Get the Nth portion of the register name (count from RIGHT)
+       - Single underscore: Treated as a literal underscore
+       - Double underscore ("__N"): Get the Nth portion of the register name (count from LEFT)
+       - Triple underscore ("___N"): Get the Nth portion of the register name (count from RIGHT)
     */
     std::string ret;
     
@@ -351,20 +351,20 @@ namespace BUTool{
   }
 
   std::string StatusDisplayMatrix::NameBuilder(std::string const & markup,
-                  std::string const & registerName,
-                  std::string const & parameterName) const{
+                                               std::string const & registerName,
+                                               std::string const & parameterName) const{
     /*
-    Main name builder function to determine row and column names for StatusDisplayMatrix tables.
-    Row and column names are inferred from the "Row" and "Column" parameters in the address table.
+      Main name builder function to determine row and column names for StatusDisplayMatrix tables.
+      Row and column names are inferred from the "Row" and "Column" parameters in the address table.
 
-    If SD_USE_NEW_PARSER is defined via a compile-time flag, this function will call the more recent
-    version of the name parser. Otherwise, it will call the older version of the name parser, where only
-    a single underscore ('_') in the beginning is treated as a special character.
+      If SD_USE_NEW_PARSER is defined via a compile-time flag, this function will call the more recent
+      version of the name parser. Otherwise, it will call the older version of the name parser, where only
+      a single underscore ('_') in the beginning is treated as a special character.
     */
 
     // Create a tokenized register name, that is, the register name split by '.' character
     boost::tokenizer<boost::char_separator<char> > tokenizedName(registerName,
-				boost::char_separator<char>("."));
+                                                                 boost::char_separator<char>("."));
     
     // parsedName vector will hold the full register name at index 0
     // and the ith component of the tokenized name at index i
@@ -374,20 +374,20 @@ namespace BUTool{
       parsedName.push_back(*itTok); // for _N
     }
     
-    #ifdef SD_USE_NEW_PARSER
+#ifdef SD_USE_NEW_PARSER
     return BuildNameWithMultipleUnderscores(markup, parsedName, parameterName);
-    #endif
+#endif
 
     return BuildNameWithSingleUnderscore(markup, parsedName, parameterName);
   }
 
   std::string StatusDisplayMatrix::ParseRowOrCol(RegisterHelperIO* regIO,
-              std::string const & registerName,
-              std::string const & parameterName) const
+                                                 std::string const & registerName,
+                                                 std::string const & parameterName) const
   {
     /*
-    Function that returns the row (parameterName="row") or column name
-    (parameterName="column") for a given named register.
+      Function that returns the row (parameterName="row") or column name
+      (parameterName="column") for a given named register.
     */
     std::string markup;
     try {
@@ -451,32 +451,32 @@ namespace BUTool{
       //Get a vector for this row
       const std::map<std::string,StatusDisplayCell*> & inColumn = colRowMap.at(colName[iCol]);
       for(std::map<std::string,StatusDisplayCell*>::const_iterator itColCell = inColumn.begin();
-	  itColCell != inColumn.end();
-	  itColCell++){
-	//Check if we should display this cell
-	if(itColCell->second->Display(status,forceDisplay)){
-	  //This entry will be printed, 
-	  //update the table,row, and column display variables
-	  printTable = true;
-	  // check if this row is already marked to be suppressed
-	  if( rowKill[itColCell->first]) {
-	    // yes, delete entry in rowDisp if any
-	    rowDisp.erase(itColCell->first);
-	  } else {
-	    // nope, mark it for display
-	    rowDisp[itColCell->first] = true;
-	  }
-	  // deal with the width
-	  int width = itColCell->second->Print(-1).size();
-	  if(width > colWidth[iCol]){
-	    colWidth[iCol]=width;
-	  }
-	}
-	// now check if this cell should cause the row to be suppressed
-	if( itColCell->second->SuppressRow( forceDisplay) || rowKill[itColCell->first] ) {
-	  rowKill[itColCell->first] = true;
-	  rowDisp.erase(itColCell->first);
-	}
+          itColCell != inColumn.end();
+          itColCell++){
+        //Check if we should display this cell
+        if(itColCell->second->Display(status,forceDisplay)){
+          //This entry will be printed, 
+          //update the table,row, and column display variables
+          printTable = true;
+          // check if this row is already marked to be suppressed
+          if( rowKill[itColCell->first]) {
+            // yes, delete entry in rowDisp if any
+            rowDisp.erase(itColCell->first);
+          } else {
+            // nope, mark it for display
+            rowDisp[itColCell->first] = true;
+          }
+          // deal with the width
+          int width = itColCell->second->Print(-1).size();
+          if(width > colWidth[iCol]){
+            colWidth[iCol]=width;
+          }
+        }
+        // now check if this cell should cause the row to be suppressed
+        if( itColCell->second->SuppressRow( forceDisplay) || rowKill[itColCell->first] ) {
+          rowKill[itColCell->first] = true;
+          rowDisp.erase(itColCell->first);
+        }
       }
     }
 
@@ -490,10 +490,10 @@ namespace BUTool{
       headerColWidth = name.size();
     } 
     for(std::map<std::string,bool>::iterator itRowName = rowDisp.begin();
-	itRowName != rowDisp.end();
-	itRowName++){
+        itRowName != rowDisp.end();
+        itRowName++){
       if(itRowName->first.size() > size_t(headerColWidth)){
-	headerColWidth = itRowName->first.size();
+        headerColWidth = itRowName->first.size();
       }
     }
 
@@ -510,11 +510,11 @@ namespace BUTool{
     }
   }
   void StatusDisplayMatrix::Print(std::ostream & stream,
-			       int status,
-			       bool forceDisplay,
-			       int headerColWidth,
-			       std::map<std::string,bool> & rowDisp,
-			       std::vector<int> & colWidth) const
+                                  int status,
+                                  bool forceDisplay,
+                                  int headerColWidth,
+                                  std::map<std::string,bool> & rowDisp,
+                                  std::vector<int> & colWidth) const
   {
     //=====================
     //Print the header
@@ -523,20 +523,20 @@ namespace BUTool{
     stream << std::right << std::setw(headerColWidth+1) << name << "|";	
     for(size_t iCol = 0; iCol < colWidth.size();iCol++){
       if(colWidth[iCol] > 0){
-	size_t columnPrintWidth = std::max(colWidth[iCol],int(colName[iCol].size()));
-	stream<< std::right  
-	      << std::setw(columnPrintWidth+1) 
-	      << colName[iCol] << "|";
+        size_t columnPrintWidth = std::max(colWidth[iCol],int(colName[iCol].size()));
+        stream<< std::right  
+              << std::setw(columnPrintWidth+1) 
+              << colName[iCol] << "|";
       }	  
     }
     //Draw line
     stream << std::endl << std::right << std::setw(headerColWidth+2) << "--|" << std::setfill('-');
     for(size_t iCol = 0; iCol < colWidth.size();iCol++){
       if(colWidth[iCol] > 0){
-	size_t columnPrintWidth = std::max(colWidth[iCol],int(colName[iCol].size()));
-	stream<< std::right  
-	      << std::setw(columnPrintWidth+2) 
-	      << "|";
+        size_t columnPrintWidth = std::max(colWidth[iCol],int(colName[iCol].size()));
+        stream<< std::right  
+              << std::setw(columnPrintWidth+2) 
+              << "|";
       }	  
     }
     stream << std::setfill(' ') << std::endl;
@@ -545,27 +545,27 @@ namespace BUTool{
     //Print the data
     //=====================
     for(std::map<std::string,bool>::iterator itRow = rowDisp.begin();
-	itRow != rowDisp.end();
-	itRow++){
+        itRow != rowDisp.end();
+        itRow++){
       //Print the rowName
       stream << std::right << std::setw(headerColWidth+1) << itRow->first << "|";
       //Print the data
       const std::map<std::string,StatusDisplayCell*> & colMap = rowColMap.at(itRow->first);
       for(size_t iCol = 0; iCol < colName.size();iCol++){	  
-	if(colWidth[iCol] > 0){
-	  size_t width = std::max(colWidth[iCol],int(colName[iCol].size()));
-	  std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
-	  if((itMap != colMap.end()) &&
-	     (itMap->second->Display(status,forceDisplay))){
-	    stream << std::right  
-		   << std::setw(width+1)
-		   << itMap->second->Print(colWidth[iCol]) << "|";	   
-	  }else{
-	    stream << std::right 
-		   << std::setw(width+2) 
-		   << " |";
-	  }
-	}
+        if(colWidth[iCol] > 0){
+          size_t width = std::max(colWidth[iCol],int(colName[iCol].size()));
+          std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
+          if((itMap != colMap.end()) &&
+             (itMap->second->Display(status,forceDisplay))){
+            stream << std::right  
+                   << std::setw(width+1)
+                   << itMap->second->Print(colWidth[iCol]) << "|";	   
+          }else{
+            stream << std::right 
+                   << std::setw(width+2) 
+                   << " |";
+          }
+        }
       }
       stream << std::endl;
     }
@@ -576,11 +576,11 @@ namespace BUTool{
     stream << std::endl;
   }
   void StatusDisplayMatrix::PrintHTML(std::ostream & stream,
-				      int status,
-				      bool forceDisplay,
-				      int /*headerColWidth*/,
-				      std::map<std::string,bool> & rowDisp,
-				      std::vector<int> & colWidth) const
+                                      int status,
+                                      bool forceDisplay,
+                                      int /*headerColWidth*/,
+                                      std::map<std::string,bool> & rowDisp,
+                                      std::vector<int> & colWidth) const
   {
     //=====================
     //Print the header
@@ -589,7 +589,7 @@ namespace BUTool{
     stream << "<table border=\"1\" >" << "<tr>" << "<th class=\"name\">" << name << "</th>";    
     for(size_t iCol = 0; iCol < colWidth.size();iCol++){
       if(colWidth[iCol] > 0){
-	stream << "<th>" << colName[iCol] << "</th>";
+        stream << "<th>" << colName[iCol] << "</th>";
       }	  
     }
     stream << "</tr>\n";   	
@@ -597,38 +597,38 @@ namespace BUTool{
     //Print the data
     //=====================
     for(std::map<std::string,bool>::iterator itRow = rowDisp.begin();
-	itRow != rowDisp.end();
-	itRow++){
+        itRow != rowDisp.end();
+        itRow++){
       stream << "<tr><th>" << itRow->first << "</th>";
       //Print the data
       const std::map<std::string,StatusDisplayCell*> & colMap = rowColMap.at(itRow->first);
       for(size_t iCol = 0; iCol < colName.size();iCol++){	  
-	if(colWidth[iCol] > 0){
-	  std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
-	  if(itMap != colMap.end()){
+        if(colWidth[iCol] > 0){
+          std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
+          if(itMap != colMap.end()){
 
-	    //sets the class for the td element for determining its color
-	    std::string tdClass;
-	    if((itMap->second->GetDesc().find("error") != std::string::npos)){
-	      tdClass = "error";
-	    }else if((itMap->second->GetDesc().find("warning") != std::string::npos)){
-	      tdClass = "warning" ;
-	    }else{
-	      tdClass = "nonerror";
-	    }
-	    tdClass = (itMap->second->Print(colWidth[iCol],true) == "0") ? "null" : tdClass; 
+            //sets the class for the td element for determining its color
+            std::string tdClass;
+            if((itMap->second->GetDesc().find("error") != std::string::npos)){
+              tdClass = "error";
+            }else if((itMap->second->GetDesc().find("warning") != std::string::npos)){
+              tdClass = "warning" ;
+            }else{
+              tdClass = "nonerror";
+            }
+            tdClass = (itMap->second->Print(colWidth[iCol],true) == "0") ? "null" : tdClass; 
 
-	    if(itMap->second->Display(status,forceDisplay)){
-	      stream << "<td title=\"" << itMap->second->GetDesc()  << "\" class=\"" << tdClass << "\">" 
-		     << itMap->second->Print(colWidth[iCol],true) << "</td>";
-	    }else{
-	      //	      stream << "<td title=\"" << itMap->second->GetDesc()  << "\" class=\"" << tdClass << "\">" << " " << "</td>";
-	      stream << "<td title=\"" << itMap->second->GetDesc()  << "\">" << " " << "</td>";
-	    }
-	  }else{
-	    stream << "<td>" << " " << "</td>";
-	  }
-	}
+            if(itMap->second->Display(status,forceDisplay)){
+              stream << "<td title=\"" << itMap->second->GetDesc()  << "\" class=\"" << tdClass << "\">" 
+                     << itMap->second->Print(colWidth[iCol],true) << "</td>";
+            }else{
+              //	      stream << "<td title=\"" << itMap->second->GetDesc()  << "\" class=\"" << tdClass << "\">" << " " << "</td>";
+              stream << "<td title=\"" << itMap->second->GetDesc()  << "\">" << " " << "</td>";
+            }
+          }else{
+            stream << "<td>" << " " << "</td>";
+          }
+        }
       }
       stream << "</tr>\n";
     }
@@ -651,9 +651,9 @@ namespace BUTool{
     for (std::vector<std::string>::iterator it = modColName.begin(); it != modColName.end(); ++it) {
       headerSuffix = headerSuffix + "|l";
       if (it->find("_") != std::string::npos) {
-	cols = cols +" & " + (*it).replace(it->find("_"),1," ");
+        cols = cols +" & " + (*it).replace(it->find("_"),1," ");
       } else {
-	cols = cols + " & " + *it;
+        cols = cols + " & " + *it;
       }
     }
 
@@ -685,35 +685,35 @@ namespace BUTool{
       char s_mask[s_maskSize+1];
 
       while (thisRow.find("_") != std::string::npos) {
-	thisRow = thisRow.replace(thisRow.find("_"),1," ");
+        thisRow = thisRow.replace(thisRow.find("_"),1," ");
       }
 
       for(std::vector<std::string>::iterator itCol = modColName.begin(); itCol != modColName.end(); itCol++) {
-	std::string addr;
+        std::string addr;
 
-	//	if (true) { //WTF? why is this here?
-	  if (rowColMap.at(*itRow).find(*itCol) == rowColMap.at(*itRow).end()) {
-	    addr = " ";
-	    *s_mask = '\0';
-	  }
-	  else {
-	    addr = rowColMap.at(*itRow).at(*itCol)->GetAddress();
-	    uint32_t mask = rowColMap.at(*itRow).at(*itCol)->GetMask();
-	    snprintf( s_mask, s_maskSize, "0x%x", mask );
+        //	if (true) { //WTF? why is this here?
+        if (rowColMap.at(*itRow).find(*itCol) == rowColMap.at(*itRow).end()) {
+          addr = " ";
+          *s_mask = '\0';
+        }
+        else {
+          addr = rowColMap.at(*itRow).at(*itCol)->GetAddress();
+          uint32_t mask = rowColMap.at(*itRow).at(*itCol)->GetMask();
+          snprintf( s_mask, s_maskSize, "0x%x", mask );
 
-	    if (addr.find(".") != std::string::npos) {
-	      addr = addr.substr(addr.find_last_of(".")+1);
-	    }
-	    while (addr.find("_") != std::string::npos) {
-	      addr = addr.replace(addr.find("_"),1," ");
-	    }
-	  }
+          if (addr.find(".") != std::string::npos) {
+            addr = addr.substr(addr.find_last_of(".")+1);
+          }
+          while (addr.find("_") != std::string::npos) {
+            addr = addr.replace(addr.find("_"),1," ");
+          }
+        }
 
 
-	  thisRow = thisRow + " & " + s_mask + "/" + addr;
-//	} else {
-//	  thisRow = thisRow + " & " + " ";
-//	}
+        thisRow = thisRow + " & " + s_mask + "/" + addr;
+        //	} else {
+        //	  thisRow = thisRow + " & " + " ";
+        //	}
       }
       
       
@@ -732,73 +732,73 @@ namespace BUTool{
 
   
   void StatusDisplayMatrix::PrintGraphite(std::ostream & stream,
-					  int status,
-					  bool forceDisplay,
-					  int /*headerColWidth*/,
-					  std::map<std::string,bool> & rowDisp,
-					  std::vector<int> & colWidth) const
+                                          int status,
+                                          bool forceDisplay,
+                                          int /*headerColWidth*/,
+                                          std::map<std::string,bool> & rowDisp,
+                                          std::vector<int> & colWidth) const
   {
     for(std::map<std::string,bool>::iterator itRow = rowDisp.begin();
-	itRow != rowDisp.end();
-	itRow++){
+        itRow != rowDisp.end();
+        itRow++){
       //Print the data
       const std::map<std::string,StatusDisplayCell*> & colMap = rowColMap.at(itRow->first);
       for(size_t iCol = 0; iCol < colName.size();iCol++){	  
-	if(colWidth[iCol] > 0){
-	  std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
-	  if(itMap != colMap.end()){
-	    time_t time_now = time(NULL);
-      
-      // Build the graphite command for this cell
-	    if(itMap->second->Display(status,forceDisplay)){	      
-        // Check for spaces in the row and column names
-        // If there is a space, replace it with an underscore
-        std::string rowForCell = itRow->first;
-        std::string colForCell = colName[iCol];
+        if(colWidth[iCol] > 0){
+          std::map<std::string,StatusDisplayCell*>::const_iterator itMap = colMap.find(colName[iCol]);
+          if(itMap != colMap.end()){
+            time_t time_now = time(NULL);
+            // Build the graphite command for this cell
+            if(itMap->second->Display(status,forceDisplay)){	      
+              // Check for spaces in the row and column names
+              // If there is a space, replace it with an underscore
+              std::string rowForCell = itRow->first;
+              std::string colForCell = colName[iCol];
 
-        std::replace(rowForCell.begin(), rowForCell.end(), ' ', '_');
-        std::replace(colForCell.begin(), colForCell.end(), ' ', '_');
+              std::replace(rowForCell.begin(), rowForCell.end(), ' ', '_');
+              std::replace(colForCell.begin(), colForCell.end(), ' ', '_');
 
-        // Append table, row and column names to the stream
-        stream << name << "." << rowForCell << "." << colForCell;
+              // Append table, row and column names to the stream
+              stream << name << "." << rowForCell << "." << colForCell;
 
-        // Retrieve the cell value and check if it is a number
-        std::string cellValue = itMap->second->Print(0,true);
+              // Retrieve the cell value and check if it is a number
+              std::string cellValue = itMap->second->Print(0,true);
 
-        bool valueIsNumber = true;
-        uint8_t startPosition = 0;
+              bool valueIsNumber = true;
+              uint8_t startPosition = 0;
 
-        // Check if this is a number represented in hex notation
-        // If that is the case, start checking from starting from position 2
-        if (cellValue.compare(0, 2, "0x") == 0) {
-          startPosition = 2;
-        } 
+              // Check if this is a number represented in hex notation
+              // If that is the case, start checking from starting from position 2
+              if (cellValue.compare(0, 2, "0x") == 0) {
+                startPosition = 2;
+              } 
 
-        for (uint8_t idx=startPosition; idx<cellValue.size(); idx++) {
-          // If this if clause is True, we found a non-hex character in the string
-          if (isxdigit(cellValue[idx]) == 0 && 
-	      (cellValue[idx] != '-' && cellValue[idx] != '.') ) {
-            valueIsNumber = false;
-            break;
+              for (uint8_t idx=startPosition; idx<cellValue.size(); idx++) {
+                // If this if clause is True, we found a non-hex character in the string
+                if ((cellValue[idx] != '.') && 
+		    (cellValue[idx] != '-') && 
+		    (isxdigit(cellValue[idx]) == 0)) {
+                  valueIsNumber = false;
+                  break;
+                }
+              }
+
+              /* 
+               * If the cell value is not a number, append it to the column name (colForCell) 
+               * with a dot, and fill the value as 1. This is done for Graphite-related purposes,
+               * since it expects all cell values to be numbers.
+               */
+              if (valueIsNumber) {
+                stream << " " << cellValue;
+              } else {
+                stream << "." << cellValue << " 1";
+              }
+
+              // Finally, add the timestamp
+              stream << " " << time_now << "\n";
+            }
           }
         }
-
-        /* 
-         * If the cell value is not a number, append it to the column name (colForCell) 
-         * with a dot, and fill the value as 1. This is done for Graphite-related purposes,
-         * since it expects all cell values to be numbers.
-         */
-        if (valueIsNumber) {
-          stream << " " << cellValue;
-        } else {
-          stream << "." << cellValue << " 1";
-        }
-
-        // Finally, add the timestamp
-        stream << " " << time_now << "\n";
-	    }
-	  }
-	}
       }
     }
   }
