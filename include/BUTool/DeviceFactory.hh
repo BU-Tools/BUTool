@@ -5,10 +5,10 @@
 #include <vector>
 #include <map>
 
-#include "CommandList.hh"
+#include <BUTool/CommandList.hh>
+#include <BUTool/VersionTracker.hh>
 
-
-#define RegisterDevice(ClassName,ClassNickName,ClassHelp,CLIFlag,CLIFullFlag,CLIDescription) \
+#define RegisterDevice(ClassName,ClassNickName,ClassHelp,CLIFlag,CLIFullFlag,CLIDescription,pluginVersion) \
   namespace {								\
     /*make creator function*/						\
     BUTool::CommandListBase * creator_function(std::vector<std::string> args){ \
@@ -21,13 +21,15 @@
     const char CLI_flag[] = CLIFlag;					\
     const char CLI_full_flag[] = CLIFullFlag;				\
     const char CLI_description[] = CLIDescription;			\
+    const VersionTracker version = pluginVersion;                       \
     const bool registered = BUTool::DeviceFactory::Instance()->Register(type, \
 									name, \
 									&creator_function, \
 									help, \
 									CLI_flag, \
 									CLI_full_flag,\
-									CLI_description); \
+									CLI_description,\
+									version); \
   }
 
 namespace BUTool{
@@ -47,7 +49,9 @@ namespace BUTool{
 		  std::string  help,
 		  std::string  CLI_flag,
 		  std::string  CLI_full_flag,
-		  std::string  CLI_description);
+		  std::string  CLI_description,
+		  VersionTracker pluginVersion
+		  );
     void UnRegister(std::string  name);
 
 
@@ -56,6 +60,7 @@ namespace BUTool{
     std::string Help(std::string);
     bool CLIArgs(std::string const & name,std::string & flag, std::string & full_flag, std::string &description);
     bool Exists(std::string name);
+    VersionTracker GetVersion(std::string name = "BUTOOL" );
   private:
     //Singleton stuff
     //Never implement
@@ -65,7 +70,8 @@ namespace BUTool{
   
     ~DeviceFactory();
     static DeviceFactory * pInstance;
-
+    static VersionTracker const BUToolVersion;
+    
     //List stuff
     struct device{
       std::string type;
@@ -73,7 +79,8 @@ namespace BUTool{
       std::string help;
       std::string  CLI_flag;
       std::string  CLI_full_flag;
-      std::string  CLI_description;     
+      std::string  CLI_description;
+      VersionTracker pluginVersion;
     };
     std::map<std::string,device> deviceMap;
   };

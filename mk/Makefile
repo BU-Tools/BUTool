@@ -83,9 +83,10 @@ LINK_LIBRARY_FLAGS = -shared -fPIC -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${L
 LINK_EXECUTABLE_FLAGS = -Wall -Wl,--no-as-needed -g -O3 -rdynamic ${LIBRARY_PATH} ${EXECUTABLE_LIBRARIES} -Wl,-rpath=${RUNTIME_LDPATH}/lib ${COMPILETIME_ROOT}
 
 ### LINTER checking ###
-LINTER?=clang-tidy -extra-arg=-Wno-unknown-warning-option
+#LINTER?=clang-tidy 
+LINTER?=:
 #second line sets warnings to errors except for certain things
-LINTER_DEFAULT_ARGS=-checks=readability-* --warnings-as-errors=readability-*,-readability-implicit-bool-conversion,-readability-else-after-return,-readability-function-cognitive-complexity,-readability-convert-member-functions-to-static,-clang-diagnostic-unknown-warning-option,-readability-make-member-function-const
+LINTER_DEFAULT_ARGS=-extra-arg=-Wno-unknown-warning-option -checks=readability-* --warnings-as-errors=readability-*,-readability-implicit-bool-conversion,-readability-else-after-return,-readability-function-cognitive-complexity,-readability-convert-member-functions-to-static,-clang-diagnostic-unknown-warning-option,-readability-make-member-function-const
 
 .PHONY: all _all clean _cleanall build _buildall self plugin init git_remote_to_ssh git_remote_to_https
 
