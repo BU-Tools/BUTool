@@ -28,8 +28,6 @@ bool BUTool::DeviceFactory::Register(std::string type,
     dev.help = help;
     dev.pluginVersion = pluginVersion;
 
-    fprintf(stderr,"%s %s\n",pluginVersion.GetHumanVer().c_str(),pluginVersion.GetRepositoryURI().c_str());
-    
     //Check that our registered flags don't conflict with anyone elses
     bool registerCLI = true;
     for(it = deviceMap.begin();

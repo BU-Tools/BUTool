@@ -2,6 +2,7 @@
 default: build
 include mk/helpers.mk
 include mk/uhal.mk
+include mk/version.mk
 
 
 BUTOOL_PATH=${MAKE_PATH}
@@ -20,6 +21,7 @@ LIBRARY_BUTEXTIO_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_BUTEXTIO_S
 
 LIBRARY_TOOL = lib/libBUTool.so
 LIBRARY_TOOL_SOURCES  = $(wildcard src/BUTool/*.cc)
+LIBRARY_TOOL_SOURCES  += $(VERSION_FILE)
 LIBRARY_TOOL_OBJECT_FILES = $(patsubst src/%.cc,obj/%.o,${LIBRARY_TOOL_SOURCES})
 
 LIBRARY_HELPERS = lib/libBUTool_Helpers.so
@@ -90,7 +92,7 @@ LINTER_DEFAULT_ARGS=-extra-arg=-Wno-unknown-warning-option -checks=readability-*
 
 .PHONY: all _all clean _cleanall build _buildall self plugin init git_remote_to_ssh git_remote_to_https
 
-clean: _cleanall
+clean: _cleanall clean_version
 _cleanall:
 	rm -rf obj
 	rm -rf bin
@@ -189,3 +191,4 @@ FLAGS = $(ifeq $(MAKEFLAGS) "","",-$(MAKEFLAGS))
 
 plugin: ${LIBRARY_BUEXCEPTION} ${LIBRARY_BUTEXTIO} ${LIBRARY_HELPERS}
 	 ${MAKE} ${FLAGS} -C ${PLUGIN_DIR} 
+

@@ -115,11 +115,11 @@ CommandReturn::status Launcher::GetVersion(std::vector<std::string> iArg,
     version.insert(version.end(),pluginList.begin(),pluginList.end());
   }
 
-  Print(Level::INFO,"Name           Version             notes\n");
+  Print(Level::INFO,"Name           Version                     notes\n");
   for(auto itVer = version.begin(); itVer != version.end();itVer++){
     VersionTracker pluginVersion = BUTool::DeviceFactory::Instance()->GetVersion(*itVer);
     Print(Level::INFO,
-	  "%-13s  %-19s %s\n",
+	  "%-13s  %-27s %s\n",
 	  itVer->c_str(),
 	  pluginVersion.GetHumanVer().c_str(),
 	  pluginVersion.GetRepositoryURI().c_str()
