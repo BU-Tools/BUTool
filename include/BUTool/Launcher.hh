@@ -59,6 +59,8 @@ namespace BUTool{
     CommandReturn::status UnSetVariable(std::vector<std::string>,std::vector<uint64_t>); 
     CommandReturn::status ListVariables(std::vector<std::string>,std::vector<uint64_t>); 
 
+    CommandReturn::status GetVersion(std::vector<std::string>,std::vector<uint64_t>);
+    
     //Add new command (sub command) auto-complete files here
     std::string autoComplete_Help(std::vector<std::string> const &,std::string const &,int);
     std::string autoComplete_AddDevice(std::vector<std::string> const &,std::string const &,int);

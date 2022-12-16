@@ -99,3 +99,31 @@ std::string Launcher::autoComplete_AddDevice(std::vector<std::string> const & li
   //not found
   return std::string("");  
 }
+
+
+CommandReturn::status Launcher::GetVersion(std::vector<std::string> iArg,
+					   std::vector<uint64_t> /*asdf*/){
+  std::vector<std::string> version;
+  
+  if(iArg.size() > 0){
+    version.push_back(iArg[0]);
+  }else{
+    //Add the tool version to the list
+    version.push_back(std::string("BUTOOL"));
+    //Add all the devices to the list
+    std::vector<std::string> const pluginList = BUTool::DeviceFactory::Instance()->GetDeviceNames();
+    version.insert(version.end(),pluginList.begin(),pluginList.end());
+  }
+
+  Print(Level::INFO,"Name           Version                     notes\n");
+  for(auto itVer = version.begin(); itVer != version.end();itVer++){
+    VersionTracker pluginVersion = BUTool::DeviceFactory::Instance()->GetVersion(*itVer);
+    Print(Level::INFO,
+	  "%-13s  %-27s %s\n",
+	  itVer->c_str(),
+	  pluginVersion.GetHumanVer().c_str(),
+	  pluginVersion.GetRepositoryURI().c_str()
+	  );
+  }
+  return CommandReturn::OK;
+}
