@@ -70,7 +70,11 @@ void Launcher::LoadCommandList()
 	     "Get a list of internal variable.\n"\
 	     "  Usage:\n"\
 	     "  list_vars\n");
-
+  AddCommand("version",&Launcher::GetVersion,
+	     "Get the version(s) of this software.\n"\
+	     "  Usage:\n"\
+	     "  version <name>\n");
+  AddCommandAlias("ver","version");
 }
 
 #define MAX_VERBOSITY 9
@@ -511,3 +515,4 @@ CommandReturn::status Launcher::ListVariables(std::vector<std::string> /*args*/,
   }
   return CommandReturn::OK;
 }
+

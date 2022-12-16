@@ -4,7 +4,6 @@
 //Singleton
 BUTool::DeviceFactory * BUTool::DeviceFactory::DeviceFactory::pInstance = NULL;
 
-
 static bool CLIArgsValid(std::string const & flag,std::string const & full_flag){
   return (!flag.empty() && !full_flag.empty());
 }
@@ -15,7 +14,8 @@ bool BUTool::DeviceFactory::Register(std::string type,
 				     std::string help,
 				     std::string  CLI_flag,
 				     std::string  CLI_full_flag,
-				     std::string  CLI_description){
+				     std::string  CLI_description,
+				     VersionTracker pluginVersion){
   boost::algorithm::to_upper(name);
   std::map<std::string,device>::iterator it = deviceMap.find(name);
   
@@ -26,6 +26,7 @@ bool BUTool::DeviceFactory::Register(std::string type,
     dev.type = type;
     dev.fPtr = fPtr;
     dev.help = help;
+    dev.pluginVersion = pluginVersion;
 
     //Check that our registered flags don't conflict with anyone elses
     bool registerCLI = true;
@@ -51,7 +52,7 @@ bool BUTool::DeviceFactory::Register(std::string type,
       dev.CLI_full_flag   = CLI_full_flag;
       dev.CLI_description = CLI_description;      
     }
-
+    
     printf("Registered device: %s\n",name.c_str());          
   }else{
     //This name is already registered.
@@ -148,4 +149,22 @@ bool BUTool::DeviceFactory::CLIArgs(std::string const & name,std::string & flag,
   full_flag = it->second.CLI_full_flag;
   description = it->second.CLI_description;
   return true;
+}
+
+
+VersionTracker BUTool::DeviceFactory::GetVersion(std::string name){
+  boost::algorithm::to_upper(name);
+  //local BUTool version
+  if(name == "BUTOOL"){
+    return BUToolVersion;
+  }else{
+    //Plugin version
+    if(Exists(name)){
+      return deviceMap[name].pluginVersion;
+    }
+  }
+  BUException::BAD_VALUE e;
+  e.Append("Bad Version name: ");
+  e.Append(name);
+  return VersionTracker({0},"Not configured","Not configured");
 }
