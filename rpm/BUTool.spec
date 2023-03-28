@@ -40,5 +40,6 @@ chmod -R 755 $RPM_BUILD_ROOT%{_prefix}/bin
 %defattr(-, root, root) 
 %{_prefix}/lib/*
 %{_prefix}/bin/*
+%{_prefix}/include/*
 
 

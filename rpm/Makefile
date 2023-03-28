@@ -14,14 +14,14 @@ _rpmall:
 
 	# copy files over
 #	find ../include \( -name "*.[hi]" -o -name "*.hpp" -o -name "*.hh" -o -name "*.hxx" \) -exec install -D -m 644 {} ${RPMBUILD_DIR}/SOURCES/include {} \;
-	find ../include -exec install -D -m 644 -t ${RPMBUILD_DIR}/SOURCES/include {} \;
+	find ../include -exec install -D -m 644 -t ${RPMBUILD_DIR}/SOURCES/include/{} {} \;
 	find ../bin     -exec install -D -m 755 -t ${RPMBUILD_DIR}/SOURCES/bin/tool {} \;
 	find ../lib     -exec install -D -m 755 -t ${RPMBUILD_DIR}/SOURCES/lib {} \;
 
 	# build the rpm
 	rpmbuild -bb -bl --buildroot=${RPMBUILD_DIR}/BUILD						\
 			--define "_topdir ${RPMBUILD_DIR}"						\
-			--define "_prefix /opt"							\
+			--define "_prefix /opt/BUTool"							\
 			--define "sources_dir ${RPMBUILD_DIR}/SOURCES"					\
 			--define "name ${PackageName}"								\
 			--define "version ${PACKAGE_VER}"	\
