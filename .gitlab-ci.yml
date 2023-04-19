@@ -1,0 +1,15 @@
+build:alma8_amd64:
+  stage: build
+  image: amd64/almalinux:8
+  before_script:
+     - dnf -y update && dnf -y install make gcc-c++ rpm-build git wget unzip boost boost-filesystem boost-program-options boost-regex boost-devel readline-devel zlib-devel
+     - cd /tmp
+     - wget https://gitlab.com/BU-EDF/butool-libs/buexception/-/jobs/4033627360/artifacts/file/rpm/RPMS/x86_64/BUException-5ca438c-1.x86_64.rpm
+     - rpm -i BUException-5ca438c-1.x86_64.rpm     
+  script:
+    - make
+    - cd rpm
+    - make 
+  artifacts:
+    paths:
+      - rpm/RPMS/*
