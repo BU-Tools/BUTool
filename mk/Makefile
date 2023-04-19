@@ -11,8 +11,9 @@ RUNTIME_LDPATH?=${PWD}
 
 
 #Exception class
-LIBRARY_BUEXCEPTION_PATH ?= ${BUTOOL_PATH}/external/BUException
-LIBRARY_BUEXCEPTION      = ${LIBRARY_BUEXCEPTION_PATH}/lib/libToolException.so
+#LIBRARY_BUEXCEPTION_PATH ?= ${BUTOOL_PATH}/external/BUException
+LIBRARY_BUEXCEPTION_PATH ?= /opt/BUTool/
+LIBRARY_BUEXCEPTION       = ${LIBRARY_BUEXCEPTION_PATH}/lib/libToolException.so
 
 # BUTextIO class
 LIBRARY_BUTEXTIO = lib/libBUTool_BUTextIO.so
@@ -110,8 +111,8 @@ self: ${EXECUTABLE_LINKED_LIBRARIES} ${LIBRARY_HELPERS} ${LIBRARY_TOOL}  ${EXECU
 # ------------------------
 # exception library
 # ------------------------
-${LIBRARY_BUEXCEPTION}:
-	${MAKE} -C external/BUException
+#${LIBRARY_BUEXCEPTION}:
+#	${MAKE} -C external/BUException
 #	${MAKE} ${FLAGS} LIBRARY_OUTPUT_PATH=${BUTOOL_PATH}/lib -C external/BUException
 
 
@@ -178,7 +179,6 @@ install: all
 	 install -b -m 775 ./lib/* ${INSTALL_PATH}/lib
 	 install -m 775 -d ${INSTALL_PATH}/include
 	 cp -r ./include/* ${INSTALL_PATH}/include
-	 ${MAKE} install ${FLAGS} -C external/BUException
 	 ${MAKE} install ${FLAGS} -C ${PLUGIN_DIR} 
 
 
