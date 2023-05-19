@@ -255,7 +255,7 @@ namespace BUTool{
     }
   }
 
-  std::string StatusDisplayCell::Print(int width = -1,bool /*html*/) const
+  std::string StatusDisplayCell::Print(int width = -1,bool /*html*/, bool displayEnum) const
   { 
     const int bufferSize = 20;
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
@@ -267,7 +267,7 @@ namespace BUTool{
       case RegisterHelperIO::STRING:
       {
         std::string value;
-        regIO->ReadConvert(address, value);
+        regIO->ReadConvert(address, value, displayEnum);
         snprintf(buffer,bufferSize,"%s",value.c_str());
         break;
       }

@@ -254,13 +254,17 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, double & val
   }
 }
 
-void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string & val){
+void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string & val, bool displayEnum){
   // Read the value from the named register, and update the value in place
   std::string format = GetConvertFormat(reg);
   uint64_t rawValue = ComputeValueFromRegister(reg);
   
   if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
-    val = ConvertEnumToString(rawValue, format);
+    if(displayEnum){
+      val = ConvertEnumToString(rawValue, format);
+    }else{
+      val = std::to_string(rawValue);
+    }
   }
   // IP addresses
   else if (boost::algorithm::iequals(format, std::string("IP"))) {
