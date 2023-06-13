@@ -46,7 +46,7 @@ namespace BUTool{
     void                          ReadConvert(std::string const & reg, uint64_t & val);
     void                          ReadConvert(std::string const & reg, int64_t & val);
     void                          ReadConvert(std::string const & reg, double & val);
-    void                          ReadConvert(std::string const & reg, std::string & val, unsigned char displayFlags = HUMAN_READABLE);
+    void                          ReadConvert(std::string const & reg, std::string & val, uint8_t displayFlags = HUMAN_READABLE);
     
     //writes
     virtual void WriteAddress      (uint32_t addr,           uint32_t data)=0;

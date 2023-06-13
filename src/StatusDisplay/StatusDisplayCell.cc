@@ -255,7 +255,7 @@ namespace BUTool{
     }
   }
 
-  std::string StatusDisplayCell::Print(int width = -1,bool /*html*/, unsigned char displayFlag) const
+  std::string StatusDisplayCell::Print(int width = -1,bool /*html*/, uint8_t displayFlag) const
   { 
     const int bufferSize = 20;
     char buffer[bufferSize+1];  //64bit integer can be max 20 ascii chars (as a signed int)
