@@ -7,6 +7,11 @@
 #include <stdint.h>
 #include <unordered_map>
 
+// Bitmask for displayFlag for Graphite. 
+#define HUMAN_READABLE 0
+#define IGNORE_ENUM 1
+#define IGNORE_IP 2
+
 namespace BUTool{  
   class RegisterHelperIO {  
   public:
@@ -41,7 +46,7 @@ namespace BUTool{
     void                          ReadConvert(std::string const & reg, uint64_t & val);
     void                          ReadConvert(std::string const & reg, int64_t & val);
     void                          ReadConvert(std::string const & reg, double & val);
-    void                          ReadConvert(std::string const & reg, std::string & val, bool displayEnum = true);
+    void                          ReadConvert(std::string const & reg, std::string & val, unsigned char displayFlags = HUMAN_READABLE);
     
     //writes
     virtual void WriteAddress      (uint32_t addr,           uint32_t data)=0;

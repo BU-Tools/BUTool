@@ -762,8 +762,8 @@ namespace BUTool{
               stream << name << "." << rowForCell << "." << colForCell;
 
               // Retrieve the cell value and check if it is a number
-              //Third parameter is false so that the enums are not converted to strings
-              std::string cellValue = itMap->second->Print(0,true,false);
+              //Third parameter is a bitmask so that the enums and IPs are not converted to strings
+              std::string cellValue = itMap->second->Print(0,true,IGNORE_ENUM | IGNORE_IP);
 
               bool valueIsNumber = true;
               uint8_t startPosition = 0;

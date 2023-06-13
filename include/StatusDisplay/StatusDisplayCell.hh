@@ -46,7 +46,7 @@ namespace BUTool{
     ///! Determine if this cell's row should be suppressed based on rule="nzr"
     bool SuppressRow( bool force) const;
     int DisplayLevel() const;
-    std::string Print(int width,bool html = false,bool displayEnum = true) const;
+    std::string Print(int width,bool html = false, unsigned char displayFlag) const;
     std::string const & GetRow() const;
     std::string const & GetCol() const;
     std::string const & GetDesc() const;
