@@ -260,7 +260,7 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string 
   uint64_t rawValue = ComputeValueFromRegister(reg);
   
   if ((format.size() > 1) && (('t' == format[0]) || ('T' == format[0]))) {
-    if((displayFlags && IGNORE_ENUM) == IGNORE_ENUM){
+    if((displayFlags & IGNORE_ENUM) == IGNORE_ENUM){
       val = std::to_string(rawValue);
     }else{
       val = ConvertEnumToString(rawValue, format);
@@ -268,7 +268,7 @@ void BUTool::RegisterHelperIO::ReadConvert(std::string const & reg, std::string 
   }
   // IP addresses
   else if (boost::algorithm::iequals(format, std::string("IP"))) {
-    if((displayFlags && IGNORE_IP) == IGNORE_IP){
+    if((displayFlags & IGNORE_IP) == IGNORE_IP){
       val = std::to_string(rawValue);
     }else{
       val = ConvertIPAddressToString(rawValue);
